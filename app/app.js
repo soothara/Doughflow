@@ -237,16 +237,16 @@ function renderDashboard(p){
       ${currentUser.role==='admin'?'<button class="btn primary hero-btn" id="quickProduction">＋ New production</button>':''}
     </div>
     <div class="stats-grid">
-      <div class="stat-card emphasis"><span>Today</span><strong>${fmt(totalM)}</strong><small>mishoks</small></div>
-      <div class="stat-card"><span>Output</span><strong>${fmt(totalPieces)}</strong><small>pieces</small></div>
-      <div class="stat-card"><span>Runs</span><strong>${todayRuns.length}</strong><small>production runs</small></div>
-      <div class="stat-card"><span>Recipe</span><strong>v${db?.recipe?.version||liveState.recipe?.version||1}</strong><small>active version</small></div>
+      <div class="stat-card emphasis"><span>🧺 Today’s Sacks</span><strong>${fmt(totalM)}</strong><small>full + half sacks</small></div>
+      <div class="stat-card"><span>🥯 Today’s Pieces</span><strong>${fmt(totalPieces)}</strong><small>pieces</small></div>
+      <div class="stat-card"><span>▶️ Production Runs</span><strong>${todayRuns.length}</strong><small>production runs</small></div>
+      <div class="stat-card"><span>📖 Recipe</span><strong>v${db?.recipe?.version||liveState.recipe?.version||1}</strong><small>active version</small></div>
     </div>
-    <div class="section-head"><div><h2>Stock</h2><p>Current balance by material.</p></div>${currentUser.role==='admin'?'<button class="text-button" id="openInventory">View all</button>':''}</div>
+    <div class="section-head"><div><h2>📦 Stock Overview</h2><p>Current available stock in inventory.</p></div>${currentUser.role==='admin'?'<button class="text-button" id="openInventory">View all</button>':''}</div>
     <div class="card stock-card"><div class="stock-list">
       ${stockRows.map(m=>`<div class="stock-row"><div class="stock-name"><span class="stock-dot ${m.stock<=0?'danger':m.stock<10?'warn':'ok'}"></span><b>${esc(m.name)}</b></div><span class="stock-value">${fmt(m.stock)} ${m.unit}</span></div>`).join('')}
     </div></div>
-    <div class="quick-strip"><span class="quick-icon">✦</span><div><b>Keep it simple</b><small>1 full mishok = 1.0 · half = 0.5 · pieces are actual.</small></div></div>`;
+    <div class="quick-strip"><span class="quick-icon">🇰🇬</span><div><b>Kyrgyz bakery workflow</b><small>1 full sack = 1.0 · +0.5 adds a half-sack · pieces are actual.</small></div></div>`;
   document.getElementById('quickProduction')?.addEventListener('click',()=>{route='production';render();});
   document.getElementById('openInventory')?.addEventListener('click',()=>{route='inventory';render();});
 }
@@ -258,35 +258,47 @@ function roleDashboard(p){
 
 function batchesFor(mishokCount){
   const count=Number(mishokCount);
+  const full=Math.floor(count);
+  const half=Math.round((count-full)*2)/2;
   const out=[];
-  for(let i=1;i<=count;i++) out.push({batchNo:i,mishok:1,pieces:''});
+  for(let i=1;i<=full;i++) out.push({batchNo:i,mishok:1,pieces:''});
+  if(half===0.5) out.push({batchNo:full+1,mishok:0.5,pieces:''});
   return out;
+}
+function normalizeSackCount(value){
+  const n=Number(value);
+  if(!Number.isFinite(n)) return 1;
+  return Math.max(0.5,Math.min(9.5,Math.round(n*2)/2));
 }
 
 function renderProduction(p){
   const existing=isDemo?db.productions.filter(x=>x.date===today()):liveState.productions.filter(x=>x.production_date===today());
   const recipe=isDemo?db.recipe:liveState.recipe;
-  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">Daily workflow</div><h1>Production</h1><p>Choose the batch size, enter actual pieces, then complete.</p></div></div><div class="grid grid-2"><div class="card"><h2>New production</h2><div class="field"><label>Mishok count (1–9)</label><div class="mishok-picker"><button type="button" class="mishok-choice active" data-mishok="1">1</button><button type="button" class="mishok-choice " data-mishok="2">2</button><button type="button" class="mishok-choice " data-mishok="3">3</button><button type="button" class="mishok-choice " data-mishok="4">4</button><button type="button" class="mishok-choice " data-mishok="5">5</button><button type="button" class="mishok-choice " data-mishok="6">6</button><button type="button" class="mishok-choice " data-mishok="7">7</button><button type="button" class="mishok-choice " data-mishok="8">8</button><button type="button" class="mishok-choice " data-mishok="9">9</button></div><input id="mishokCount" class="sr-only" type="number" min="1" max="9" step="1" value="1"></div><div id="batchEditor"></div><div style="height:10px"></div><h3>Material consumption</h3><div id="consumptionEditor"></div><div class="notice" style="margin:12px 0">Mishok count is 1–9 full mishoks. Each full mishok is one production batch; actual batch flour may be around 48–52 kg without changing the mishok count.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveProduction">Complete production</button><button class="btn secondary" id="clearProduction">Clear</button></div></div><div class="card"><h2>Today’s production</h2>${existing.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Mishok</th><th>Pieces</th><th>Recipe</th></tr></thead><tbody>${existing.map(r=>{const bs=isDemo?r.batches:r.production_batches||[]; return `<tr><td>${esc(isDemo?r.timeLabel:new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt(bs.reduce((s,z)=>s+Number(z.pieces||0),0))}</td><td>v${isDemo?r.recipeVersion:(liveState.recipe?.version||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No production saved today.</div>'}</div></div>`;
+  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">Daily workflow</div><h1>Production</h1><p>Select sacks, add a half-sack when needed, enter actual pieces, then complete.</p></div></div><div class="grid grid-2"><div class="card"><h2>New production</h2><div class="field"><label>Sack count</label><div class="mishok-picker"><button type="button" class="mishok-choice active" data-sack="1">1</button><button type="button" class="mishok-choice " data-sack="2">2</button><button type="button" class="mishok-choice " data-sack="3">3</button><button type="button" class="mishok-choice " data-sack="4">4</button><button type="button" class="mishok-choice " data-sack="5">5</button><button type="button" class="mishok-choice " data-sack="6">6</button><button type="button" class="mishok-choice " data-sack="7">7</button><button type="button" class="mishok-choice " data-sack="8">8</button><button type="button" class="mishok-choice " data-sack="9">9</button><button type="button" class="mishok-choice half-choice" data-half="0.5">＋ 0.5</button></div><div class="sack-total"><span>Total sacks</span><strong id="sackTotal">1</strong><button type="button" class="reset-sack" id="resetSack">Reset</button></div><input id="mishokCount" class="sr-only" type="number" min="0.5" max="9.5" step="0.5" value="1"></div><div id="batchEditor"></div><div style="height:10px"></div><h3>Material consumption</h3><div id="consumptionEditor"></div><div class="notice" style="margin:12px 0">A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveProduction">Complete production</button><button class="btn secondary" id="clearProduction">Clear</button></div></div><div class="card"><h2>Today’s production</h2>${existing.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Mishok</th><th>Pieces</th><th>Recipe</th></tr></thead><tbody>${existing.map(r=>{const bs=isDemo?r.batches:r.production_batches||[]; return `<tr><td>${esc(isDemo?r.timeLabel:new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt(bs.reduce((s,z)=>s+Number(z.pieces||0),0))}</td><td>v${isDemo?r.recipeVersion:(liveState.recipe?.version||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No production saved today.</div>'}</div></div>`;
   const editor=document.getElementById('batchEditor');
   const consumption=document.getElementById('consumptionEditor');
   const rebuild=()=>{
-    const m=Math.max(1,Math.min(9,Math.round(Number(document.getElementById('mishokCount').value||1)))); document.getElementById('mishokCount').value=m; const bs=batchesFor(m);
+    const m=normalizeSackCount(document.getElementById('mishokCount').value); document.getElementById('mishokCount').value=m; const bs=batchesFor(m); document.getElementById('sackTotal').textContent=m;
     editor.innerHTML=`<h3>Batches</h3>${bs.map((b,i)=>`<div class="batch-row"><div class="batch-index">#${i+1}</div><div class="batch-kind">${b.mishok===1?'1.0':'0.5'} mishok</div><input type="number" min="0" step="1" data-pieces="${i}" placeholder="Actual pieces"></div>`).join('')}`;
     consumption.innerHTML=(recipe?.items||[]).map(it=>{const expected=Number(it.qty||0)*m;return `<div class="field-row"><div class="field"><label>${esc(it.name)} expected (${esc(it.unit)})</label><input class="expected-consumption" data-code="${esc(it.code)}" value="${expected}" disabled></div><div class="field"><label>Actual (${esc(it.unit)})</label><input class="actual-consumption" data-code="${esc(it.code)}" type="number" min="0" step="0.001" value="${expected}"></div></div>`}).join('');
   };
   rebuild();
   document.getElementById('mishokCount').addEventListener('input',()=>{
-    document.querySelectorAll('.mishok-choice').forEach(x=>x.classList.toggle('active',Number(x.dataset.mishok)===Number(document.getElementById('mishokCount').value)));
+    document.getElementById('mishokCount').value=normalizeSackCount(document.getElementById('mishokCount').value);
     rebuild();
   });
   document.querySelectorAll('.mishok-choice').forEach(x=>x.addEventListener('click',()=>{
-    document.getElementById('mishokCount').value=x.dataset.mishok;
-    document.querySelectorAll('.mishok-choice').forEach(y=>y.classList.toggle('active',y===x));
+    const current=normalizeSackCount(document.getElementById('mishokCount').value);
+    document.getElementById('mishokCount').value=x.dataset.sack ? Number(x.dataset.sack) : (current%1===0 ? Math.min(9.5,current+0.5) : Math.floor(current));
     rebuild();
+    const total=Number(document.getElementById('mishokCount').value);
+    document.querySelectorAll('.mishok-choice').forEach(y=>y.classList.toggle('active',Number(y.dataset.sack)===Math.floor(total)));
+    document.querySelector('[data-half]')?.classList.toggle('active',total%1===0.5);
   }));
+  document.getElementById('resetSack').addEventListener('click',()=>{document.getElementById('mishokCount').value=1;rebuild();});
   document.getElementById('clearProduction').addEventListener('click',()=>{document.getElementById('mishokCount').value=1;rebuild();});
   document.getElementById('saveProduction').addEventListener('click',async()=>{
-    const count=Math.round(Number(document.getElementById('mishokCount').value||0)); if(!(count>=1&&count<=9)){alert('Mishok count must be between 1 and 9.');return;}
+    const count=normalizeSackCount(document.getElementById('mishokCount').value); if(!(count>=0.5&&count<=9.5)){alert('Sack count must be between 0.5 and 9.5.');return;}
     if(!recipe?.items?.length){alert('No active recipe found.');return;}
     const pieces=[...document.querySelectorAll('[data-pieces]')].map(x=>Number(x.value||0));
     if(pieces.some(x=>x<0)){alert('Piece counts cannot be negative.');return;}
