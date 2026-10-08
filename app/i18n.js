@@ -227,6 +227,20 @@ Object.assign(DICT.ky,{
   'Actual consumption cannot be negative':'Чыныгы керектөө терс боло албайт.'
 });
 
+
+Object.assign(DICT.ru,{
+  'Today’s Sacks':'Мешков сегодня',
+  'Today’s Pieces':'Штук сегодня',
+  'Production Runs':'Производства',
+  'Recipe Version':'Версия рецепта'
+});
+Object.assign(DICT.ky,{
+  'Today’s Sacks':'Бүгүнкү каптар',
+  'Today’s Pieces':'Бүгүнкү даана',
+  'Production Runs':'Өндүрүштөр',
+  'Recipe Version':'Рецепттин версиясы'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
