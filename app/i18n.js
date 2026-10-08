@@ -108,6 +108,71 @@ Object.assign(DICT.ky, {
 
 Object.assign(DICT.ru, {'Show password':'Показать пароль','Hide password':'Скрыть пароль','People':'Персонал'});
 Object.assign(DICT.ky, {'Show password':'Сырсөздү көрсөтүү','Hide password':'Сырсөздү жашыруу','People':'Кызматкерлер'});
+
+Object.assign(DICT.ru, {
+  'Bakery control':'Управление пекарней','Language':'Язык','Home':'Главная','More':'Ещё',
+  'Everything else':'Остальные разделы','Keep the daily workflow focused. Less-used tools live here.':'Основной рабочий процесс остаётся простым. Редко используемые инструменты находятся здесь.',
+  'Log out':'Выйти','Sign out from this device':'Выйти с этого устройства',
+  'Daily workflow':'Ежедневный процесс','Select sacks, add a half-sack when needed, enter actual pieces, then complete.':'Выберите мешки, при необходимости добавьте 0,5 мешка, введите фактическое количество штук и завершите.',
+  'New production':'Новое производство','Sack count':'Количество мешков','Total sacks':'Всего мешков','Material consumption':'Расход материалов',
+  'A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.':'Полный мешок = 1,0. Кнопка +0,5 добавляет половину мешка: 6 + 0,5 = 6,5. Максимум — 9,5 мешка.',
+  'Complete production':'Завершить производство','Clear':'Очистить','Today’s production':'Производство сегодня','Time':'Время',
+  'Sacks':'Мешков','Pieces':'Штук','Recipe':'Рецепт','No production saved today.':'Сегодня производство ещё не сохранено.',
+  'Batches':'Партии','1.0 sack':'1,0 мешок','0.5 sack':'0,5 мешка','Actual pieces':'Фактическое количество штук',
+  'expected':'ожидается','Expected':'Ожидается','Actual':'Фактически','Current standard':'Текущий стандарт',
+  'Working recipe per operational sack. Authorized production users can edit it.':'Рабочий рецепт на один операционный мешок. Уполномоченные производственные пользователи могут его изменять.',
+  'Save as new recipe version':'Сохранить как новую версию рецепта','Packaging rules':'Правила упаковки',
+  'Material':'Материал','Purchase package':'Упаковка закупки',
+  'Water is one material. Salt supports 1 kg and 750 g packets. Yeast supports 500 g packets and 20-packet boxes. Oil uses 20 kg cartons.':'Вода — ингредиент рецепта, но не складской материал. Соль: пачки 1 кг и 750 г. Дрожжи: пакеты 500 г и коробки по 20. Масло: коробки по 20 кг.',
+  'Inventory':'Склад','Current theoretical stock plus package-aware receiving.':'Текущий расчётный запас с учётом упаковок при приёмке.',
+  '+ Stock in':'+ Приход','Material details':'Детали материалов','Stock':'Остаток','Package options':'Варианты упаковки',
+  'Receive stock':'Принять товар','Package':'Упаковка','Number of packages':'Количество упаковок',
+  'Notes':'Примечание','Cancel':'Отмена','Add stock':'Добавить','Supplier / delivery note':'Поставщик / примечание к поставке',
+  'The system will convert package quantity into the inventory base unit.':'Система автоматически переведёт количество упаковок в базовую единицу склада.',
+  'Reports':'Отчёты','Operational summary from saved production.':'Операционный итог по сохранённому производству.',
+  'All-time sacks':'Мешки за всё время','All-time pieces':'Штуки за всё время','Pieces / sack':'Штук / мешок',
+  'Production history':'История производства','Date':'Дата','Worker':'Работник','No production yet.':'Производства ещё нет.',
+  'Users':'Пользователи','People':'Персонал','Four role model. User creation can be managed in Supabase Auth + profiles.':'Четыре роли. Пользователи управляются через Supabase Auth и профили.',
+  'User':'Пользователь','Role':'Роль','Access':'Доступ','Admin access only.':'Только для администратора.',
+  'Panel is reserved and protected.':'Панель зарезервирована и защищена.','Panel ready. We will add the exact process after you provide it.':'Панель готова. Мы добавим точный процесс после того, как вы предоставите точный рабочий процесс.',
+  'Save as new recipe version':'Сохранить как новую версию рецепта',
+  'Unable to load your profile.':'Не удалось загрузить ваш профиль.','Invalid login credentials':'Неверный логин или пароль.',
+  'Email is not confirmed':'Электронная почта не подтверждена.','Not authorized':'Нет прав для выполнения этого действия.',
+  'Insufficient stock':'Недостаточно товара на складе.','Recipe version is not active':'Версия рецепта не активна.',
+  'Something went wrong':'Что-то пошло не так.'
+});
+Object.assign(DICT.ky, {
+  'Bakery control':'Наабайкананы башкаруу','Language':'Тил','Home':'Башкы бет','More':'Дагы',
+  'Everything else':'Калган бөлүмдөр','Keep the daily workflow focused. Less-used tools live here.':'Негизги күнүмдүк иш жөнөкөй бойдон калат. Аз колдонулган куралдар ушул жерде.',
+  'Log out':'Чыгуу','Sign out from this device':'Бул түзмөктөн чыгуу',
+  'Daily workflow':'Күндөлүк иш процесси','Select sacks, add a half-sack when needed, enter actual pieces, then complete.':'Каптарды тандап, керек болсо 0,5 кап кошуп, чыныгы даананы киргизип бүтүрүңүз.',
+  'New production':'Жаңы өндүрүш','Sack count':'Каптын саны','Total sacks':'Жалпы кап','Material consumption':'Материал керектөөсү',
+  'A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.':'Толук кап = 1,0. +0,5 баскычы жарым кап кошот: 6 + 0,5 = 6,5. Максимум — 9,5 кап.',
+  'Complete production':'Өндүрүштү бүтүрүү','Clear':'Тазалоо','Today’s production':'Бүгүнкү өндүрүш','Time':'Убакыт',
+  'Sacks':'Кап','Pieces':'Даана','Recipe':'Рецепт','No production saved today.':'Бүгүн өндүрүш сакталган жок.',
+  'Batches':'Партиялар','1.0 sack':'1,0 кап','0.5 sack':'0,5 кап','Actual pieces':'Чыныгы даана',
+  'expected':'күтүлгөн','Expected':'Күтүлгөн','Actual':'Чыныгы','Current standard':'Учурдагы стандарт',
+  'Working recipe per operational sack. Authorized production users can edit it.':'Бир иштик кап үчүн жумушчу рецепт. Ыйгарым укуктуу кызматкер өзгөртө алат.',
+  'Save as new recipe version':'Жаңы рецепт версиясы катары сактоо','Packaging rules':'Таңгактоо эрежелери',
+  'Material':'Материал','Purchase package':'Сатып алуу таңгагы',
+  'Water is one material. Salt supports 1 kg and 750 g packets. Yeast supports 500 g packets and 20-packet boxes. Oil uses 20 kg cartons.':'Суу рецепттин ингредиенти, бирок кампа материалы эмес. Туз: 1 кг жана 750 г пакет. Ачыткы: 500 г пакет жана 20 пакеттик куту. Май: 20 кг куту.',
+  'Inventory':'Кампа','Current theoretical stock plus package-aware receiving.':'Учурдагы эсептик калдык жана таңгак боюнча кабыл алуу.',
+  '+ Stock in':'+ Кампага киргизүү','Material details':'Материалдардын маалыматы','Stock':'Калдык','Package options':'Таңгак варианттары',
+  'Receive stock':'Товар кабыл алуу','Package':'Таңгак','Number of packages':'Таңгак саны',
+  'Notes':'Эскертүү','Cancel':'Жокко чыгаруу','Add stock':'Кошуу','Supplier / delivery note':'Жеткирүүчү / жеткирүү эскертүүсү',
+  'The system will convert package quantity into the inventory base unit.':'Система таңгак санын автоматтык түрдө негизги өлчөмгө которот.',
+  'Reports':'Отчёттор','Operational summary from saved production.':'Сакталган өндүрүш боюнча оперативдүү жыйынтык.',
+  'All-time sacks':'Бардык каптар','All-time pieces':'Бардык даана','Pieces / sack':'Даана / кап',
+  'Production history':'Өндүрүш тарыхы','Date':'Дата','Worker':'Кызматкер','No production yet.':'Азырынча өндүрүш жок.',
+  'Users':'Колдонуучулар','People':'Кызматкерлер','Four role model. User creation can be managed in Supabase Auth + profiles.':'Төрт роль. Колдонуучулар Supabase Auth жана профилдер аркылуу башкарылат.',
+  'User':'Колдонуучу','Role':'Роль','Access':'Мүмкүнчүлүк','Admin access only.':'Администратор үчүн гана.',
+  'Panel is reserved and protected.':'Панель резервде жана корголгон.','Panel ready. We will add the exact process after you provide it.':'Панель даяр. Так процессти сиз бергенден кийин кошобуз.',
+  'Unable to load your profile.':'Профилди жүктөө мүмкүн болгон жок.','Invalid login credentials':'Логин же сырсөз туура эмес.',
+  'Email is not confirmed':'Электрондук почта ырасталган эмес.','Not authorized':'Бул аракетке уруксат жок.',
+  'Insufficient stock':'Кампада товар жетишсиз.','Recipe version is not active':'Рецепттин версиясы активдүү эмес.',
+  'Something went wrong':'Ката кетти.'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
