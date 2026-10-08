@@ -86,7 +86,16 @@ function saveDemo(){ if(isDemo) localStorage.setItem(KEY,JSON.stringify(db)); }
 const ICONS={flour:'🌾',water:'💧',oil:'🫒',yeast:'🧫',salt:'🧂',sugar:'🍚'};
 function materialIcon(code){return ICONS[code]||'📦';}
 function roleName(r){return ({admin:t('Admin',lang),hamurchi:t('Hamurchi',lang),naan:t('Naan / Leposhka Maker',lang),sales:t('Salesman',lang)})[r]||r;}
-function setLanguage(next){ lang=saveLang(currentUser?.id||'guest',next); if(currentUser) currentUser.lang=lang; if(isDemo && db?.session) { db.session.lang=lang; saveDemo(); } render(); if(!isDemo) { supabase.from('profiles').update({preferred_language:lang}).eq('id',currentUser.id).then(()=>{}); } }
+async function setLanguage(next){
+  lang=saveLang(currentUser?.id||'guest',next);
+  if(currentUser) currentUser.lang=lang;
+  if(isDemo && db?.session){ db.session.lang=lang; saveDemo(); }
+  await render();
+  if(!isDemo && currentUser){
+    const {error}=await supabase.rpc('set_preferred_language',{p_language:lang});
+    if(error) console.warn('Language preference could not be saved:',error);
+  }
+}
 function languageFlag(){ return lang==='ru'?'🇷🇺':lang==='ky'?'🇰🇬':'🇬🇧'; }
 function languageName(){ return LANGUAGES[lang]||'English'; }
 function languageSwitcher(){ return `<select id="languageSelect" class="language-select" aria-label="${t('Language',lang)}">${languageOptions(lang)}</select>`; }
