@@ -51,3 +51,14 @@ The hardening file is additive; do not delete existing production data.
 
 ## Demo mode
 Before Supabase is configured, the app runs in local demo mode. Demo data is stored only in that browser. Four role buttons are available so the interface can be tested without a backend.
+
+### Stock display
+Inventory is stored in exact base units, but the UI converts balances back into the configured physical package model. Examples include:
+- Flour: 325 kg → 6.5 sacks
+- Oil: 26.5 kg → 1 carton + 6.5 kg open
+- Salt: 43 kg → 2 bundles + 3 pcs
+- Sugar: 65 kg → 1 sack + 15 kg open
+- Yeast: 10.293 kg → 1 box + 293 g open
+Water remains recipe-only and is never shown as stock.
+
+The package definitions are updated by `db/hardening_2026_10_08.sql` for an existing database.
