@@ -288,10 +288,10 @@ function renderDashboard(p){
       "<div class='portal-hero-content'>"+
         "<div class='hero-topline'>"+
           "<div class='df-badge'>DF</div><div class='hero-brand'><b>DoughFlow</b><small>"+t('Bakery control',lang)+"</small></div><div class='hero-spacer'></div>"+
-          "<label class='hero-language'><span>${languageFlag()}</span><select id='heroLanguageSelect' aria-label="${t("Language",lang)}">${languageOptions(lang)}</select><b>⌄</b></label>"+
+          "<label class='hero-language'><span>"+languageFlag()+"</span><select id='heroLanguageSelect' aria-label=\""+t('Language',lang)+"\">"+languageOptions(lang)+"</select><b>⌄</b></label>"+
           "<div class='hero-user'><span class='hero-avatar'>"+esc(String(currentUser.name||'A')[0].toUpperCase())+"</span><span><b>"+esc(currentUser.name)+"</b><small>"+roleName(currentUser.role)+"</small></span></div>"+
         "</div>"+
-        "<div class='hero-copy'><div class='hero-date'>🇰🇬 "+today()+"</div><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+t('Let’s make great leposhka today!',lang)+"</p></div>"+
+        "<div class='hero-copy'><div class='hero-date'>🇰🇬 "+formatToday()+"</div><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+t('Let’s make great leposhka today!',lang)+"</p></div>"+
       "</div>"+
     "</section>"+
     "<section class='metric-grid'>"+
