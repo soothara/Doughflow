@@ -363,6 +363,7 @@ function renderDashboard(p){
   const stockRows=STOCK_MATERIALS.map(m=>({...m,stock:getStock(m.code)}));
   const recipe=isDemo?db.recipe:liveState.recipe;
   const firstName=esc(currentUser.name.split(' ')[0]);
+  const syncBanner=!isDemo&&liveState.syncError?"<div class='sync-banner' role='alert'>⚠️ <div><b>"+t('Data sync issue',lang)+"</b><small>"+t('Some data may be temporarily out of date.',lang)+"</small></div></div>":"";
   const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
   const stockCards=stockRows.map(m=>"<div class='stock-item'><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div><b>"+esc(t(m.name,lang))+"</b><strong class='"+(m.stock<=0?'empty-stock':'')+"'>"+fmt(m.stock)+" "+m.unit+" <em>!</em></strong></div><span>›</span></div>").join('');
   p.innerHTML =
@@ -377,6 +378,7 @@ function renderDashboard(p){
         "<div class='hero-copy'><div class='hero-date'>🇰🇬 "+formatToday()+"</div><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+t('Let’s make great leposhka today!',lang)+"</p></div>"+
       "</div>"+
     "</section>"+
+    syncBanner+
     "<section class='metric-grid'>"+
       "<div class='metric-card metric-green'><div class='metric-head'><span>🧺</span><b>"+t('Today’s',lang)+"<br>"+t('Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>▥</i></div>"+
       "<div class='metric-card metric-orange'><div class='metric-head'><span>🥯</span><b>"+t('Today’s',lang)+"<br>"+t('Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>◔</i></div>"+
