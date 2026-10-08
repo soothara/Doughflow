@@ -90,13 +90,14 @@ async function init(){
   if(!isDemo){
     const {data:{session}}=await supabase.auth.getSession();
     if(session) await loadUser(session.user);
-    supabase.auth.onAuthStateChange((_e,s)=>{
+    supabase.auth.onAuthStateChange((event,s)=>{
+      if(!['SIGNED_IN','SIGNED_OUT','USER_UPDATED'].includes(event)) return;
       setTimeout(async()=>{
         if(s){
           await loadUser(s.user);
           if(currentUser){ await refreshLiveState(); render(); }
           else render();
-        } else { currentUser=null; render(); }
+        } else { currentUser=null; authError=''; render(); }
       },0);
     });
   } else {
@@ -221,7 +222,7 @@ function wireLogin(){
     if(error) document.getElementById('loginError').textContent=error.message;
   });
 }
-async function logout(){ if(isDemo){db.session=null;currentUser=null;authError='';lang=getSavedLang('guest');saveDemo();render();return;} await supabase.auth.signOut(); }
+async function logout(){ if(isDemo){db.session=null;currentUser=null;authError='';lang=getSavedLang('guest');saveDemo();render();return;} await supabase.auth.signOut({scope:'local'}); }
 
 function appShellHTML(){
   const items=navItems(currentUser.role);
