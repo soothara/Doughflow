@@ -76,7 +76,7 @@ let db = isDemo ? seed() : null;
 let currentUser = null;
 let authError = '';
 let lang = getSavedLang('guest');
-let liveState = {recipe:null, productions:[], balances:[], users:[]};
+let liveState = {recipe:null, productions:[], balances:[], users:[], summaryToday:null, summaryAll:null, syncError:null};
 let route='dashboard';
 
 const app=document.getElementById('app');
@@ -151,29 +151,51 @@ async function loadUser(user){
 
 async function refreshLiveState(){
   if(isDemo) return;
-  const {data:rv}=await supabase.from('recipe_versions')
-    .select('id,version_number,note,created_at,recipe_items(id,material_code,qty_per_mishok,unit,note,sort_order)')
-    .eq('active',true).order('version_number',{ascending:false}).limit(1).maybeSingle();
-  liveState.recipe=rv?{
-    id:rv.id,version:rv.version_number,
-    items:(rv.recipe_items||[]).sort((a,b)=>a.sort_order-b.sort_order).map(x=>({
-      code:x.material_code,
-      name:MATERIALS.find(m=>m.code===x.material_code)?.name||x.material_code,
-      qty:Number(x.qty_per_mishok),unit:x.unit,note:x.note||''
-    }))
-  }:null;
-  const {data:runs}=await supabase.from('production_runs')
-    .select('id,production_date,created_by,mishok_count,recipe_version_id,created_at,production_batches(batch_no,mishok_fraction,pieces),production_materials(material_code,expected_qty,actual_qty,unit)')
-    .order('created_at',{ascending:false}).limit(200);
-  liveState.productions=runs||[];
-  const {data:balances}=await supabase.from('inventory_balances').select('*');
-  liveState.balances=balances||[];
-  if(currentUser?.role==='admin'){
-    const {data:users}=await supabase.from('profiles').select('id,full_name,role').order('full_name');
-    liveState.users=users||[];
+  try{
+    const usersQuery=currentUser?.role==='admin'
+      ? supabase.from('profiles').select('id,full_name,role').order('full_name')
+      : Promise.resolve({data:[],error:null});
+    const [recipeRes,runsRes,balancesRes,usersRes,todaySummaryRes,allSummaryRes]=await Promise.all([
+      supabase.from('recipe_versions')
+        .select('id,version_number,note,created_at,recipe_items(id,material_code,qty_per_mishok,unit,note,sort_order)')
+        .eq('active',true).order('version_number',{ascending:false}).limit(1).maybeSingle(),
+      supabase.from('production_runs')
+        .select('id,production_date,created_by,mishok_count,recipe_version_id,created_at,production_batches(batch_no,mishok_fraction,pieces),production_materials(material_code,expected_qty,actual_qty,unit)')
+        .order('created_at',{ascending:false}).limit(200),
+      supabase.from('inventory_balances').select('*'),
+      usersQuery,
+      supabase.rpc('production_summary',{p_from:today(),p_to:today()}),
+      supabase.rpc('production_summary',{p_from:null,p_to:null})
+    ]);
+
+    if(recipeRes.error) throw recipeRes.error;
+    if(runsRes.error) throw runsRes.error;
+    if(balancesRes.error) throw balancesRes.error;
+    if(usersRes.error) throw usersRes.error;
+
+    const rv=recipeRes.data;
+    liveState.recipe=rv?{
+      id:rv.id,version:rv.version_number,
+      items:(rv.recipe_items||[]).sort((a,b)=>a.sort_order-b.sort_order).map(x=>({
+        code:x.material_code,
+        name:MATERIALS.find(m=>m.code===x.material_code)?.name||x.material_code,
+        qty:Number(x.qty_per_mishok),unit:x.unit,note:x.note||''
+      }))
+    }:null;
+
+    liveState.productions=runsRes.data||[];
+    liveState.balances=balancesRes.data||[];
+    liveState.users=usersRes.data||[];
+
+    // Summary RPC is an enhancement; older databases can continue using the 200-row fallback
+    // until db/hardening_2026_10_08.sql has been run.
+    liveState.summaryToday=Array.isArray(todaySummaryRes.data)?(todaySummaryRes.data[0]||null):null;
+    liveState.summaryAll=Array.isArray(allSummaryRes.data)?(allSummaryRes.data[0]||null):null;
+    liveState.syncError=null;
+  }catch(error){
+    liveState.syncError=friendlyError(error);
   }
 }
-
 async function render(){
   document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard');
   if(!currentUser){ app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage(); document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value)); document.getElementById('loginError')?.setAttribute('data-auth-error','1'); if(authError) document.getElementById('loginError').textContent=authError; return; }
@@ -318,8 +340,10 @@ function renderMore(p){
 function renderDashboard(p){
   const prod=isDemo?db.productions:liveState.productions;
   const todayRuns=prod.filter(x=>(isDemo?x.date:x.production_date)===today());
-  const totalSacks=todayRuns.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
-  const totalPieces=todayRuns.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
+  const todaySummary=!isDemo?liveState.summaryToday:null;
+  const totalSacks=todaySummary?Number(todaySummary.total_sacks):todayRuns.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
+  const totalPieces=todaySummary?Number(todaySummary.total_pieces):todayRuns.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
+  const totalRuns=todaySummary?Number(todaySummary.run_count):todayRuns.length;
   const stockRows=STOCK_MATERIALS.map(m=>({...m,stock:getStock(m.code)}));
   const recipe=isDemo?db.recipe:liveState.recipe;
   const firstName=esc(currentUser.name.split(' ')[0]);
@@ -514,7 +538,11 @@ function openStockModal(){
 function closeModal(){modalRoot.innerHTML='';}
 
 function renderReports(p){
-  const runs=isDemo?db.productions:liveState.productions; const total=runs.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0); const pieces=runs.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0); const avg=total?pieces/total:0;
+  const runs=isDemo?db.productions:liveState.productions;
+  const summary=!isDemo?liveState.summaryAll:null;
+  const total=summary?Number(summary.total_sacks):runs.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
+  const pieces=summary?Number(summary.total_pieces):runs.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
+  const avg=total?pieces/total:0;
   p.innerHTML=`<div class="page-head"><div><h1>Reports</h1><p>Operational summary from saved production.</p></div></div><div class="grid grid-3"><div class="card"><div class="kpi-label">All-time sacks</div><div class="kpi">${fmt(total)}</div></div><div class="card"><div class="kpi-label">All-time pieces</div><div class="kpi">${fmt(pieces)}</div></div><div class="card"><div class="kpi-label">Pieces / sack</div><div class="kpi">${fmt(avg)}</div></div></div><div style="height:16px"></div><div class="card"><h2>Production history</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Pieces</th><th>Worker</th></tr></thead><tbody>${runs.length?runs.map(r=>`<tr><td>${esc(isDemo?r.date:r.production_date)}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt((isDemo?r.batches:r.production_batches||[]).reduce((a,b)=>a+Number(b.pieces||0),0))}</td><td>${esc(isDemo?r.createdBy:r.created_by===currentUser.id?currentUser.name:'User')}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No production yet.</td></tr>'}</tbody></table></div></div>`;
 }
 
