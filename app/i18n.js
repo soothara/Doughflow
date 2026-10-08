@@ -106,8 +106,8 @@ Object.assign(DICT.ky, {
   'Designed & built with care':'Көңүл коюу менен жасалды'
 });
 
-Object.assign(DICT.ru, {'Show password':'Показать пароль','Hide password':'Скрыть пароль'});
-Object.assign(DICT.ky, {'Show password':'Сырсөздү көрсөтүү','Hide password':'Сырсөздү жашыруу'});
+Object.assign(DICT.ru, {'Show password':'Показать пароль','Hide password':'Скрыть пароль','People':'Персонал'});
+Object.assign(DICT.ky, {'Show password':'Сырсөздү көрсөтүү','Hide password':'Сырсөздү жашыруу','People':'Кызматкерлер'});
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
