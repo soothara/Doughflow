@@ -53,6 +53,45 @@ Object.assign(DICT.ky, {
   'Kyrgyz bakery workflow':'Кыргыз наабайканасынын иш процесси','Bishkek':'Бишкек'
 });
 
+
+Object.assign(DICT.ru, {
+  'Daily workflow':'Ежедневный процесс',
+  'Select sacks, add a half-sack when needed, enter actual pieces, then complete.':'Выберите мешки, при необходимости добавьте 0,5 мешка, введите фактическое количество штук и завершите.',
+  'New production':'Новое производство','Today’s production':'Производство сегодня','Batches':'Партии',
+  'Material consumption':'Расход материалов','Actual pieces':'Фактическое количество штук',
+  'Expected consumption':'Ожидаемый расход','Actual':'Фактически','Expected':'Ожидается',
+  'Complete production':'Завершить производство','Clear':'Очистить','No production saved today.':'Сегодня производство ещё не сохранено.',
+  'Current theoretical stock plus package-aware receiving.':'Текущий расчётный запас с учётом упаковок при приёмке.',
+  'Stock & inventory':'Склад и запасы','See balances and stock movements':'Остатки и движения запасов',
+  'Review production and usage':'Производство и расход','Manage staff and roles':'Управление персоналом и ролями',
+  'Open the naan workflow':'Открыть процесс наана / лепёшки','Open the sales workspace':'Открыть рабочее место продаж',
+  'Edit the working recipe':'Изменить рабочий рецепт','Sign out from this device':'Выйти с этого устройства',
+  'Everything else':'Остальные разделы','Keep the daily workflow focused. Less-used tools live here.':'Основной рабочий процесс остаётся простым. Редко используемые инструменты находятся здесь.',
+  'Admin access only.':'Только для администратора.','Panel reserved':'Панель зарезервирована',
+  'This panel is reserved for the exact workflow you will provide next.':'Этот раздел зарезервирован для точного рабочего процесса, который вы предоставите позже.',
+  'Open the sales workspace':'Открыть рабочее место продаж','Open the naan workflow':'Открыть процесс наана / лепёшки',
+  'No active recipe found. Run the database seed SQL first.':'Активный рецепт не найден. Сначала выполните SQL-инициализацию базы данных.',
+  'Recipe saved as':'Рецепт сохранён как','Production saved.':'Производство сохранено.'
+});
+Object.assign(DICT.ky, {
+  'Daily workflow':'Күндөлүк иш процесси',
+  'Select sacks, add a half-sack when needed, enter actual pieces, then complete.':'Каптарды тандап, керек болсо 0,5 кап кошуп, чыныгы даананы киргизип бүтүрүңүз.',
+  'New production':'Жаңы өндүрүш','Today’s production':'Бүгүнкү өндүрүш','Batches':'Партиялар',
+  'Material consumption':'Материал керектөөсү','Actual pieces':'Чыныгы даана',
+  'Expected consumption':'Күтүлгөн керектөө','Actual':'Чыныгы','Expected':'Күтүлгөн',
+  'Complete production':'Өндүрүштү бүтүрүү','Clear':'Тазалоо','No production saved today.':'Бүгүн өндүрүш сакталган жок.',
+  'Current theoretical stock plus package-aware receiving.':'Учурдагы эсептик калдык жана таңгак боюнча кабыл алуу.',
+  'Stock & inventory':'Кампа жана запастар','See balances and stock movements':'Калдык жана кыймылдар',
+  'Review production and usage':'Өндүрүш жана керектөө','Manage staff and roles':'Кызматкерлерди жана ролдорду башкаруу',
+  'Open the naan workflow':'Нан / лепёшка процессин ачуу','Open the sales workspace':'Сатуу жумуш ордун ачуу',
+  'Edit the working recipe':'Жумушчу рецептти өзгөртүү','Sign out from this device':'Бул түзмөктөн чыгуу',
+  'Everything else':'Калган бөлүмдөр','Keep the daily workflow focused. Less-used tools live here.':'Күндөлүк негизги иш жөнөкөй бойдон калат. Аз колдонулган куралдар ушул жерде.',
+  'Admin access only.':'Администратор үчүн гана.','Panel reserved':'Панель резервде',
+  'This panel is reserved for the exact workflow you will provide next.':'Бул бөлүм кийин сиз берген так иш процесси үчүн резервде турат.',
+  'No active recipe found. Run the database seed SQL first.':'Активдүү рецепт табылган жок. Адегенде SQL аркылуу баштапкы маалыматты түзүңүз.',
+  'Recipe saved as':'Рецепт сакталды:','Production saved.':'Өндүрүш сакталды.'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
