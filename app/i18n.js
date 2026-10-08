@@ -259,7 +259,7 @@ export function applyTranslations(root=document, lang='en'){
   const nodes=[]; let n; while((n=walker.nextNode())) nodes.push(n);
   nodes.forEach(node=>{
     const parent=node.parentElement;
-    if(parent && ['SCRIPT','STYLE'].includes(parent.tagName)) return;
+    if(parent && (['SCRIPT','STYLE'].includes(parent.tagName) || parent.closest('.no-translate'))) return;
     const translated=replaceText(node.nodeValue,lang); if(translated!==node.nodeValue) node.nodeValue=translated;
   });
   root.querySelectorAll?.('[placeholder],[title],[aria-label]').forEach(el=>{
