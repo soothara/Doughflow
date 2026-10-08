@@ -170,7 +170,16 @@ create policy production_materials_write on public.production_materials for all 
 drop policy if exists inventory_read on public.inventory_transactions;
 create policy inventory_read on public.inventory_transactions for select using (public.is_admin() or created_by=auth.uid());
 drop policy if exists inventory_admin_insert on public.inventory_transactions;
-create policy inventory_admin_insert on public.inventory_transactions for insert with check (public.is_admin());
+drop policy if exists inventory_admin_insert on public.inventory_transactions;
+create policy inventory_admin_insert on public.inventory_transactions
+for insert
+with check (
+  public.is_admin()
+  and exists(
+    select 1 from public.materials m
+    where m.code=material_code and m.active and m.inventory_tracked
+  )
+);
 
 -- Atomic production completion. Consumption is always recipe_qty_per_mishok × mishok_count.
 create or replace function public.complete_production(
