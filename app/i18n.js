@@ -106,10 +106,20 @@ Object.assign(DICT.ky, {
   'Designed & built with care':'Көңүл коюу менен жасалды'
 });
 
+Object.assign(DICT.ru, {'Show password':'Показать пароль','Hide password':'Скрыть пароль'});
+Object.assign(DICT.ky, {'Show password':'Сырсөздү көрсөтүү','Hide password':'Сырсөздү жашыруу'});
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
-export function languageOptions(selected){ return Object.entries(LANGUAGES).map(([code,label])=>`<option value="${code}" ${code===selected?'selected':''}>${label}</option>`).join(''); }
+export function languageOptions(selected){
+  const l=normalizeLang(selected);
+  const labels={
+    en:{en:'English',ru:'Русский',ky:'Кыргызча'},
+    ru:{en:'Английский',ru:'Русский',ky:'Кыргызский'},
+    ky:{en:'Англисче',ru:'Орусча',ky:'Кыргызча'}
+  }[l]||LANGUAGES;
+  return Object.keys(LANGUAGES).map(code=>`<option value="${code}" ${code===l?'selected':''}>${labels[code]}</option>`).join('');
+}
 export function t(value, lang='en'){ const l=normalizeLang(lang); return DICT[l][value] || value; }
 
 function replaceText(text, lang){
