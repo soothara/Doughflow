@@ -571,7 +571,10 @@ async function renderUsers(p){
   p.innerHTML=`<div class="page-head"><div><h1>Users</h1><p>Four role model. User creation can be managed in Supabase Auth + profiles.</p></div></div><div class="card"><div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Access</th></tr></thead><tbody>${users.map(u=>`<tr><td>${esc(isDemo?u.name:u.full_name)}</td><td><span class="status neutral">${roleName(u.role)}</span></td><td>${u.role==='admin'?'Full':'Role-limited'}</td></tr>`).join('')}</tbody></table></div></div>`;
 }
 
-function placeholderPanel(title,text){const p=document.getElementById('page');p.innerHTML=`<div class="page-head"><div><h1>${esc(title)}</h1><p>Panel is reserved and protected.</p></div></div><div class="card"><div class="notice">${esc(text)}</div></div>`;}
+function placeholderPanel(title,text){
+  const p=document.getElementById('page');
+  p.innerHTML=`<div class="page-head"><div><h1>${esc(t(title,lang))}</h1><p>${t('Panel is reserved and protected.',lang)}</p></div></div><div class="card"><div class="notice">${esc(t(text,lang))}</div></div>`;
+}
 
 async function activeRecipeId(){ const {data}=await supabase.from('recipe_versions').select('id').eq('active',true).limit(1).single(); return data?.id; }
 
