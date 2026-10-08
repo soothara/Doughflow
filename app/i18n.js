@@ -173,6 +173,18 @@ Object.assign(DICT.ky, {
   'Something went wrong':'Ката кетти.','Every batch needs a positive whole-number piece count.':'Ар бир партия үчүн оң бүтүн даана санын көрсөтүңүз.','Data sync issue':'Маалыматтарды синхрондоштуруу көйгөйү','Some data may be temporarily out of date.':'Айрым маалыматтар убактылуу эски болушу мүмкүн.'
 });
 
+
+Object.assign(DICT.ru,{
+  'Naan / Leposhka':'Наан / Лепёшка',
+  'WhatsApp Ali':'WhatsApp Али',
+  'This panel is reserved for the exact sales workflow you will provide next.':'Этот раздел зарезервирован для точного процесса продаж, который вы предоставите позже.'
+});
+Object.assign(DICT.ky,{
+  'Naan / Leposhka':'Нан / Лепёшка',
+  'WhatsApp Ali':'WhatsApp Али',
+  'This panel is reserved for the exact sales workflow you will provide next.':'Бул бөлүм сиз кийин берген так сатуу процесси үчүн резервде турат.'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
