@@ -102,7 +102,7 @@ async function logout(){ if(isDemo){db.session=null;currentUser=null;lang=getSav
 
 function appShellHTML(){
   const items=navItems(currentUser.role);
-  const initials=String(currentUser.name||'U').trim().split(/\\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  const initials=String(currentUser.name||'U').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
   return `
     <div class="topbar">
       <div class="brand">
