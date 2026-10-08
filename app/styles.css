@@ -906,3 +906,6 @@ body{min-height:100dvh}
 @media(prefers-reduced-motion:reduce){
   .toast{transition:none}
 }
+
+.stock-open{width:100%;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.stock-open:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(42,43,47,.07);border-color:#d8e1ec}
