@@ -31,6 +31,18 @@ const today=()=>{const d=new Date();const pad=n=>String(n).padStart(2,'0');retur
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:3});
 const money=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+function formatSackUnit(value,language=lang){
+  const n=Number(value);
+  if(language==='ru'){
+    if(Math.abs(n%1)>0.001) return 'мешка';
+    const i=Math.round(n);
+    if(i%10===1 && i%100!==11) return 'мешок';
+    if(i%10>=2 && i%10<=4 && (i%100<10 || i%100>=20)) return 'мешка';
+    return 'мешков';
+  }
+  if(language==='ky') return 'кап';
+  return Math.abs(n-1)<0.001 ? 'sack' : 'sacks';
+}
 function friendlyError(error){
   const raw=String(error?.message||error||'').trim();
   const lower=raw.toLowerCase();
@@ -430,14 +442,25 @@ function renderProduction(p){
   document.getElementById('saveProduction').addEventListener('click',async()=>{
     const count=normalizeSackCount(document.getElementById('sackCount').value); if(!(count>=0.5&&count<=9.5)){alert(t('Sack count must be between 0.5 and 9.5.',lang));return;}
     if(!recipe?.items?.length){alert(t('No active recipe found.',lang));return;}
-    const pieces=[...document.querySelectorAll('[data-pieces]')].map(x=>Number(x.value||0));
-    if(pieces.some(x=>x<0)){alert(t('Piece counts cannot be negative.',lang));return;}
+    const pieceInputs=[...document.querySelectorAll('[data-pieces]')];
+    if(pieceInputs.some(x=>x.value.trim()==='' || !Number.isInteger(Number(x.value)) || Number(x.value)<1)){
+      alert(t('Every batch needs a positive whole-number piece count.',lang));return;
+    }
+    const pieces=pieceInputs.map(x=>Number(x.value));
     const consumptionItems=[...document.querySelectorAll('.actual-consumption')].map(el=>({code:el.dataset.code,actual:el.value}));
     if(consumptionItems.some(x=>!Number.isFinite(Number(x.actual))||Number(x.actual)<0)){alert(t('Consumption values must be valid non-negative numbers.',lang));return;}
     if(isDemo){
-      const batches=batchesFor(count).map((b,i)=>({...b,pieces:pieces[i]||0}));
+      const actualByCode=new Map(consumptionItems.map(x=>[x.code,Number(x.actual)]));
+      for(const item of db.recipe.items.filter(item=>item.code!=='water')){
+        const required=actualByCode.get(item.code);
+        if(Number.isFinite(required) && required>getStock(item.code)){
+          alert(t('Insufficient stock',lang)+': '+t(item.name,lang));
+          return;
+        }
+      }
+      const batches=batchesFor(count).map((b,i)=>({...b,pieces:pieces[i]}));
       const now=new Date(); const run={id:uid(),date:today(),timeLabel:now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),createdBy:currentUser.name,mishokCount:count,batches,recipeVersion:db.recipe.version,consumption:consumptionItems.map(x=>({code:x.code,actual:Number(x.actual)}))};
-      db.productions.push(run); applyProductionConsumption(count,run.id,run.consumption); saveDemo(); alert(`${t('Saved',lang)} ${count} ${t('Sack',lang)}.`); render();
+      db.productions.push(run); applyProductionConsumption(count,run.id,run.consumption); saveDemo(); alert(t('Saved',lang)+' '+count+' '+formatSackUnit(count,lang)+'.'); render();
     } else {
       const batchPayload=batchesFor(count).map((b,i)=>({batch_no:i+1,mishok_fraction:b.sack,pieces:pieces[i]||0}));
       const payload=consumptionItems.filter(x=>x.code!=='water').map(x=>({material_code:x.code,actual_qty:Number(x.actual)}));
