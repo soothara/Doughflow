@@ -2,7 +2,7 @@
 
 ## Free stack
 - Cloudflare Pages: static PWA hosting. Static asset requests are free and unlimited on the current free Pages plan. See the Cloudflare Pages pricing docs.
-- Supabase Free: Postgres + Auth + API. Current free quota includes 500 MB database, 50,000 monthly active users, 5 GB egress and 1 GB storage.
+- Supabase: Postgres + Auth + API. Check Supabase's current plan limits before production deployment.
 
 ## 1. Create Supabase project
 Create a project at https://supabase.com/.
@@ -29,7 +29,7 @@ Use the browser-safe publishable key. NEVER use the service-role key in `config.
 ## 5. Deploy to Cloudflare Pages
 You can deploy the `app/` directory as static assets using Cloudflare Pages Direct Upload or Git integration.
 
-For Git integration, put the `app/` contents at the repository root. No build command is required.
+For Git integration, deploy the `app/` directory with no build command. The frontend pins `@supabase/supabase-js` to `2.117.3` for reproducible browser behavior.
 
 ## 6. WhatsApp
 Post the resulting Cloudflare Pages URL in the existing WhatsApp group. On Android, open it and use Chrome → Add to Home screen. The PWA then opens like an app.
