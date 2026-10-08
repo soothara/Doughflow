@@ -16,6 +16,43 @@ const DICT = {
   }
 };
 
+
+Object.assign(DICT.ru, {
+  'Language':'Язык','Username':'Имя пользователя','Welcome back':'С возвращением',
+  'Kyrgyz bakery portal':'Портал кыргызской пекарни',
+  'Sign in to manage production, recipes and stock.':'Войдите для управления производством, рецептами и складом.',
+  'Let’s make great leposhka today!':'Давайте сегодня испечём отличные лепёшки!',
+  'Today’s':'Сегодня','Sacks':'Мешков','Sack':'Мешок','Pieces':'Штук','Runs':'Производств','Version':'Версия',
+  'New Production':'Новое производство','Select total sacks (you can add 0.5)':'Выберите общее количество мешков (можно добавить 0,5)',
+  'Sack Count':'Количество мешков','Recipe':'Рецепт','per 1 sack':'на 1 мешок',
+  'Automatically calculated':'Рассчитывается автоматически','Start Production':'Начать производство',
+  'Calculate ingredients and enter pieces':'Рассчитать ингредиенты и ввести количество штук',
+  'Stock Overview':'Обзор склада','Current available stock in inventory':'Текущие запасы на складе',
+  'View All':'Посмотреть всё','Designed & built with care':'Создано с заботой',
+  'Reset':'Сбросить','Total':'Итого','English':'Английский','Russian':'Русский','Kyrgyz':'Кыргызский',
+  'Sack count must be between 0.5 and 9.5.':'Количество мешков должно быть от 0,5 до 9,5.',
+  'A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.':'Полный мешок = 1,0. Кнопка +0,5 добавляет половину мешка: 6 + 0,5 = 6,5. Максимум — 9,5 мешка.',
+  'Kyrgyz bakery workflow':'Рабочий процесс кыргызской пекарни',
+  'Bishkek':'Бишкек'
+});
+Object.assign(DICT.ky, {
+  'Language':'Тил','Username':'Колдонуучу аты','Welcome back':'Кайра келиңиз',
+  'Kyrgyz bakery portal':'Кыргыз наабайканасынын порталы',
+  'Sign in to manage production, recipes and stock.':'Өндүрүштү, рецепттерди жана кампаңызды башкаруу үчүн кириңиз.',
+  'Let’s make great leposhka today!':'Бүгүн даамдуу лепёшка жасайлы!',
+  'Today’s':'Бүгүнкү','Sacks':'Кап','Sack':'Кап','Pieces':'Даана','Runs':'Өндүрүштөр','Version':'Версиясы',
+  'New Production':'Жаңы өндүрүш','Select total sacks (you can add 0.5)':'Жалпы кап санын тандаңыз (0,5 кошсо болот)',
+  'Sack Count':'Каптын саны','Recipe':'Рецепт','per 1 sack':'1 капка',
+  'Automatically calculated':'Автоматтык эсептелет','Start Production':'Өндүрүштү баштоо',
+  'Calculate ingredients and enter pieces':'Ингредиенттерди эсептеп, даананы киргизиңиз',
+  'Stock Overview':'Кампанын абалы','Current available stock in inventory':'Камдагы жеткиликтүү калдык',
+  'View All':'Баарын көрүү','Designed & built with care':'Көңүл коюу менен жасалды',
+  'Reset':'Калыбына келтирүү','Total':'Жалпы','English':'Англисче','Russian':'Орусча','Kyrgyz':'Кыргызча',
+  'Sack count must be between 0.5 and 9.5.':'Каптын саны 0,5тен 9,5ке чейин болушу керек.',
+  'A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.':'Толук кап = 1,0. +0,5 баскычы жарым кап кошот: 6 + 0,5 = 6,5. Максимум — 9,5 кап.',
+  'Kyrgyz bakery workflow':'Кыргыз наабайканасынын иш процесси','Bishkek':'Бишкек'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
