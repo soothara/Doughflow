@@ -880,3 +880,7 @@ body{min-height:100dvh}
   box-shadow:0 5px 15px rgba(110,75,0,.06);
 }
 .sync-banner b{display:block;font-size:12px}.sync-banner small{display:block;margin-top:2px;font-size:11px;color:#8b6a2b}
+
+.nav-icon svg{width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav button.active .nav-icon svg{stroke-width:2.1}
+@media(max-width:1000px){.nav-icon svg{width:21px;height:21px}}
