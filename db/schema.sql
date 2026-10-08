@@ -367,6 +367,42 @@ begin
             where (x->>'mishok_fraction')::numeric not in (0.5,1)) then
     raise exception 'Each batch must be 1.0 or 0.5 sack';
   end if;
+  if exists(
+    select 1
+    from generate_series(1, v_batch_count) g(n)
+    where not exists(
+      select 1
+      from jsonb_array_elements(coalesce(p_batches,'[]'::jsonb)) x
+      where (x->>'batch_no')::integer=g.n
+    )
+  ) then
+    raise exception 'Batch numbers must be sequential starting at 1';
+  end if;
+
+  if exists(
+    select 1
+    from (
+      select x->>'material_code' as code
+      from jsonb_array_elements(coalesce(p_consumption,'[]'::jsonb)) x
+    ) q
+    group by code
+    having count(*)>1
+  ) then
+    raise exception 'Consumption contains duplicate materials';
+  end if;
+
+  if exists(
+    select 1
+    from jsonb_array_elements(coalesce(p_consumption,'[]'::jsonb)) x
+    where not exists(
+      select 1
+      from public.recipe_items ri
+      where ri.recipe_version_id=p_recipe_version_id
+        and ri.material_code=x->>'material_code'
+    )
+  ) then
+    raise exception 'Consumption contains an unknown material';
+  end if;
 
   insert into public.production_runs(production_date,created_by,mishok_count,recipe_version_id,status)
   values(p_production_date,auth.uid(),p_mishok_count,p_recipe_version_id,'completed')
