@@ -80,6 +80,62 @@ function navItems(role){
   base.push(['more','•••','More']);
   return base;
 }
+async function init(){
+  if(!isDemo){
+    const {data:{session}}=await supabase.auth.getSession();
+    if(session) await loadUser(session.user);
+    supabase.auth.onAuthStateChange(async (_e,s)=>{
+      if(s){ await loadUser(s.user); await refreshLiveState(); render(); }
+      else { currentUser=null; render(); }
+    });
+  } else {
+    currentUser=db.session.user ? {...db.session.user,role:db.session.role,lang:db.session.lang||getSavedLang(db.session.user.id)} : null;
+    lang=currentUser?.lang||lang;
+  }
+  if(!isDemo && currentUser) await refreshLiveState();
+  render();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+async function loadUser(user){
+  const {data,error}=await supabase.from('profiles')
+    .select('id,full_name,role,preferred_language')
+    .eq('id',user.id).single();
+  if(error){
+    currentUser={id:user.id,name:user.email||'User',role:'hamurchi',lang:getSavedLang(user.id)};
+    lang=currentUser.lang;
+  }else{
+    currentUser={id:user.id,name:data.full_name||user.email||'User',role:data.role,lang:data.preferred_language||getSavedLang(user.id)};
+    lang=currentUser.lang;
+    saveLang(user.id,lang);
+  }
+}
+
+async function refreshLiveState(){
+  if(isDemo) return;
+  const {data:rv}=await supabase.from('recipe_versions')
+    .select('id,version_number,note,created_at,recipe_items(id,material_code,qty_per_mishok,unit,note,sort_order)')
+    .eq('active',true).order('version_number',{ascending:false}).limit(1).maybeSingle();
+  liveState.recipe=rv?{
+    id:rv.id,version:rv.version_number,
+    items:(rv.recipe_items||[]).sort((a,b)=>a.sort_order-b.sort_order).map(x=>({
+      code:x.material_code,
+      name:MATERIALS.find(m=>m.code===x.material_code)?.name||x.material_code,
+      qty:Number(x.qty_per_mishok),unit:x.unit,note:x.note||''
+    }))
+  }:null;
+  const {data:runs}=await supabase.from('production_runs')
+    .select('id,production_date,created_by,mishok_count,recipe_version_id,created_at,production_batches(batch_no,mishok_fraction,pieces),production_materials(material_code,expected_qty,actual_qty,unit)')
+    .order('created_at',{ascending:false}).limit(200);
+  liveState.productions=runs||[];
+  const {data:balances}=await supabase.from('inventory_balances').select('*');
+  liveState.balances=balances||[];
+  if(currentUser?.role==='admin'){
+    const {data:users}=await supabase.from('profiles').select('id,full_name,role').order('full_name');
+    liveState.users=users||[];
+  }
+}
+
 function render(){
   if(!currentUser){ app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage(); document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value)); return; }
   if(!can(currentUser.role,route)) route='dashboard';
