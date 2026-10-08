@@ -51,6 +51,7 @@ function seed(){
 }
 let db = isDemo ? seed() : null;
 let currentUser = null;
+let authError = '';
 let lang = getSavedLang('guest');
 let liveState = {recipe:null, productions:[], balances:[], users:[]};
 let route='dashboard';
@@ -89,9 +90,14 @@ async function init(){
   if(!isDemo){
     const {data:{session}}=await supabase.auth.getSession();
     if(session) await loadUser(session.user);
-    supabase.auth.onAuthStateChange(async (_e,s)=>{
-      if(s){ await loadUser(s.user); await refreshLiveState(); render(); }
-      else { currentUser=null; render(); }
+    supabase.auth.onAuthStateChange((_e,s)=>{
+      setTimeout(async()=>{
+        if(s){
+          await loadUser(s.user);
+          if(currentUser){ await refreshLiveState(); render(); }
+          else render();
+        } else { currentUser=null; render(); }
+      },0);
     });
   } else {
     currentUser=db.session.user ? {...db.session.user,role:db.session.role,lang:db.session.lang||getSavedLang(db.session.user.id)} : null;
@@ -106,10 +112,13 @@ async function loadUser(user){
   const {data,error}=await supabase.from('profiles')
     .select('id,full_name,role,preferred_language')
     .eq('id',user.id).single();
-  if(error){
-    currentUser={id:user.id,name:user.email||'User',role:'hamurchi',lang:getSavedLang(user.id)};
-    lang=currentUser.lang;
+  if(error || !data){
+    currentUser=null;
+    authError=error?.message||'Unable to load your profile.';
+    return;
   }else{
+    authError='';
+
     currentUser={id:user.id,name:data.full_name||user.email||'User',role:data.role,lang:data.preferred_language||getSavedLang(user.id)};
     lang=currentUser.lang;
     saveLang(user.id,lang);
@@ -143,7 +152,7 @@ async function refreshLiveState(){
 
 function render(){
   document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard');
-  if(!currentUser){ app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage(); document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value)); return; }
+  if(!currentUser){ app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage(); document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value)); document.getElementById('loginError')?.setAttribute('data-auth-error','1'); if(authError) document.getElementById('loginError').textContent=authError; return; }
   if(!can(currentUser.role,route)) route='dashboard';
   app.innerHTML=appShellHTML();
   document.querySelectorAll('[data-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.route;render();}));
@@ -190,7 +199,7 @@ function wireLogin(){
     document.querySelectorAll('.demo-login').forEach(b=>b.addEventListener('click',()=>{
       db.session={user:{id:`demo-${b.dataset.role}`,name:roleName(b.dataset.role)},role:b.dataset.role,lang:getSavedLang(`demo-${b.dataset.role}`)};
       currentUser={id:db.session.user.id,name:db.session.user.name,role:b.dataset.role,lang:db.session.lang};
-      lang=currentUser.lang;route='dashboard';saveDemo();render();
+      lang=currentUser.lang;authError='';route='dashboard';saveDemo();render();
     }));
     return;
   }
@@ -203,7 +212,7 @@ function wireLogin(){
     if(error) document.getElementById('loginError').textContent=error.message;
   });
 }
-async function logout(){ if(isDemo){db.session=null;currentUser=null;lang=getSavedLang('guest');saveDemo();render();return;} await supabase.auth.signOut(); }
+async function logout(){ if(isDemo){db.session=null;currentUser=null;authError='';lang=getSavedLang('guest');saveDemo();render();return;} await supabase.auth.signOut(); }
 
 function appShellHTML(){
   const items=navItems(currentUser.role);
