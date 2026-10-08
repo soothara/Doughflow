@@ -425,7 +425,7 @@ function loginHTML(){
     <div class="login-photo"></div><div class="login-shade"></div>
     <div class="login-shell">
       <div class="login-brand-row">
-        <div class="login-logo">DF</div>
+        <div class="login-logo">"+leposhkaIcon(42)+"</div>
         <div><strong>DoughFlow</strong><small>Bakery control</small></div>
         <div class="login-lang">${languageFlag()} ${languageSwitcher()}</div>
       </div>
@@ -486,7 +486,7 @@ function appShellHTML(){
   return `
     <div class="topbar">
       <div class="brand">
-        <div class="brand-mark">DF</div>
+        <div class="brand-mark">"+leposhkaIcon(30)+"</div>
         <div class="brand-copy"><strong>DoughFlow</strong><span>Bakery control</span></div>
       </div>
       <div class="top-actions">
