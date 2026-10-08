@@ -7,12 +7,12 @@ const isDemo = !(CFG.supabaseUrl && CFG.supabaseAnonKey);
 const supabase = isDemo ? null : createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
 
 const MATERIALS = [
-  {code:'flour', name:'Flour', unit:'kg', decimals:2, packages:[{label:'Bulk',qty:1}]},
-  {code:'water', name:'Water', unit:'kg', decimals:2, packages:[{label:'Bulk',qty:1}], inventoryTracked:false},
-  {code:'oil', name:'Oil', unit:'kg', decimals:2, packages:[{label:'20 kg carton',qty:20}]},
-  {code:'salt', name:'Salt', unit:'kg', decimals:3, packages:[{label:'1 kg packet',qty:1},{label:'750 g packet',qty:.75},{label:'20 × 1 kg bundle',qty:20}]},
-  {code:'sugar', name:'Sugar', unit:'kg', decimals:2, packages:[{label:'Bulk',qty:1}]},
-  {code:'yeast', name:'Yeast', unit:'kg', decimals:3, packages:[{label:'500 g packet',qty:.5},{label:'20 × 500 g box',qty:10}]}
+  {code:'flour', name:'Flour', unit:'kg', decimals:2, packages:[{label:'50 kg sack',qty:50,kind:'sack'}]},
+  {code:'water', name:'Water', unit:'kg', decimals:2, packages:[{label:'Recipe only',qty:1,kind:'recipe'}], inventoryTracked:false},
+  {code:'oil', name:'Oil', unit:'kg', decimals:2, packages:[{label:'20 kg carton',qty:20,kind:'carton'}]},
+  {code:'salt', name:'Salt', unit:'kg', decimals:3, packages:[{label:'20 × 1 kg bundle',qty:20,kind:'bundle'},{label:'1 kg packet',qty:1,kind:'piece'},{label:'750 g packet',qty:.75,kind:'piece'}]},
+  {code:'sugar', name:'Sugar', unit:'kg', decimals:2, packages:[{label:'50 kg sack',qty:50,kind:'sack'}]},
+  {code:'yeast', name:'Yeast', unit:'kg', decimals:3, packages:[{label:'20 × 500 g box',qty:10,kind:'box'},{label:'500 g packet',qty:.5,kind:'piece'}]}
 ];
 const STOCK_MATERIALS=MATERIALS.filter(m=>m.inventoryTracked!==false);
 
@@ -31,6 +31,53 @@ const today=()=>{const d=new Date();const pad=n=>String(n).padStart(2,'0');retur
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:3});
 const money=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+function formatBaseRemainder(kg,material,language=lang){
+  const n=Math.max(0,Number(kg)||0);
+  if(n<0.001) return '';
+  if(material.unit==='kg' && n<1) return fmt(n*1000)+' g';
+  return fmt(n)+' '+material.unit;
+}
+function stockBreakdown(material,stock,language=lang){
+  const qty=Math.max(0,Number(stock)||0);
+  const eps=0.000001;
+  let remaining=qty;
+  const parts=[];
+  const packages=[...(material.packages||[])].filter(p=>p.kind!=='recipe'&&Number(p.qty)>0).sort((a,b)=>Number(b.qty)-Number(a.qty));
+  for(const p of packages){
+    if(remaining+eps<Number(p.qty)) continue;
+    const count=Math.floor((remaining+eps)/Number(p.qty));
+    if(count<=0) continue;
+    remaining=Math.max(0,remaining-count*Number(p.qty));
+    const kind=p.kind||'piece';
+    const baseLabel=kind==='sack' ? (language==='ru'?'мешок':language==='ky'?'кап':'sack')
+      : kind==='carton' ? (language==='ru'?'коробка':language==='ky'?'куту':'carton')
+      : kind==='bundle' ? (language==='ru'?'связка':language==='ky'?'боо':'bundle')
+      : kind==='box' ? (language==='ru'?'коробка':language==='ky'?'куту':'box')
+      : (language==='ru'?'шт.':language==='ky'?'даана':'pc');
+    const plural=(language==='en' && count!==1)?'s':'';
+    parts.push({count,kind,text:String(count)+' '+baseLabel+plural});
+  }
+  if(packages[0]?.kind==='sack' && remaining>eps){
+    const pkg=Number(packages[0].qty);
+    const half=pkg/2;
+    if(Math.abs(remaining-half)<eps){
+      const whole=Math.floor(qty/pkg);
+      const label=language==='ru'?'мешка':language==='ky'?'кап':'sacks';
+      parts.length=0;
+      parts.push({count:whole+0.5,kind:'sack',text:String(whole+0.5)+' '+label});
+      remaining=0;
+    }
+  }
+  if(remaining>eps){
+    const remLabel=formatBaseRemainder(remaining,material,language);
+    const open=language==='ru'?'открытая':language==='ky'?'ачылган':'open';
+    parts.push({count:null,kind:'remainder',text:remLabel+' '+open});
+  }
+  if(!parts.length){
+    return {primary:'0',secondary:formatBaseRemainder(qty,material,language)||('0 '+material.unit),parts:[]};
+  }
+  return {primary:parts.map(p=>p.text).join(' + '),secondary:fmt(qty)+' '+material.unit,parts};
+}
 function formatSackUnit(value,language=lang){
   const n=Number(value);
   if(language==='ru'){
