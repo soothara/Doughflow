@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="DoughFlow leposhka">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#163b5d"/>
+      <stop offset="1" stop-color="#071a2b"/>
+    </linearGradient>
+    <radialGradient id="bread" cx="35%" cy="26%">
+      <stop offset="0" stop-color="#ffe8a6"/>
+      <stop offset=".52" stop-color="#efae4a"/>
+      <stop offset="1" stop-color="#a85518"/>
+    </radialGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="200%">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#000" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="31" fill="url(#bg)"/>
+  <circle cx="64" cy="65" r="43" fill="rgba(255,255,255,.07)"/>
+  <g filter="url(#shadow)">
+    <ellipse cx="64" cy="74" rx="44" ry="29" fill="rgba(0,0,0,.18)"/>
+    <ellipse cx="64" cy="62" rx="43" ry="31" fill="url(#bread)" stroke="#8d4514" stroke-width="2"/>
+    <ellipse cx="64" cy="61" rx="31" ry="20" fill="none" stroke="#b86a20" stroke-width="4" opacity=".78"/>
+    <path d="M49 48c5 8 5 19 0 27M79 48c-5 8-5 19 0 27M39 61c8 2 15 2 23 0M89 61c-8 2-15 2-23 0" fill="none" stroke="#8f4a19" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+    <g fill="#fff3bd">
+      <ellipse cx="47" cy="50" rx="3" ry="1.7" transform="rotate(-20 47 50)"/>
+      <ellipse cx="61" cy="44" rx="3" ry="1.7" transform="rotate(15 61 44)"/>
+      <ellipse cx="76" cy="49" rx="3" ry="1.7" transform="rotate(-12 76 49)"/>
+      <ellipse cx="86" cy="58" rx="3" ry="1.7" transform="rotate(22 86 58)"/>
+      <ellipse cx="48" cy="69" rx="3" ry="1.7" transform="rotate(20 48 69)"/>
+      <ellipse cx="64" cy="75" rx="3" ry="1.7" transform="rotate(-15 64 75)"/>
+      <ellipse cx="79" cy="69" rx="3" ry="1.7" transform="rotate(-22 79 69)"/>
+    </g>
+  </g>
+  <circle cx="100" cy="28" r="16" fill="#fff"/>
+  <text x="100" y="34" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="900" fill="#17304b">DF</text>
+</svg>
