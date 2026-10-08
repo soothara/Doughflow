@@ -569,3 +569,10 @@ $$;
 
 revoke all on function public.set_preferred_language(text) from public;
 grant execute on function public.set_preferred_language(text) to authenticated;
+
+do $$
+begin
+  alter table public.materials add constraint materials_water_not_tracked_chk
+    check (code<>'water' or inventory_tracked=false) not valid;
+exception when duplicate_object then null;
+end $$;
