@@ -62,27 +62,57 @@ function inventoryCountLabel(kind,count,language=lang){
   if(kind==='bundle') return n===1?'bundle':'bundles';
   return 'pc';
 }
-function stockBreakdown(material,stock,language=lang){
-  const qty=Math.max(0,Number(stock)||0);
-  const eps=0.000001; let remaining=qty; const parts=[];
-  const packages=[...(material.packages||[])].filter(p=>p.kind!=='recipe'&&Number(p.qty)>0).sort((a,b)=>Number(b.qty)-Number(a.qty));
-  for(const p of packages){
-    if(remaining+eps<Number(p.qty)) continue;
-    const count=Math.floor((remaining+eps)/Number(p.qty)); if(count<=0) continue;
-    remaining=Math.max(0,remaining-count*Number(p.qty));
-    parts.push({count,kind:p.kind||'piece',text:formatInventoryNumber(count,language)+' '+inventoryCountLabel(p.kind||'piece',count,language)});
+function packageCombination(remainder,packages,language=lang){
+  const usable=packages.filter(p=>Number(p.qty)>0);
+  if(!usable.length) return {items:[],used:0};
+  const unit=usable.some(p=>Number(p.qty)%0.001!==0)?0.001:0.001;
+  const max=Math.max(0,Math.floor(remainder*1000+0.0001));
+  const step=1;
+  const dp=Array(max+1).fill(null); dp[0]={used:0,totalCount:0,counts:Array(usable.length).fill(0)};
+  for(let g=0;g<=max;g++){
+    if(!dp[g]) continue;
+    usable.forEach((p,i)=>{
+      const w=Math.max(1,Math.round(Number(p.qty)*1000));
+      const ng=g+w; if(ng>max) return;
+      const next={used:dp[g].used+Number(p.qty),totalCount:dp[g].totalCount+1,counts:dp[g].counts.slice()};
+      next.counts[i]++;
+      if(!dp[ng] || next.totalCount<dp[ng].totalCount) dp[ng]=next;
+    });
   }
-  if(packages[0]?.kind==='sack' && remaining>eps){
-    const pkg=Number(packages[0].qty), half=pkg/2;
-    if(Math.abs(remaining-half)<eps){
-      const whole=Math.floor(qty/pkg); const count=whole+0.5;
-      parts.length=0; parts.push({count,kind:'sack',text:formatInventoryNumber(count,language)+' '+inventoryCountLabel('sack',count,language)}); remaining=0;
+  let best=null;
+  for(let g=max;g>=0;g--){if(dp[g]){best=dp[g];break;}}
+  if(!best || best.used<0.000001) return {items:[],used:0};
+  const items=[];
+  usable.forEach((p,i)=>{if(best.counts[i]) items.push({count:best.counts[i],kind:p.kind||'piece',text:formatInventoryNumber(best.counts[i],language)+' '+inventoryCountLabel(p.kind||'piece',best.counts[i],language)});});
+  return {items,used:best.used};
+}
+function stockBreakdown(material,stock,language=lang){
+  const qty=Math.max(0,Number(stock)||0); const eps=0.000001; let remaining=qty; const parts=[];
+  const packages=[...(material.packages||[])].filter(p=>p.kind!=='recipe'&&Number(p.qty)>0).sort((a,b)=>Number(b.qty)-Number(a.qty));
+  const largest=packages[0];
+  if(largest){
+    const size=Number(largest.qty); const count=Math.floor((remaining+eps)/size);
+    if(count>0){
+      parts.push({count,kind:largest.kind||'piece',text:formatInventoryNumber(count,language)+' '+inventoryCountLabel(largest.kind||'piece',count,language)});
+      remaining=Math.max(0,remaining-count*size);
+    }
+  }
+  if(largest?.kind==='sack' && remaining>eps){
+    const size=Number(largest.qty);
+    if(Math.abs(remaining-size/2)<eps){
+      const last=parts.pop(); const count=(last?.count||0)+0.5;
+      parts.push({count,kind:'sack',text:formatInventoryNumber(count,language)+' '+inventoryCountLabel('sack',count,language)}); remaining=0;
     }
   }
   if(remaining>eps){
+    const smaller=packages.slice(1);
+    const combo=packageCombination(remaining,smaller,language);
+    if(combo.items.length){parts.push(...combo.items); remaining=Math.max(0,remaining-combo.used);}
+  }
+  if(remaining>eps){
     const remLabel=formatBaseRemainder(remaining,material,language);
-    const open=language==='ru'?'открытый остаток':language==='ky'?'ачылган калдык':'open remainder';
-    parts.push({count:null,kind:'remainder',text:remLabel+' · '+open});
+    const open=language==='ru'?'остаток':language==='ky'?'калдык':'open';
+    if(remLabel) parts.push({count:null,kind:'remainder',text:remLabel+' '+open});
   }
   return {primary:parts.length?parts.map(p=>p.text).join(' + '):'0',secondary:formatInventoryNumber(qty,language)+' '+material.unit,parts};
 }
