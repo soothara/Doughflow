@@ -533,7 +533,8 @@ function renderDashboard(p){
   const stockCards=stockRows.map(m=>{
     const tag=currentUser.role==='admin'?'button':'div';
     const attrs=currentUser.role==='admin'?" type='button' data-stock-open='inventory'":'';
-    return "<"+tag+" class='stock-item"+(currentUser.role==='admin'?' stock-open':'')+"'"+attrs+"><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div><b>"+esc(t(m.name,lang))+"</b><strong class='"+(m.stock<=0?'empty-stock':'')+"'>"+fmt(m.stock)+" "+m.unit+" <em>!</em></strong></div><span>›</span></"+tag+">";
+    const view=stockBreakdown(m,m.stock,lang);
+    return "<"+tag+" class='stock-item"+(currentUser.role==='admin'?' stock-open':'')+"'"+attrs+"><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div class='stock-item-copy'><b>"+esc(t(m.name,lang))+"</b><strong class='"+(m.stock<=0?'empty-stock':'')+"'>"+esc(view.primary)+(m.stock<=0?" <em>!</em>":"")+"</strong><small>"+esc(view.secondary)+"</small></div><span>›</span></"+tag+">";
   }).join('');
   p.innerHTML =
     "<section class='portal-hero'>"+
@@ -555,9 +556,9 @@ function renderDashboard(p){
       "<div class='metric-card metric-blue'><div class='metric-head'><span>▦</span><b>"+t('Recipe Version',lang)+"</b></div><strong>v"+(db?.recipe?.version||liveState.recipe?.version||1)+"</strong><i>⟳</i></div>"+
     "</section>"+
     "<section class='portal-panel production-panel'>"+
-      "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker coral'>🍞</div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
+      "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker coral'>"+leposhkaIcon(34)+"</div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
       "<div class='portal-panel-inner'>"+
-        "<div class='portal-section-title'><div class='section-icon green'>🧺</div><div><h3>"+t('Sack Count',lang)+"</h3><span>ⓘ 1–9 "+t('Sacks',lang)+" + 0.5</span></div></div>"+
+        "<div class='portal-section-title'><div class='section-icon green'>"+leposhkaIcon(30)+"</div><div><h3>"+t('Sack Count',lang)+"</h3><span>ⓘ 1–9 "+t('Sacks',lang)+" + 0.5</span></div></div>"+
         "<div class='dashboard-sack-grid'>"+Array.from({length:9},(_,i)=>"<button class='dashboard-sack-btn' data-dashboard-sack='"+(i+1)+"'>"+(i+1)+"</button>").join('')+"</div>"+
         "<div class='dashboard-sack-row'><button class='dashboard-half-btn' id='dashboardHalf'>＋ <b>0.5</b></button><div class='dashboard-total'><small>"+t('Total',lang)+"</small><strong id='dashboardTotal'>0</strong></div><button class='dashboard-reset' id='dashboardReset'>↻ <span>"+t('Reset',lang)+"</span></button></div>"+
         "<div class='portal-section-title recipe-title'><div class='section-icon mint'>▦</div><div><h3>"+t('Recipe',lang)+" <small>("+t('per 1 sack',lang)+")</small></h3><span>"+t('Automatically calculated',lang)+" ⚙</span></div></div>"+
@@ -566,7 +567,7 @@ function renderDashboard(p){
       "</div>"+
     "</section>"+
     "<section class='portal-panel stock-panel'>"+
-      "<div class='portal-section-title stock-title'><div class='section-icon brown'>📦</div><div><h3>"+t('Stock Overview',lang)+"</h3><span>"+t('Current available stock in inventory',lang)+"</span></div>"+
+      "<div class='portal-section-title stock-title'><div class='section-icon brown'>"+materialIcon('flour')+"</div><div><h3>"+t('Stock Overview',lang)+"</h3><span>"+t('Current available stock in inventory',lang)+"</span></div>"+
       (currentUser.role==='admin'?"<button class='stock-view-all' id='openInventory'>"+t('View All',lang)+" »</button>":"")+
       "</div><div class='stock-grid'>"+stockCards+"</div>"+
     "</section>"+
