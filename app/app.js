@@ -183,7 +183,7 @@ function loginHTML(){
         `:`
           <form id="loginForm" class="modern-login-form">
             <div class="field"><label>${t('Username',lang)}</label><input required type="text" name="login" value="askat" placeholder="askat" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
-            <div class="field"><label>${t('Password',lang)}</label><input required type="password" name="password" autocomplete="current-password"></div>
+            <div class="field password-field"><label>${t('Password',lang)}</label><div class="password-wrap"><input required id="loginPassword" type="password" name="password" autocomplete="current-password"><button type="button" class="password-toggle" id="togglePassword" aria-label="${t('Show password',lang)}">◉</button></div></div>
             <button class="login-submit" type="submit"><span>↪</span>${t('Sign in',lang)}<b>›</b></button>
             <div id="loginError" class="login-error"></div>
           </form>
@@ -195,6 +195,15 @@ function loginHTML(){
   </div>`;
 }
 function wireLogin(){
+  document.getElementById('togglePassword')?.addEventListener('click',()=>{
+    const input=document.getElementById('loginPassword');
+    const button=document.getElementById('togglePassword');
+    if(!input||!button) return;
+    const show=input.type==='password';
+    input.type=show?'text':'password';
+    button.textContent=show?'◉':'○';
+    button.setAttribute('aria-label',t(show?'Hide password':'Show password',lang));
+  });
   if(isDemo){
     document.querySelectorAll('.demo-login').forEach(b=>b.addEventListener('click',()=>{
       db.session={user:{id:`demo-${b.dataset.role}`,name:roleName(b.dataset.role)},role:b.dataset.role,lang:getSavedLang(`demo-${b.dataset.role}`)};
