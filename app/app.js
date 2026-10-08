@@ -441,7 +441,11 @@ function renderDashboard(p){
   const firstName=esc(currentUser.name.split(' ')[0]);
   const syncBanner=!isDemo&&liveState.syncError?"<div class='sync-banner' role='alert'>⚠️ <div><b>"+t('Data sync issue',lang)+"</b><small>"+t('Some data may be temporarily out of date.',lang)+"</small></div></div>":"";
   const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
-  const stockCards=stockRows.map(m=>"<div class='stock-item'><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div><b>"+esc(t(m.name,lang))+"</b><strong class='"+(m.stock<=0?'empty-stock':'')+"'>"+fmt(m.stock)+" "+m.unit+" <em>!</em></strong></div><span>›</span></div>").join('');
+  const stockCards=stockRows.map(m=>{
+    const tag=currentUser.role==='admin'?'button':'div';
+    const attrs=currentUser.role==='admin'?" type='button' data-stock-open='inventory'":'';
+    return "<"+tag+" class='stock-item"+(currentUser.role==='admin'?' stock-open':'')+"'"+attrs+"><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div><b>"+esc(t(m.name,lang))+"</b><strong class='"+(m.stock<=0?'empty-stock':'')+"'>"+fmt(m.stock)+" "+m.unit+" <em>!</em></strong></div><span>›</span></"+tag+">";
+  }).join('');
   p.innerHTML =
     "<section class='portal-hero'>"+
       "<div class='portal-hero-photo'></div><div class='portal-hero-shade'></div>"+
@@ -503,6 +507,7 @@ function renderDashboard(p){
     },0);
   };
   document.getElementById('dashboardStart')?.addEventListener('click',openProduction);
+  document.querySelectorAll('[data-stock-open]').forEach(b=>b.addEventListener('click',()=>{route='inventory';render();}));
   document.getElementById('openInventory')?.addEventListener('click',()=>{route='inventory';render();});
 }
 function roleDashboard(p){
