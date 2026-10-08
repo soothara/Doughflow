@@ -24,7 +24,7 @@ Copy `app/config.example.js` to `app/config.js` and set:
 - `supabaseUrl`
 - `supabaseAnonKey`
 
-Use the browser-safe anon/publishable key. NEVER use the service-role key in `config.js`.
+Use the browser-safe publishable key. NEVER use the service-role key in `config.js`. Supabase documents publishable keys as safe for frontend use when RLS and least-privilege grants are correctly configured.
 
 ## 5. Deploy to Cloudflare Pages
 You can deploy the `app/` directory as static assets using Cloudflare Pages Direct Upload or Git integration.
@@ -33,6 +33,21 @@ For Git integration, put the `app/` contents at the repository root. No build co
 
 ## 6. WhatsApp
 Post the resulting Cloudflare Pages URL in the existing WhatsApp group. On Android, open it and use Chrome → Add to Home screen. The PWA then opens like an app.
+
+## 7. Production hardening (existing installations)
+
+After the original `db/schema.sql` has already been run, run **`db/hardening_2026_10_08.sql` once** in Supabase SQL Editor.
+
+This patch:
+- treats water as a recipe ingredient, not a stocked inventory item
+- limits production to 0.5–9.5 sacks in 0.5 increments
+- verifies that submitted batches exactly match the selected sack count
+- prevents production from consuming more tracked stock than exists
+- makes recipe versions immutable through the browser
+- removes direct client-side production writes and routes them through atomic database functions
+- locks down unauthenticated table access and function execution
+
+The hardening file is additive; do not delete existing production data.
 
 ## Demo mode
 Before Supabase is configured, the app runs in local demo mode. Demo data is stored only in that browser. Four role buttons are available so the interface can be tested without a backend.
