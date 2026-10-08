@@ -383,7 +383,7 @@ function appShellHTML(){
         <div class="brand-copy"><strong>DoughFlow</strong><span>Bakery control</span></div>
       </div>
       <div class="top-actions">
-        <div class="user-chip"><span class="avatar">${esc(initials)}</span><span class="user-meta"><b>${esc(currentUser.name)}</b><small>${roleName(currentUser.role)}</small></span></div>
+        <div class="user-chip"><span class="avatar">${esc(initials)}</span><span class="user-meta"><b class="no-translate">${esc(currentUser.name)}</b><small>${roleName(currentUser.role)}</small></span></div>
         ${languageSwitcher()}
       </div>
     </div>
