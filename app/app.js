@@ -86,6 +86,15 @@ const modalRoot=document.getElementById('modalRoot');
 function saveDemo(){ if(isDemo) localStorage.setItem(KEY,JSON.stringify(db)); }
 const ICONS={flour:'🌾',water:'💧',oil:'🫒',yeast:'🧫',salt:'🧂',sugar:'🍚'};
 function materialIcon(code){return ICONS[code]||'📦';}
+const NAV_ICONS={
+  home:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3l8.5 7.5"/><path d="M5.5 9.5v10h13v-10"/><path d="M9 19.5v-6h6v6"/></svg>',
+  production:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16M6.5 4v3.5M17.5 4v3.5"/><rect x="4" y="7.5" width="16" height="12.5" rx="2"/><path d="M8 12h8M8 15.5h5"/></svg>',
+  stock:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="M4 7v10l8 4 8-4V7M12 11v10"/></svg>',
+  recipe:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5A2.5 2.5 0 0 1 8.5 2H20v18H8.5A2.5 2.5 0 0 0 6 22V4.5Z"/><path d="M6 4.5A2.5 2.5 0 0 0 3.5 2H4v18h4.5A2.5 2.5 0 0 1 11 22"/></svg>',
+  naan:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14c1.8-5.5 7.2-8.6 12.6-7.8 1.8.3 3.2 1.1 3.9 2.3-1.3 4.6-5 8-9.3 8.4-3.1.3-5.7-.9-7.2-2.9Z"/><path d="M9 10.5h.01M14 12.5h.01M12 15h.01"/></svg>',
+  sales:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5h16M6 17V10M10 17V6M14 17v-3M18 17V4"/><path d="m15.5 5 2.5-1 1 2.5"/></svg>',
+  more:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>'
+};
 function roleName(r){return ({admin:t('Admin',lang),hamurchi:t('Hamurchi',lang),naan:t('Naan / Leposhka Maker',lang),sales:t('Salesman',lang)})[r]||r;}
 async function setLanguage(next){
   lang=saveLang(currentUser?.id||'guest',next);
@@ -110,13 +119,13 @@ function can(role, section){
   return false;
 }
 function navItems(role){
-  const base=[['dashboard','⌂','Home']];
-  if(role==='admin'||role==='hamurchi') base.push(['production','🥣','Production']);
-  if(role==='admin') base.push(['inventory','📦','Stock']);
-  if(role==='admin'||role==='hamurchi') base.push(['recipe','🧪','Recipe']);
-  if(role==='naan') base.push(['naan','🫓','Naan']);
-  if(role==='sales') base.push(['sales','💰','Sales']);
-  base.push(['more','•••','More']);
+  const base=[['dashboard',NAV_ICONS.home,'Home']];
+  if(role==='admin'||role==='hamurchi') base.push(['production',NAV_ICONS.production,'Production']);
+  if(role==='admin') base.push(['inventory',NAV_ICONS.stock,'Stock']);
+  if(role==='admin'||role==='hamurchi') base.push(['recipe',NAV_ICONS.recipe,'Recipe']);
+  if(role==='naan') base.push(['naan',NAV_ICONS.naan,'Naan']);
+  if(role==='sales') base.push(['sales',NAV_ICONS.sales,'Sales']);
+  base.push(['more',NAV_ICONS.more,'More']);
   return base;
 }
 async function init(){
