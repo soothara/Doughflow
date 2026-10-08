@@ -159,9 +159,6 @@ main{padding:28px 24px 110px;min-width:0}
 }
 .field input:focus,.field select:focus{border-color:rgba(0,122,255,.55);box-shadow:0 0 0 4px rgba(0,122,255,.10)}
 .field-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.mishok-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.mishok-choice{height:48px;border:1px solid var(--line);background:#f7f7f9;color:#3d4047;border-radius:14px;font-weight:850}
-.mishok-choice.active{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 7px 15px rgba(0,122,255,.18)}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 
 .seg{display:flex;gap:7px;background:#ececf1;border-radius:14px;padding:4px}.seg button{border:0;background:transparent;border-radius:10px;padding:8px 12px}.seg button.active{background:#fff;color:var(--brand);font-weight:800;box-shadow:0 2px 7px rgba(0,0,0,.08)}
@@ -225,8 +222,6 @@ table{width:100%;border-collapse:collapse}.table-wrap{overflow:auto;border-radiu
   .grid-4,.grid-3,.grid-2{grid-template-columns:1fr}
   .field-row{grid-template-columns:1fr}
   .more-grid{grid-template-columns:1fr}
-  .mishok-picker{gap:6px}
-  .mishok-choice{height:46px}
   .card{padding:17px;border-radius:20px}
   .section-head{margin-top:3px}
   .stock-row{min-height:54px}
@@ -447,15 +442,6 @@ button:active{transform:scale(.965)}
 .sack-total strong{transition:transform .22s cubic-bezier(.22,1,.36,1)}
 .sack-total.bump strong{animation:totalBump .28s cubic-bezier(.22,1,.36,1)}
 @keyframes totalBump{50%{transform:scale(1.14)}}
-.mishok-choice{
-  position:relative;overflow:hidden;
-}
-.mishok-choice:after{
-  content:'';position:absolute;inset:0;opacity:0;
-  background:linear-gradient(120deg,transparent,rgba(255,255,255,.38),transparent);
-  transform:translateX(-100%);
-}
-.mishok-choice.active:after{animation:shine .7s ease}
 @keyframes shine{to{transform:translateX(100%);opacity:.75}}
 .nav button.active .nav-icon{animation:navPop .35s cubic-bezier(.22,1,.36,1)}
 @keyframes navPop{50%{transform:scale(1.18)}}
@@ -476,7 +462,6 @@ button:active{transform:scale(.965)}
 }
 @media(prefers-reduced-motion:reduce){
   #page,.stat-card,.card,.quick-strip,.more-card{animation:none}
-  .nav button.active .nav-icon,.mishok-choice.active:after{animation:none}
 }
 
 
