@@ -872,3 +872,11 @@ body{min-height:100dvh}
 }
 .photo-attribution a{color:inherit;text-decoration:none}
 .photo-attribution a:hover{text-decoration:underline;color:#667181}
+
+.sync-banner{
+  display:flex;align-items:center;gap:10px;
+  margin:0 0 12px;padding:11px 14px;border-radius:16px;
+  background:#fff6df;border:1px solid #f3ddb2;color:#6e4b00;
+  box-shadow:0 5px 15px rgba(110,75,0,.06);
+}
+.sync-banner b{display:block;font-size:12px}.sync-banner small{display:block;margin-top:2px;font-size:11px;color:#8b6a2b}
