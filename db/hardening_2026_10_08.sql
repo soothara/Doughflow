@@ -339,3 +339,36 @@ revoke all on public.profiles,
 from anon;
 
 commit;
+
+
+create or replace function public.production_summary(
+  p_from date default null,
+  p_to date default null
+) returns table(
+  total_sacks numeric,
+  total_pieces bigint,
+  run_count bigint
+)
+language sql
+security definer
+set search_path=public
+as $$
+  select
+    coalesce(sum(r.mishok_count),0)::numeric as total_sacks,
+    coalesce(sum(coalesce(b.pieces,0)),0)::bigint as total_pieces,
+    count(*)::bigint as run_count
+  from public.production_runs r
+  left join lateral (
+    select sum(pb.pieces)::bigint as pieces
+    from public.production_batches pb
+    where pb.production_run_id=r.id
+  ) b on true
+  where
+    (public.is_admin() or r.created_by=auth.uid())
+    and (p_from is null or r.production_date>=p_from)
+    and (p_to is null or r.production_date<=p_to)
+    and r.status='completed';
+$$;
+
+revoke all on function public.production_summary(date,date) from public;
+grant execute on function public.production_summary(date,date) to authenticated;
