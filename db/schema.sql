@@ -245,12 +245,12 @@ $$;
 
 -- Seed materials.
 insert into public.materials(code,name,base_unit,decimals,package_options) values
-('flour','Flour','kg',2,'[{"label":"Bulk","qty":1}]'),
-('water','Water','kg',2,'[{"label":"Bulk","qty":1}]'),
-('oil','Oil','kg',2,'[{"label":"20 kg carton","qty":20}]'),
-('salt','Salt','kg',3,'[{"label":"1 kg packet","qty":1},{"label":"750 g packet","qty":0.75},{"label":"20 × 1 kg bundle","qty":20}]'),
-('sugar','Sugar','kg',2,'[{"label":"Bulk","qty":1}]'),
-('yeast','Yeast','kg',3,'[{"label":"500 g packet","qty":0.5},{"label":"20 × 500 g box","qty":10}]')
+('flour','Flour','kg',2,'[{"label":"50 kg sack","qty":50,"kind":"sack"}]'),
+('water','Water','kg',2,'[{"label":"Recipe only","qty":1,"kind":"recipe"}]'),
+('oil','Oil','kg',2,'[{"label":"20 kg carton","qty":20,"kind":"carton"}]'),
+('salt','Salt','kg',3,'[{"label":"20 × 1 kg bundle","qty":20,"kind":"bundle"},{"label":"1 kg packet","qty":1,"kind":"piece"},{"label":"750 g packet","qty":0.75,"kind":"piece"}]'),
+('sugar','Sugar','kg',2,'[{"label":"50 kg sack","qty":50,"kind":"sack"}]'),
+('yeast','Yeast','kg',3,'[{"label":"20 × 500 g box","qty":10,"kind":"box"},{"label":"500 g packet","qty":0.5,"kind":"piece"}]')
 on conflict (code) do update set package_options=excluded.package_options, name=excluded.name;
 
 -- Seed first recipe version once.
