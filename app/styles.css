@@ -849,3 +849,17 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{
   .hero-language select{max-width:72px;font-size:11px}
   .hero-language>span{font-size:14px}
 }
+
+/* iPhone safe-area and rendering refinements */
+html{background:#f5f2ed;overscroll-behavior-y:none}
+body{min-height:100dvh}
+.login-portal{min-height:100dvh}
+.sidebar{padding-bottom:max(18px,env(safe-area-inset-bottom))}
+@media(max-width:1000px){
+  .sidebar{
+    bottom:max(10px,env(safe-area-inset-bottom));
+    padding-bottom:max(7px,env(safe-area-inset-bottom));
+  }
+}
+.portal-hero-photo{will-change:transform}
+.panel-photo{will-change:transform}
