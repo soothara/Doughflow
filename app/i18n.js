@@ -92,6 +92,10 @@ Object.assign(DICT.ky, {
   'Recipe saved as':'Рецепт сакталды:','Production saved.':'Өндүрүш сакталды.'
 });
 
+
+Object.assign(DICT.ru, {'sack':'мешок','sacks':'мешков','Sack count':'Количество мешков','sack count':'количество мешков'});
+Object.assign(DICT.ky, {'sack':'кап','sacks':'кап','Sack count':'Каптын саны','sack count':'каптын саны'});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
