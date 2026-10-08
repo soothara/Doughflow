@@ -31,52 +31,65 @@ const today=()=>{const d=new Date();const pad=n=>String(n).padStart(2,'0');retur
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:3});
 const money=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-function formatBaseRemainder(kg,material,language=lang){
-  const n=Math.max(0,Number(kg)||0);
-  if(n<0.001) return '';
-  if(material.unit==='kg' && n<1) return fmt(n*1000)+' g';
-  return fmt(n)+' '+material.unit;
+function formatInventoryNumber(value,language=lang){
+  const locale=language==='ru'?'ru-RU':language==='ky'?'ky-KG':'en-US';
+  return Number(value||0).toLocaleString(locale,{maximumFractionDigits:3});
+}
+function packageUnit(material,pkg,language=lang){
+  const kind=pkg.kind||'piece';
+  const q=Number(pkg.qty);
+  if(kind==='sack') return language==='ru'?`${formatInventoryNumber(q,language)} кг мешок`:language==='ky'?`${formatInventoryNumber(q,language)} кг кап`:`${formatInventoryNumber(q,language)} kg sack`;
+  if(kind==='carton') return language==='ru'?`${formatInventoryNumber(q,language)} кг коробка`:language==='ky'?`${formatInventoryNumber(q,language)} кг куту`:`${formatInventoryNumber(q,language)} kg carton`;
+  if(kind==='bundle') return language==='ru'?`${formatInventoryNumber(q,language)} кг связка`:language==='ky'?`${formatInventoryNumber(q,language)} кг боо`:`${formatInventoryNumber(q,language)} kg bundle`;
+  if(kind==='box') return language==='ru'?`20 × 500 г коробка`:language==='ky'?`20 × 500 г куту`:`20 × 500 g box`;
+  const grams=q<1 ? Math.round(q*1000) : q*1000;
+  return q<1 ? (language==='ru'?`${formatInventoryNumber(grams,language)} г пакет`:language==='ky'?`${formatInventoryNumber(grams,language)} г пакет`:`${formatInventoryNumber(grams,language)} g packet`) : (language==='ru'?`${formatInventoryNumber(q,language)} кг пакет`:language==='ky'?`${formatInventoryNumber(q,language)} кг пакет`:`${formatInventoryNumber(q,language)} kg packet`);
+}
+function inventoryCountLabel(kind,count,language=lang){
+  const n=Number(count);
+  if(language==='ky'){
+    if(kind==='sack') return 'кап'; if(kind==='carton'||kind==='box') return 'куту'; if(kind==='bundle') return 'боо'; return 'даана';
+  }
+  if(language==='ru'){
+    if(kind==='sack') return n%10===1&&n%100!==11?'мешок':(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?'мешка':'мешков');
+    if(kind==='carton'||kind==='box') return n%10===1&&n%100!==11?'коробка':(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?'коробки':'коробок');
+    if(kind==='bundle') return n===1?'связка':'связки';
+    return 'шт.';
+  }
+  if(kind==='sack') return n===1?'sack':'sacks';
+  if(kind==='carton') return n===1?'carton':'cartons';
+  if(kind==='box') return n===1?'box':'boxes';
+  if(kind==='bundle') return n===1?'bundle':'bundles';
+  return 'pc';
 }
 function stockBreakdown(material,stock,language=lang){
   const qty=Math.max(0,Number(stock)||0);
-  const eps=0.000001;
-  let remaining=qty;
-  const parts=[];
+  const eps=0.000001; let remaining=qty; const parts=[];
   const packages=[...(material.packages||[])].filter(p=>p.kind!=='recipe'&&Number(p.qty)>0).sort((a,b)=>Number(b.qty)-Number(a.qty));
   for(const p of packages){
     if(remaining+eps<Number(p.qty)) continue;
-    const count=Math.floor((remaining+eps)/Number(p.qty));
-    if(count<=0) continue;
+    const count=Math.floor((remaining+eps)/Number(p.qty)); if(count<=0) continue;
     remaining=Math.max(0,remaining-count*Number(p.qty));
-    const kind=p.kind||'piece';
-    const baseLabel=kind==='sack' ? (language==='ru'?'мешок':language==='ky'?'кап':'sack')
-      : kind==='carton' ? (language==='ru'?'коробка':language==='ky'?'куту':'carton')
-      : kind==='bundle' ? (language==='ru'?'связка':language==='ky'?'боо':'bundle')
-      : kind==='box' ? (language==='ru'?'коробка':language==='ky'?'куту':'box')
-      : (language==='ru'?'шт.':language==='ky'?'даана':'pc');
-    const plural=(language==='en' && count!==1)?'s':'';
-    parts.push({count,kind,text:String(count)+' '+baseLabel+plural});
+    parts.push({count,kind:p.kind||'piece',text:formatInventoryNumber(count,language)+' '+inventoryCountLabel(p.kind||'piece',count,language)});
   }
   if(packages[0]?.kind==='sack' && remaining>eps){
-    const pkg=Number(packages[0].qty);
-    const half=pkg/2;
+    const pkg=Number(packages[0].qty), half=pkg/2;
     if(Math.abs(remaining-half)<eps){
-      const whole=Math.floor(qty/pkg);
-      const label=language==='ru'?'мешка':language==='ky'?'кап':'sacks';
-      parts.length=0;
-      parts.push({count:whole+0.5,kind:'sack',text:String(whole+0.5)+' '+label});
-      remaining=0;
+      const whole=Math.floor(qty/pkg); const count=whole+0.5;
+      parts.length=0; parts.push({count,kind:'sack',text:formatInventoryNumber(count,language)+' '+inventoryCountLabel('sack',count,language)}); remaining=0;
     }
   }
   if(remaining>eps){
     const remLabel=formatBaseRemainder(remaining,material,language);
-    const open=language==='ru'?'открытая':language==='ky'?'ачылган':'open';
-    parts.push({count:null,kind:'remainder',text:remLabel+' '+open});
+    const open=language==='ru'?'открытый остаток':language==='ky'?'ачылган калдык':'open remainder';
+    parts.push({count:null,kind:'remainder',text:remLabel+' · '+open});
   }
-  if(!parts.length){
-    return {primary:'0',secondary:formatBaseRemainder(qty,material,language)||('0 '+material.unit),parts:[]};
-  }
-  return {primary:parts.map(p=>p.text).join(' + '),secondary:fmt(qty)+' '+material.unit,parts};
+  return {primary:parts.length?parts.map(p=>p.text).join(' + '):'0',secondary:formatInventoryNumber(qty,language)+' '+material.unit,parts};
+}
+function formatBaseRemainder(kg,material,language=lang){
+  const n=Math.max(0,Number(kg)||0); if(n<0.001) return '';
+  if(material.unit==='kg' && n<1) return formatInventoryNumber(n*1000,language)+' g';
+  return formatInventoryNumber(n,language)+' '+material.unit;
 }
 function formatSackUnit(value,language=lang){
   const n=Number(value);
