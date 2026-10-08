@@ -96,11 +96,52 @@ const NAV_ICONS={
   more:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>'
 };
 function roleName(r){return ({admin:t('Admin',lang),hamurchi:t('Hamurchi',lang),naan:t('Naan / Leposhka Maker',lang),sales:t('Salesman',lang)})[r]||r;}
+function captureRouteDraft(){
+  if(route==='production'){
+    return {
+      type:'production',
+      sackCount:document.getElementById('sackCount')?.value||'0',
+      pieces:[...document.querySelectorAll('[data-pieces]')].map(x=>x.value),
+      consumption:[...document.querySelectorAll('.actual-consumption')].map(x=>({code:x.dataset.code,value:x.value}))
+    };
+  }
+  if(route==='recipe'){
+    return {
+      type:'recipe',
+      quantities:[...document.querySelectorAll('.recipe-qty')].map(x=>({code:x.dataset.code,value:x.value}))
+    };
+  }
+  return null;
+}
+function restoreRouteDraft(draft){
+  if(!draft) return;
+  if(draft.type==='production'){
+    const input=document.getElementById('sackCount');
+    if(input){
+      input.value=draft.sackCount;
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      [...document.querySelectorAll('[data-pieces]')].forEach((el,i)=>{if(draft.pieces[i]!==undefined) el.value=draft.pieces[i];});
+      draft.consumption.forEach(item=>{
+        const el=document.querySelector(\`.actual-consumption[data-code="\${CSS.escape(item.code)}"]\`);
+        if(el) el.value=item.value;
+      });
+    }
+  }else if(draft.type==='recipe'){
+    draft.quantities.forEach(item=>{
+      const el=document.querySelector(\`.recipe-qty[data-code="\${CSS.escape(item.code)}"]\`);
+      if(el) el.value=item.value;
+    });
+  }
+}
 async function setLanguage(next){
+  const draft=captureRouteDraft();
+  const scrollY=window.scrollY;
   lang=saveLang(currentUser?.id||'guest',next);
   if(currentUser) currentUser.lang=lang;
   if(isDemo && db?.session){ db.session.lang=lang; saveDemo(); }
   await render();
+  restoreRouteDraft(draft);
+  window.scrollTo(0,scrollY);
   if(!isDemo && currentUser){
     const {error}=await supabase.rpc('set_preferred_language',{p_language:lang});
     if(error) console.warn('Language preference could not be saved:',error);
