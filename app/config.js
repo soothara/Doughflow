@@ -1,6 +1,5 @@
 window.DOUGHFLOW_CONFIG = {
-  // Demo mode until Supabase is configured.
-  supabaseUrl: "https://izcrysbmsbwwsbobqtng.supabase.co",
+  supabaseUrl: "https://izcrysbmsbvwsbobqtng.supabase.co",
   supabaseAnonKey: "sb_publishable_eOWPpRKD8QC4ZbmHmklYdA_9eFiWEa_",
   appName: "DoughFlow"
 };
