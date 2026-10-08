@@ -440,6 +440,11 @@ begin
     select 1 from jsonb_array_elements(p_items) x
     where not exists(select 1 from public.materials m where m.code=x->>'code' and m.active)
   ) then raise exception 'Recipe contains an unknown material'; end if;
+  if exists(
+    select 1 from jsonb_array_elements(p_items) x
+    join public.materials m on m.code=x->>'code'
+    where x->>'unit' <> m.base_unit
+  ) then raise exception 'Recipe unit does not match the material base unit'; end if;
 
   perform pg_advisory_xact_lock(41720261008);
   select coalesce(max(version_number),0)+1 into v_version from public.recipe_versions;
