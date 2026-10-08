@@ -185,6 +185,18 @@ Object.assign(DICT.ky,{
   'This panel is reserved for the exact sales workflow you will provide next.':'Бул бөлүм сиз кийин берген так сатуу процесси үчүн резервде турат.'
 });
 
+
+Object.assign(DICT.ru,{
+  'Photo:':'Фото:',
+  'Enter your sacks and actual pieces from the Production panel.':'Введите мешки и фактическое количество штук в панели производства.',
+  'Panel ready. We will add the exact sales process after you provide it.':'Панель готова. Мы добавим точный процесс продаж после того, как вы его предоставите.'
+});
+Object.assign(DICT.ky,{
+  'Photo:':'Сүрөт:',
+  'Enter your sacks and actual pieces from the Production panel.':'Өндүрүш панелинен каптарды жана чыныгы дааналарды киргизиңиз.',
+  'Panel ready. We will add the exact sales process after you provide it.':'Панель даяр. Так сатуу процессин сиз бергенден кийин кошобуз.'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
