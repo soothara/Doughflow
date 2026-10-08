@@ -139,7 +139,7 @@ Object.assign(DICT.ru, {
   'Unable to load your profile.':'Не удалось загрузить ваш профиль.','Invalid login credentials':'Неверный логин или пароль.',
   'Email is not confirmed':'Электронная почта не подтверждена.','Not authorized':'Нет прав для выполнения этого действия.',
   'Insufficient stock':'Недостаточно товара на складе.','Recipe version is not active':'Версия рецепта не активна.',
-  'Something went wrong':'Что-то пошло не так.','Every batch needs a positive whole-number piece count.':'Для каждой партии нужно указать положительное целое количество штук.'
+  'Something went wrong':'Что-то пошло не так.','Every batch needs a positive whole-number piece count.':'Для каждой партии нужно указать положительное целое количество штук.','Data sync issue':'Проблема синхронизации данных','Some data may be temporarily out of date.':'Некоторые данные могут быть временно неактуальными.'
 });
 Object.assign(DICT.ky, {
   'Bakery control':'Наабайкананы башкаруу','Language':'Тил','Home':'Башкы бет','More':'Дагы',
@@ -170,7 +170,7 @@ Object.assign(DICT.ky, {
   'Unable to load your profile.':'Профилди жүктөө мүмкүн болгон жок.','Invalid login credentials':'Логин же сырсөз туура эмес.',
   'Email is not confirmed':'Электрондук почта ырасталган эмес.','Not authorized':'Бул аракетке уруксат жок.',
   'Insufficient stock':'Кампада товар жетишсиз.','Recipe version is not active':'Рецепттин версиясы активдүү эмес.',
-  'Something went wrong':'Ката кетти.','Every batch needs a positive whole-number piece count.':'Ар бир партия үчүн оң бүтүн даана санын көрсөтүңүз.'
+  'Something went wrong':'Ката кетти.','Every batch needs a positive whole-number piece count.':'Ар бир партия үчүн оң бүтүн даана санын көрсөтүңүз.','Data sync issue':'Маалыматтарды синхрондоштуруу көйгөйү','Some data may be temporarily out of date.':'Айрым маалыматтар убактылуу эски болушу мүмкүн.'
 });
 
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
