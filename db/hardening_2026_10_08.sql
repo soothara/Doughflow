@@ -399,3 +399,11 @@ begin
     check (code<>'water' or inventory_tracked=false) not valid;
 exception when duplicate_object then null;
 end $$;
+
+-- Refresh package options for the existing installation.
+update public.materials set package_options='[{"label":"50 kg sack","qty":50,"kind":"sack"}]' where code='flour';
+update public.materials set package_options='[{"label":"Recipe only","qty":1,"kind":"recipe"}]', inventory_tracked=false where code='water';
+update public.materials set package_options='[{"label":"20 kg carton","qty":20,"kind":"carton"}]' where code='oil';
+update public.materials set package_options='[{"label":"20 × 1 kg bundle","qty":20,"kind":"bundle"},{"label":"1 kg packet","qty":1,"kind":"piece"},{"label":"750 g packet","qty":0.75,"kind":"piece"}]' where code='salt';
+update public.materials set package_options='[{"label":"50 kg sack","qty":50,"kind":"sack"}]' where code='sugar';
+update public.materials set package_options='[{"label":"20 × 500 g box","qty":10,"kind":"box"},{"label":"500 g packet","qty":0.5,"kind":"piece"}]' where code='yeast';
