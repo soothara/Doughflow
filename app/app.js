@@ -428,9 +428,13 @@ function renderProduction(p){
   });
 }
 
-function applyProductionConsumption(count,productionId){
+function applyProductionConsumption(count,productionId,consumption=[]){
+  const actualMap=new Map((consumption||[]).map(x=>[x.code,Number(x.actual)]));
   db.recipe.items.filter(item=>item.code!=='water').forEach(item=>{
-    const qty=Number(item.qty)*count;
+    const expected=Number(item.qty)*count;
+    const qty=actualMap.has(item.code) && Number.isFinite(actualMap.get(item.code))
+      ? actualMap.get(item.code)
+      : expected;
     const inv=db.inventory[item.code]||{stock:0,tx:[]};
     inv.stock-=qty;
     inv.tx.push({id:uid(),dir:'out',qty,reason:'Production consumption',productionId,at:new Date().toISOString(),by:currentUser.name});
