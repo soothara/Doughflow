@@ -799,3 +799,53 @@ button:active{transform:scale(.965)}
 }
 
 .photo-credit{display:block!important;margin-top:7px!important;color:rgba(255,255,255,.52)!important;font-size:8px!important;font-weight:600!important}
+
+
+/* Final interaction/accessibility polish */
+.hero-language{
+  position:relative;
+  min-width:125px;
+  cursor:pointer;
+}
+.hero-language select{
+  appearance:none;
+  -webkit-appearance:none;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:#fff;
+  font:inherit;
+  font-weight:800;
+  cursor:pointer;
+  min-height:28px;
+  padding:0 17px 0 1px;
+}
+.hero-language select option{background:#fff;color:#111318}
+.hero-language:focus-within{
+  box-shadow:0 0 0 3px rgba(255,255,255,.35);
+}
+.hero-language>span{font-size:17px}
+.password-wrap{position:relative;display:flex;align-items:center}
+.password-wrap input{padding-right:52px!important}
+.password-toggle{
+  position:absolute;right:7px;top:50%;transform:translateY(-50%);
+  width:42px;height:42px;border:0;border-radius:12px;background:#f0f3f6;color:#667184;
+  display:grid;place-items:center;font-size:16px;
+}
+.password-toggle:hover{background:#e6ebf0}
+.password-toggle:focus-visible{
+  outline:3px solid rgba(0,122,255,.30);outline-offset:2px;
+}
+.login-error:empty{display:none}
+.login-error{
+  padding:10px 12px;border-radius:13px;background:#fff0ef;color:#b42318;border:1px solid #ffd4d0;
+}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{
+  outline:3px solid rgba(0,122,255,.34);
+  outline-offset:2px;
+}
+@media(max-width:640px){
+  .hero-language{min-width:94px;padding:7px 8px!important}
+  .hero-language select{max-width:72px;font-size:11px}
+  .hero-language>span{font-size:14px}
+}
