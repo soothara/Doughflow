@@ -82,6 +82,22 @@ let route='dashboard';
 
 const app=document.getElementById('app');
 const modalRoot=document.getElementById('modalRoot');
+const toastRoot=document.getElementById('toastRoot');
+
+
+function showToast(message,type='info',duration=2600){
+  if(!toastRoot) return;
+  const toast=document.createElement('div');
+  toast.className='toast '+type;
+  toast.setAttribute('role',type==='error'?'alert':'status');
+  const icon=type==='success'?'✓':type==='error'?'!':'i';
+  toast.innerHTML='<span class="toast-icon">'+icon+'</span><span class="toast-text"></span><button class="toast-close" aria-label="'+t('Close',lang)+'">×</button>';
+  toast.querySelector('.toast-text').textContent=String(message);
+  toast.querySelector('.toast-close').addEventListener('click',()=>toast.remove());
+  toastRoot.appendChild(toast);
+  requestAnimationFrame(()=>toast.classList.add('show'));
+  window.setTimeout(()=>{toast.classList.remove('show');window.setTimeout(()=>toast.remove(),220);},duration);
+}
 
 function saveDemo(){ if(isDemo) localStorage.setItem(KEY,JSON.stringify(db)); }
 const ICONS={flour:'🌾',water:'💧',oil:'🫒',yeast:'🧫',salt:'🧂',sugar:'🍚'};
@@ -542,32 +558,32 @@ function renderProduction(p){
   document.getElementById('resetSack').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();syncSackChoices();});
   document.getElementById('clearProduction').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();syncSackChoices();});
   document.getElementById('saveProduction').addEventListener('click',async()=>{
-    const count=normalizeSackCount(document.getElementById('sackCount').value); if(!(count>=0.5&&count<=9.5)){alert(t('Sack count must be between 0.5 and 9.5.',lang));return;}
-    if(!recipe?.items?.length){alert(t('No active recipe found.',lang));return;}
+    const count=normalizeSackCount(document.getElementById('sackCount').value); if(!(count>=0.5&&count<=9.5)){showToast(t('Sack count must be between 0.5 and 9.5.',lang),'error');return;}
+    if(!recipe?.items?.length){showToast(t('No active recipe found.',lang),'error');return;}
     const pieceInputs=[...document.querySelectorAll('[data-pieces]')];
     if(pieceInputs.some(x=>x.value.trim()==='' || !Number.isInteger(Number(x.value)) || Number(x.value)<1)){
-      alert(t('Every batch needs a positive whole-number piece count.',lang));return;
+      showToast(t('Every batch needs a positive whole-number piece count.',lang),'error');return;
     }
     const pieces=pieceInputs.map(x=>Number(x.value));
     const consumptionItems=[...document.querySelectorAll('.actual-consumption')].map(el=>({code:el.dataset.code,actual:el.value}));
-    if(consumptionItems.some(x=>!Number.isFinite(Number(x.actual))||Number(x.actual)<0)){alert(t('Consumption values must be valid non-negative numbers.',lang));return;}
+    if(consumptionItems.some(x=>!Number.isFinite(Number(x.actual))||Number(x.actual)<0)){showToast(t('Consumption values must be valid non-negative numbers.',lang),'error');return;}
     if(isDemo){
       const actualByCode=new Map(consumptionItems.map(x=>[x.code,Number(x.actual)]));
       for(const item of db.recipe.items.filter(item=>item.code!=='water')){
         const required=actualByCode.get(item.code);
         if(Number.isFinite(required) && required>getStock(item.code)){
-          alert(t('Insufficient stock',lang)+': '+t(item.name,lang));
+          showToast(t('Insufficient stock',lang)+': '+t(item.name,lang),'error');
           return;
         }
       }
       const batches=batchesFor(count).map((b,i)=>({...b,pieces:pieces[i]}));
       const now=new Date(); const run={id:uid(),date:today(),timeLabel:now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),createdBy:currentUser.name,mishokCount:count,batches,recipeVersion:db.recipe.version,consumption:consumptionItems.map(x=>({code:x.code,actual:Number(x.actual)}))};
-      db.productions.push(run); applyProductionConsumption(count,run.id,run.consumption); saveDemo(); alert(t('Saved',lang)+' '+count+' '+formatSackUnit(count,lang)+'.'); render();
+      db.productions.push(run); applyProductionConsumption(count,run.id,run.consumption); saveDemo(); showToast(t('Saved',lang)+' '+count+' '+formatSackUnit(count,lang)+'.','success'); render();
     } else {
       const batchPayload=batchesFor(count).map((b,i)=>({batch_no:i+1,mishok_fraction:b.sack,pieces:pieces[i]||0}));
       const payload=consumptionItems.filter(x=>x.code!=='water').map(x=>({material_code:x.code,actual_qty:Number(x.actual)}));
       const recipeId=await activeRecipeId(); const {error}=await supabase.rpc('complete_production',{p_production_date:today(),p_mishok_count:count,p_recipe_version_id:recipeId,p_batches:batchPayload,p_consumption:payload});
-      if(error){alert(friendlyError(error));return;} await refreshLiveState(); alert(t('Production saved.',lang)); render();
+      if(error){showToast(friendlyError(error),'error');return;} await refreshLiveState(); showToast(t('Production saved.',lang),'success'); render();
     }
   });
 }
@@ -593,9 +609,9 @@ function renderRecipe(p){
   p.innerHTML=`<div class="page-head"><div><h1>Recipe</h1><p>Working recipe per operational sack. Authorized production users can edit it.</p></div></div><div class="grid grid-2"><div class="card"><h2>v${recipe.version}</h2>${recipe.items.map((it)=>`<div class="field-row" style="align-items:end"><div class="field"><label>${esc(it.name)} (${esc(it.unit)})</label><input class="recipe-qty" data-code="${esc(it.code)}" type="number" step="0.001" value="${it.qty}"><div class="small">${esc(it.note||'')}</div></div><div class="field"><label>Current standard</label><div class="notice">${fmt(it.qty)} ${esc(it.unit)} / sack</div></div></div>`).join('')}<button class="btn primary" id="saveRecipe">Save as new recipe version</button></div><div class="card"><h2>Packaging rules</h2><div class="table-wrap"><table><thead><tr><th>Material</th><th>Purchase package</th></tr></thead><tbody>${STOCK_MATERIALS.map(m=>`<tr><td>${esc(m.name)}</td><td>${m.packages.map(x=>esc(x.label)).join('<br>')}</td></tr>`).join('')}</tbody></table></div><div class="notice" style="margin-top:14px">Water is a recipe input and is not tracked as stock. Salt supports 1 kg and 750 g packets. Yeast supports 500 g packets and 20-packet boxes. Oil uses 20 kg cartons.</div></div></div>`;
   document.getElementById('saveRecipe').addEventListener('click',async()=>{
     const items=recipe.items.map((it,i)=>({...it,qty:Number(document.querySelector(`.recipe-qty[data-code="${it.code}"]`).value),sort_order:i}));
-    if(items.some(x=>!Number.isFinite(x.qty)||x.qty<0)){alert(t('Recipe quantities must be valid non-negative numbers.',lang));return;}
-    if(isDemo){db.recipe.version+=1;db.recipe.updatedAt=new Date().toISOString();db.recipe.updatedBy=currentUser.name;db.recipe.items=items;saveDemo();alert(`${t('Recipe saved as',lang)} v${db.recipe.version}.`);render();}
-    else {const {error}=await supabase.rpc('create_recipe_version',{p_items:items.map(x=>({code:x.code,qty:x.qty,unit:x.unit,note:x.note||'',sort_order:x.sort_order})),p_note:`Updated by ${currentUser.name}`});if(error){alert(friendlyError(error));return;}await refreshLiveState();alert(`${t('Recipe saved as',lang)} v${liveState.recipe.version}.`);render();}
+    if(items.some(x=>!Number.isFinite(x.qty)||x.qty<0)){showToast(t('Recipe quantities must be valid non-negative numbers.',lang),'error');return;}
+    if(isDemo){db.recipe.version+=1;db.recipe.updatedAt=new Date().toISOString();db.recipe.updatedBy=currentUser.name;db.recipe.items=items;saveDemo();showToast(`${t('Recipe saved as',lang)} v${db.recipe.version}.`,'success');render();}
+    else {const {error}=await supabase.rpc('create_recipe_version',{p_items:items.map(x=>({code:x.code,qty:x.qty,unit:x.unit,note:x.note||'',sort_order:x.sort_order})),p_note:`Updated by ${currentUser.name}`});if(error){showToast(friendlyError(error),'error');return;}await refreshLiveState();showToast(`${t('Recipe saved as',lang)} v${liveState.recipe.version}.`,'success');render();}
   });
 }
 
@@ -611,7 +627,7 @@ function openStockModal(){
   modalRoot.innerHTML=`<div class="modal-backdrop show"><div class="modal"><div class="modal-head"><h2>Receive stock</h2><button id="closeModal">×</button></div><div class="field"><label>Material</label><select id="stockMaterial">${opts}</select></div><div id="packageChooser"></div><div class="field"><label>Notes</label><input id="stockNote" placeholder="Supplier / delivery note"></div><div class="modal-footer"><button class="btn secondary" id="cancelModal">Cancel</button><button class="btn primary" id="saveStock">Add stock</button></div></div></div>`;
   const update=()=>{const m=STOCK_MATERIALS.find(x=>x.code===document.getElementById('stockMaterial').value);document.getElementById('packageChooser').innerHTML=`<div class="field"><label>Package</label><select id="stockPackage">${m.packages.map((x,i)=>`<option value="${i}">${esc(x.label)}</option>`).join('')} </select></div><div class="field"><label>Number of packages</label><input id="packageCount" type="number" min="0.001" step="1" value="1"></div><div class="small">The system will convert package quantity into the inventory base unit.</div>`;};
   update();document.getElementById('stockMaterial').addEventListener('change',update);document.getElementById('closeModal').addEventListener('click',closeModal);document.getElementById('cancelModal').addEventListener('click',closeModal);
-  document.getElementById('saveStock').addEventListener('click',async()=>{const code=document.getElementById('stockMaterial').value;const m=STOCK_MATERIALS.find(x=>x.code===code);const pi=Number(document.getElementById('stockPackage').value);const count=Number(document.getElementById('packageCount').value||0);if(!(count>0))return;const qty=m.packages[pi].qty*count;const reason=document.getElementById('stockNote').value||'Stock received';if(isDemo){const inv=db.inventory[code];inv.stock+=qty;inv.tx.push({id:uid(),dir:'in',qty,packages:count,packageLabel:m.packages[pi].label,reason,at:new Date().toISOString(),by:currentUser.name});saveDemo();closeModal();render();}else{const {error}=await supabase.from('inventory_transactions').insert({material_code:code,direction:'in',qty_base:qty,package_count:count,package_label:m.packages[pi].label,reason,created_by:currentUser.id});if(error){alert(friendlyError(error));return;}await refreshLiveState();closeModal();render();}});
+  document.getElementById('saveStock').addEventListener('click',async()=>{const code=document.getElementById('stockMaterial').value;const m=STOCK_MATERIALS.find(x=>x.code===code);const pi=Number(document.getElementById('stockPackage').value);const count=Number(document.getElementById('packageCount').value||0);if(!(count>0))return;const qty=m.packages[pi].qty*count;const reason=document.getElementById('stockNote').value||'Stock received';if(isDemo){const inv=db.inventory[code];inv.stock+=qty;inv.tx.push({id:uid(),dir:'in',qty,packages:count,packageLabel:m.packages[pi].label,reason,at:new Date().toISOString(),by:currentUser.name});saveDemo();closeModal();render();}else{const {error}=await supabase.from('inventory_transactions').insert({material_code:code,direction:'in',qty_base:qty,package_count:count,package_label:m.packages[pi].label,reason,created_by:currentUser.id});if(error){showToast(friendlyError(error),'error');return;}await refreshLiveState();closeModal();render();}});
 }
 function closeModal(){modalRoot.innerHTML='';}
 
