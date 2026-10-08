@@ -77,6 +77,7 @@ let currentUser = null;
 let authError = '';
 let lang = getSavedLang('guest');
 let liveState = {recipe:null, productions:[], balances:[], users:[], summaryToday:null, summaryAll:null, syncError:null};
+let summaryRpcAvailable=true;
 let route='dashboard';
 
 const app=document.getElementById('app');
@@ -164,6 +165,12 @@ async function refreshLiveState(){
     const usersQuery=currentUser?.role==='admin'
       ? supabase.from('profiles').select('id,full_name,role').order('full_name')
       : Promise.resolve({data:[],error:null});
+    const summaryQueries=summaryRpcAvailable
+      ? [
+          supabase.rpc('production_summary',{p_from:today(),p_to:today()}),
+          supabase.rpc('production_summary',{p_from:null,p_to:null})
+        ]
+      : [Promise.resolve({data:null,error:null}),Promise.resolve({data:null,error:null})];
     const [recipeRes,runsRes,balancesRes,usersRes,todaySummaryRes,allSummaryRes]=await Promise.all([
       supabase.from('recipe_versions')
         .select('id,version_number,note,created_at,recipe_items(id,material_code,qty_per_mishok,unit,note,sort_order)')
@@ -173,8 +180,7 @@ async function refreshLiveState(){
         .order('created_at',{ascending:false}).limit(200),
       supabase.from('inventory_balances').select('*'),
       usersQuery,
-      supabase.rpc('production_summary',{p_from:today(),p_to:today()}),
-      supabase.rpc('production_summary',{p_from:null,p_to:null})
+      ...summaryQueries
     ]);
 
     if(recipeRes.error) throw recipeRes.error;
@@ -196,10 +202,11 @@ async function refreshLiveState(){
     liveState.balances=balancesRes.data||[];
     liveState.users=usersRes.data||[];
 
-    // Summary RPC is an enhancement; older databases can continue using the 200-row fallback
-    // until db/hardening_2026_10_08.sql has been run.
-    liveState.summaryToday=Array.isArray(todaySummaryRes.data)?(todaySummaryRes.data[0]||null):null;
-    liveState.summaryAll=Array.isArray(allSummaryRes.data)?(allSummaryRes.data[0]||null):null;
+    if(summaryRpcAvailable && (todaySummaryRes.error || allSummaryRes.error)){
+      summaryRpcAvailable=false;
+    }
+    liveState.summaryToday=summaryRpcAvailable && Array.isArray(todaySummaryRes.data)?(todaySummaryRes.data[0]||null):null;
+    liveState.summaryAll=summaryRpcAvailable && Array.isArray(allSummaryRes.data)?(allSummaryRes.data[0]||null):null;
     liveState.syncError=null;
   }catch(error){
     liveState.syncError=friendlyError(error);
