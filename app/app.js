@@ -408,21 +408,21 @@ function renderProduction(p){
   document.getElementById('resetSack').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();});
   document.getElementById('clearProduction').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();});
   document.getElementById('saveProduction').addEventListener('click',async()=>{
-    const count=normalizeSackCount(document.getElementById('sackCount').value); if(!(count>=0.5&&count<=9.5)){alert('Sack count must be between 0.5 and 9.5.');return;}
-    if(!recipe?.items?.length){alert('No active recipe found.');return;}
+    const count=normalizeSackCount(document.getElementById('sackCount').value); if(!(count>=0.5&&count<=9.5)){alert(t('Sack count must be between 0.5 and 9.5.',lang));return;}
+    if(!recipe?.items?.length){alert(t('No active recipe found.',lang));return;}
     const pieces=[...document.querySelectorAll('[data-pieces]')].map(x=>Number(x.value||0));
-    if(pieces.some(x=>x<0)){alert('Piece counts cannot be negative.');return;}
+    if(pieces.some(x=>x<0)){alert(t('Piece counts cannot be negative.',lang));return;}
     const consumptionItems=[...document.querySelectorAll('.actual-consumption')].map(el=>({code:el.dataset.code,actual:el.value}));
-    if(consumptionItems.some(x=>!Number.isFinite(Number(x.actual))||Number(x.actual)<0)){alert('Consumption values must be valid non-negative numbers.');return;}
+    if(consumptionItems.some(x=>!Number.isFinite(Number(x.actual))||Number(x.actual)<0)){alert(t('Consumption values must be valid non-negative numbers.',lang));return;}
     if(isDemo){
       const batches=batchesFor(count).map((b,i)=>({...b,pieces:pieces[i]||0}));
       const now=new Date(); const run={id:uid(),date:today(),timeLabel:now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),createdBy:currentUser.name,mishokCount:count,batches,recipeVersion:db.recipe.version,consumption:consumptionItems.map(x=>({code:x.code,actual:Number(x.actual)}))};
-      db.productions.push(run); applyProductionConsumption(count,run.id,run.consumption); saveDemo(); alert(`Saved ${count} sack.`); render();
+      db.productions.push(run); applyProductionConsumption(count,run.id,run.consumption); saveDemo(); alert(`${t('Saved',lang)} ${count} ${t('Sack',lang)}.`); render();
     } else {
       const batchPayload=batchesFor(count).map((b,i)=>({batch_no:i+1,mishok_fraction:b.sack,pieces:pieces[i]||0}));
       const payload=consumptionItems.filter(x=>x.code!=='water').map(x=>({material_code:x.code,actual_qty:Number(x.actual)}));
       const recipeId=await activeRecipeId(); const {error}=await supabase.rpc('complete_production',{p_production_date:today(),p_mishok_count:count,p_recipe_version_id:recipeId,p_batches:batchPayload,p_consumption:payload});
-      if(error){alert(error.message);return;} await refreshLiveState(); alert('Production saved.'); render();
+      if(error){alert(error.message);return;} await refreshLiveState(); alert(t('Production saved.',lang)); render();
     }
   });
 }
@@ -444,9 +444,9 @@ function renderRecipe(p){
   p.innerHTML=`<div class="page-head"><div><h1>Recipe</h1><p>Working recipe per operational sack. Authorized production users can edit it.</p></div></div><div class="grid grid-2"><div class="card"><h2>v${recipe.version}</h2>${recipe.items.map((it)=>`<div class="field-row" style="align-items:end"><div class="field"><label>${esc(it.name)} (${esc(it.unit)})</label><input class="recipe-qty" data-code="${esc(it.code)}" type="number" step="0.001" value="${it.qty}"><div class="small">${esc(it.note||'')}</div></div><div class="field"><label>Current standard</label><div class="notice">${fmt(it.qty)} ${esc(it.unit)} / sack</div></div></div>`).join('')}<button class="btn primary" id="saveRecipe">Save as new recipe version</button></div><div class="card"><h2>Packaging rules</h2><div class="table-wrap"><table><thead><tr><th>Material</th><th>Purchase package</th></tr></thead><tbody>${MATERIALS.map(m=>`<tr><td>${esc(m.name)}</td><td>${m.packages.map(x=>esc(x.label)).join('<br>')}</td></tr>`).join('')}</tbody></table></div><div class="notice" style="margin-top:14px">Water is one material. Salt supports 1 kg and 750 g packets. Yeast supports 500 g packets and 20-packet boxes. Oil uses 20 kg cartons.</div></div></div>`;
   document.getElementById('saveRecipe').addEventListener('click',async()=>{
     const items=recipe.items.map((it,i)=>({...it,qty:Number(document.querySelector(`.recipe-qty[data-code="${it.code}"]`).value),sort_order:i}));
-    if(items.some(x=>!Number.isFinite(x.qty)||x.qty<0)){alert('Recipe quantities must be valid non-negative numbers.');return;}
-    if(isDemo){db.recipe.version+=1;db.recipe.updatedAt=new Date().toISOString();db.recipe.updatedBy=currentUser.name;db.recipe.items=items;saveDemo();alert(`Recipe saved as v${db.recipe.version}.`);render();}
-    else {const {error}=await supabase.rpc('create_recipe_version',{p_items:items.map(x=>({code:x.code,qty:x.qty,unit:x.unit,note:x.note||'',sort_order:x.sort_order})),p_note:`Updated by ${currentUser.name}`});if(error){alert(error.message);return;}await refreshLiveState();alert(`Recipe saved as v${liveState.recipe.version}.`);render();}
+    if(items.some(x=>!Number.isFinite(x.qty)||x.qty<0)){alert(t('Recipe quantities must be valid non-negative numbers.',lang));return;}
+    if(isDemo){db.recipe.version+=1;db.recipe.updatedAt=new Date().toISOString();db.recipe.updatedBy=currentUser.name;db.recipe.items=items;saveDemo();alert(`${t('Recipe saved as',lang)} v${db.recipe.version}.`);render();}
+    else {const {error}=await supabase.rpc('create_recipe_version',{p_items:items.map(x=>({code:x.code,qty:x.qty,unit:x.unit,note:x.note||'',sort_order:x.sort_order})),p_note:`Updated by ${currentUser.name}`});if(error){alert(error.message);return;}await refreshLiveState();alert(`${t('Recipe saved as',lang)} v${liveState.recipe.version}.`);render();}
   });
 }
 
