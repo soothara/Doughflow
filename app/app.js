@@ -472,10 +472,10 @@ function renderDashboard(p){
     "</section>"+
     syncBanner+
     "<section class='metric-grid'>"+
-      "<div class='metric-card metric-green'><div class='metric-head'><span>🧺</span><b>"+t('Today’s',lang)+"<br>"+t('Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>▥</i></div>"+
-      "<div class='metric-card metric-orange'><div class='metric-head'><span>🥯</span><b>"+t('Today’s',lang)+"<br>"+t('Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>◔</i></div>"+
-      "<div class='metric-card metric-purple'><div class='metric-head'><span>▶</span><b>"+t('Production',lang)+"<br>"+t('Runs',lang)+"</b></div><strong>"+totalRuns+"</strong><i>▥</i></div>"+
-      "<div class='metric-card metric-blue'><div class='metric-head'><span>▦</span><b>"+t('Recipe',lang)+"<br>"+t('Version',lang)+"</b></div><strong>v"+(db?.recipe?.version||liveState.recipe?.version||1)+"</strong><i>⟳</i></div>"+
+      "<div class='metric-card metric-green'><div class='metric-head'><span>🧺</span><b>"+t('Today’s Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>▥</i></div>"+
+      "<div class='metric-card metric-orange'><div class='metric-head'><span>🥯</span><b>"+t('Today’s Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>◔</i></div>"+
+      "<div class='metric-card metric-purple'><div class='metric-head'><span>▶</span><b>"+t('Production Runs',lang)+"</b></div><strong>"+totalRuns+"</strong><i>▥</i></div>"+
+      "<div class='metric-card metric-blue'><div class='metric-head'><span>▦</span><b>"+t('Recipe Version',lang)+"</b></div><strong>v"+(db?.recipe?.version||liveState.recipe?.version||1)+"</strong><i>⟳</i></div>"+
     "</section>"+
     "<section class='portal-panel production-panel'>"+
       "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker coral'>🍞</div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
