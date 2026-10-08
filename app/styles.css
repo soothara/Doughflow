@@ -909,3 +909,35 @@ body{min-height:100dvh}
 
 .stock-open{width:100%;text-align:left;color:inherit;font:inherit;cursor:pointer}
 .stock-open:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(42,43,47,.07);border-color:#d8e1ec}
+
+/* Premium leposhka/material depth system */
+.material-svg{width:70%;height:70%;display:block;filter:drop-shadow(0 8px 10px rgba(30,35,45,.12))}
+.leposhka-svg{display:block;filter:drop-shadow(0 7px 9px rgba(30,20,10,.16));transform:translateZ(0)}
+.stock-item-copy{min-width:0;flex:1}
+.stock-item-copy strong{font-size:13px;line-height:1.18;letter-spacing:-.1px}
+.stock-item-copy small{display:block;margin-top:3px;color:#89919d;font-size:10px;font-weight:700}
+.stock-primary{font-size:25px!important;letter-spacing:-.7px}
+.stock-secondary{font-weight:700;color:#87909c!important}
+.stock-card-premium{position:relative;overflow:hidden}
+.stock-card-premium:before{
+  content:'';position:absolute;inset:auto -40px -55px auto;width:130px;height:130px;border-radius:50%;
+  background:radial-gradient(circle,rgba(34,123,255,.10),transparent 68%);
+  pointer-events:none;
+}
+.table-secondary{display:block;color:#87909c;font-size:10px;margin-top:3px}
+.recipe-visual,.stock-item-icon,.panel-sticker,.login-badge{
+  perspective:700px;transform-style:preserve-3d;
+}
+.recipe-photo-card{transition:transform .28s cubic-bezier(.22,1,.36,1),box-shadow .28s ease}
+.recipe-photo-card:hover{transform:translateY(-3px) rotateX(2deg) rotateY(-2deg);box-shadow:0 13px 25px rgba(34,40,50,.10)}
+.recipe-visual span{display:grid;place-items:center;animation:iconFloat 5s ease-in-out infinite}
+.stock-item-icon .material-svg{animation:iconFloat 6s ease-in-out infinite}
+.leposhka-svg{animation:leposhkaFloat 5.5s ease-in-out infinite}
+@keyframes iconFloat{0%,100%{transform:translateY(0) rotateZ(0deg)}50%{transform:translateY(-2px) rotateZ(1.5deg)}}
+@keyframes leposhkaFloat{0%,100%{transform:translateY(0) rotateZ(-1deg) rotateX(0deg)}50%{transform:translateY(-2px) rotateZ(1deg) rotateX(3deg)}}
+.panel-sticker .leposhka-svg{width:34px;height:34px}
+.login-badge .leposhka-svg{width:42px;height:42px}
+.portal-section-title .section-icon .leposhka-svg{width:27px;height:27px}
+@media(prefers-reduced-motion:reduce){
+  .recipe-photo-card,.recipe-visual span,.stock-item-icon .material-svg,.leposhka-svg{animation:none!important;transition:none!important}
+}
