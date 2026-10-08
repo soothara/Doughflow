@@ -97,6 +97,9 @@ const NAV_ICONS={
 };
 function roleName(r){return ({admin:t('Admin',lang),hamurchi:t('Hamurchi',lang),naan:t('Naan / Leposhka Maker',lang),sales:t('Salesman',lang)})[r]||r;}
 function captureRouteDraft(){
+  if(route==='dashboard'){
+    return {type:'dashboard',selected:Number(document.getElementById('dashboardTotal')?.textContent||0)};
+  }
   if(route==='production'){
     return {
       type:'production',
@@ -115,6 +118,13 @@ function captureRouteDraft(){
 }
 function restoreRouteDraft(draft){
   if(!draft) return;
+  if(draft.type==='dashboard'){
+    const selected=Number(draft.selected||0);
+    const full=Math.floor(selected);
+    if(full>0) document.querySelector(`[data-dashboard-sack="${full}"]`)?.click();
+    if(selected%1===0.5) document.getElementById('dashboardHalf')?.click();
+    return;
+  }
   if(draft.type==='production'){
     const input=document.getElementById('sackCount');
     if(input){
