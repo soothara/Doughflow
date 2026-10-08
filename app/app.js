@@ -336,9 +336,12 @@ function renderDashboard(p){
       (currentUser.role==='admin'?"<button class='stock-view-all' id='openInventory'>"+t('View All',lang)+" »</button>":"")+
       "</div><div class='stock-grid'>"+stockCards+"</div>"+
     "</section>"+
-    "<a class='made-by-card made-by-link' href='https://wa.me/996509512786' target='_blank' rel='noopener' aria-label='WhatsApp Ali'>"+
-      "<div class='made-by-symbol'>✦</div><div><small>"+t('Designed & built with care',lang)+"</small><strong>Сделано Али</strong><small class='photo-credit'>Photo: ElenaLitera / Wikimedia Commons · CC BY-SA 4.0</small></div><div class='made-by-kyrgyz'>🇰🇬</div>"+
-    "</a>";
+    "<div class='made-by-wrap'>"+
+      "<a class='made-by-card made-by-link' href='https://wa.me/996509512786' target='_blank' rel='noopener' aria-label='WhatsApp Ali'>"+
+        "<div class='made-by-symbol'>✦</div><div><small>"+t('Designed & built with care',lang)+"</small><strong>Сделано Али</strong></div><div class='made-by-kyrgyz'>🇰🇬</div>"+
+      "</a>"+
+      "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:%D0%9A%D1%8B%D1%80%D0%B3%D0%B7%D1%81%D1%82%D0%B0%D0%BD%2C_%D0%91%D0%B8%D1%88%D0%BA%D0%B5%D0%BA%2C_%D0%9E%D1%88%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D0%B0%D0%B7%D0%B0%D1%80%2C_%D1%82%D0%B0%D0%BD%D0%B4%D1%8B%D1%80%D0%BD%D1%8B%D0%B5_%D0%BB%D0%B5%D0%BF%D0%B5%D1%88%D0%BA%D0%B8_%281%29.jpg' target='_blank' rel='noopener'>Photo: ElenaLitera / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a></div>"+
+    "</div>";
 
   let selected=0;
   const sync=()=>{
