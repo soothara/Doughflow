@@ -51,8 +51,20 @@ function friendlyError(error){
   if(lower.includes('not authorized')) return t('Not authorized',lang);
   if(lower.includes('insufficient stock')) return t('Insufficient stock',lang);
   if(lower.includes('recipe version is not active')) return t('Recipe version is not active',lang);
+  if(lower.includes('recipe cannot be empty')) return t('Recipe cannot be empty',lang);
+  if(lower.includes('duplicate materials')) return t('Recipe contains duplicate materials',lang);
+  if(lower.includes('recipe quantities cannot be negative')) return t('Recipe quantities cannot be negative',lang);
+  if(lower.includes('unknown material')) return t('Recipe contains an unknown material',lang);
+  if(lower.includes('unit does not match')) return t('Recipe unit does not match the material base unit',lang);
+  if(lower.includes('batches do not match')) return t('Batches do not match the selected sack count',lang);
+  if(lower.includes('each batch must be')) return t('Each batch must be 1.0 or 0.5 sack',lang);
+  if(lower.includes('batch numbers must be sequential')) return t('Batch numbers must be sequential starting at 1',lang);
+  if(lower.includes('consumption contains duplicate')) return t('Consumption contains duplicate materials',lang);
+  if(lower.includes('consumption contains an unknown')) return t('Consumption contains an unknown material',lang);
+  if(lower.includes('actual consumption cannot be negative')) return t('Actual consumption cannot be negative',lang);
   if(lower.includes('sack count')) return t('Sack count must be between 0.5 and 9.5.',lang);
-  return raw || t('Something went wrong',lang);
+  if(!raw) return t('Something went wrong',lang);
+  return lang==='en' ? raw : t('Something went wrong',lang);
 }
 
 function seed(){
