@@ -63,6 +63,7 @@ function setLanguage(next){ lang=saveLang(currentUser?.id||'guest',next); if(cur
 function languageSwitcher(){ return `<select id="languageSelect" class="language-select" aria-label="Language">${languageOptions(lang)}</select>`; }
 function applyCurrentLanguage(){ applyTranslations(document,lang); const sel=document.getElementById('languageSelect'); if(sel) sel.value=lang; document.documentElement.lang = lang==='ru'?'ru':lang==='ky'?'ky':'en'; }
 function can(role, section){
+  if(section==='more') return true;
   if(role==='admin') return true;
   if(role==='hamurchi') return ['dashboard','production','recipe'].includes(section);
   if(role==='naan') return ['dashboard','naan'].includes(section);
@@ -70,41 +71,15 @@ function can(role, section){
   return false;
 }
 function navItems(role){
-  const base=[['dashboard','⌂','Dashboard']];
+  const base=[['dashboard','⌂','Home']];
   if(role==='admin'||role==='hamurchi') base.push(['production','🥣','Production']);
+  if(role==='admin') base.push(['inventory','📦','Stock']);
   if(role==='admin'||role==='hamurchi') base.push(['recipe','🧪','Recipe']);
-  if(role==='admin') base.push(['inventory','📦','Inventory'],['reports','📊','Reports'],['users','👥','Users']);
-  if(role==='admin'||role==='naan') base.push(['naan','🫓','Naan']);
-  if(role==='admin'||role==='sales') base.push(['sales','💰','Sales']);
+  if(role==='naan') base.push(['naan','🫓','Naan']);
+  if(role==='sales') base.push(['sales','💰','Sales']);
+  base.push(['more','•••','More']);
   return base;
 }
-
-async function init(){
-  if(!isDemo){
-    const {data:{session}}=await supabase.auth.getSession();
-    if(session) await loadUser(session.user);
-    supabase.auth.onAuthStateChange(async (_e,s)=>{ if(s) { await loadUser(s.user); await refreshLiveState(); render(); } else {currentUser=null;render();} });
-  } else { currentUser=db.session.user ? {...db.session.user,role:db.session.role,lang:db.session.lang||getSavedLang(db.session.user.id)} : null; lang=currentUser?.lang||lang; }
-  if(!isDemo && currentUser) await refreshLiveState();
-  render();
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
-}
-
-async function loadUser(user){
-  const {data,error}=await supabase.from('profiles').select('id,full_name,role,preferred_language').eq('id',user.id).single();
-  if(error){ currentUser={id:user.id,name:user.email||'User',role:'hamurchi',lang:getSavedLang(user.id)}; lang=currentUser.lang; }
-  else { currentUser={id:user.id,name:data.full_name||user.email||'User',role:data.role,lang:data.preferred_language||getSavedLang(user.id)}; lang=currentUser.lang; saveLang(user.id,lang); }
-}
-async function refreshLiveState(){
-  if(isDemo) return;
-  const {data:rv}=await supabase.from('recipe_versions').select('id,version_number,note,created_at,recipe_items(id,material_code,qty_per_mishok,unit,note,sort_order)').eq('active',true).order('version_number',{ascending:false}).limit(1).maybeSingle();
-  liveState.recipe = rv ? {id:rv.id,version:rv.version_number,items:(rv.recipe_items||[]).sort((a,b)=>a.sort_order-b.sort_order).map(x=>({code:x.material_code,name:MATERIALS.find(m=>m.code===x.material_code)?.name||x.material_code,qty:Number(x.qty_per_mishok),unit:x.unit,note:x.note||''}))} : null;
-  const {data:runs}=await supabase.from('production_runs').select('id,production_date,created_by,mishok_count,recipe_version_id,created_at,production_batches(batch_no,mishok_fraction,pieces),production_materials(material_code,expected_qty,actual_qty,unit)').order('created_at',{ascending:false}).limit(200);
-  liveState.productions=runs||[];
-  const {data:balances}=await supabase.from('inventory_balances').select('*'); liveState.balances=balances||[];
-  if(currentUser?.role==='admin'){const {data:users}=await supabase.from('profiles').select('id,full_name,role').order('full_name');liveState.users=users||[];}
-}
-
 function render(){
   if(!currentUser){ app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage(); document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value)); return; }
   if(!can(currentUser.role,route)) route='dashboard';
@@ -127,25 +102,98 @@ async function logout(){ if(isDemo){db.session=null;currentUser=null;lang=getSav
 
 function appShellHTML(){
   const items=navItems(currentUser.role);
-  return `<div class="topbar"><div class="brand"><div class="brand-mark">DF</div><div>DoughFlow</div></div><div class="top-actions">${languageSwitcher()}<span class="small" style="color:#cbd5e1">${esc(currentUser.name)} · ${roleName(currentUser.role)}</span><button id="logout">Log out</button></div></div><div class="layout"><aside class="sidebar"><div class="role-pill">${roleName(currentUser.role)}</div><nav class="nav">${items.map(([r,ic,l])=>`<button data-route="${r}" class="${r===route?'active':''}">${ic} ${l}</button>`).join('')}</nav></aside><main><div class="page" id="page"></div></main></div>`;
+  const initials=String(currentUser.name||'U').trim().split(/\\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  return `
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">DF</div>
+        <div class="brand-copy"><strong>DoughFlow</strong><span>Bakery control</span></div>
+      </div>
+      <div class="top-actions">
+        <div class="user-chip"><span class="avatar">${esc(initials)}</span><span class="user-meta"><b>${esc(currentUser.name)}</b><small>${roleName(currentUser.role)}</small></span></div>
+        ${languageSwitcher()}
+      </div>
+    </div>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="role-pill">${roleName(currentUser.role)}</div>
+        <nav class="nav">${items.map(([r,ic,l])=>`<button data-route="${r}" class="${r===route?'active':''}" aria-label="${esc(l)}"><span class="nav-icon">${ic}</span><span>${l}</span></button>`).join('')}</nav>
+      </aside>
+      <main><div class="page" id="page"></div></main>
+    </div>`;
 }
-
 function renderPage(){
   const p=document.getElementById('page');
-  const pages={dashboard:renderDashboard,production:renderProduction,recipe:renderRecipe,inventory:renderInventory,reports:renderReports,users:renderUsers,naan:()=>placeholderPanel('Naan / Leposhka Maker','This panel is reserved for the exact workflow you will provide next.'),sales:()=>placeholderPanel('Salesman','This panel is reserved for the exact sales workflow you will provide next.')};
+  const pages={
+    dashboard:renderDashboard,
+    production:renderProduction,
+    recipe:renderRecipe,
+    inventory:renderInventory,
+    reports:renderReports,
+    users:renderUsers,
+    naan:()=>placeholderPanel('Naan / Leposhka Maker','This panel is reserved for the exact workflow you will provide next.'),
+    sales:()=>placeholderPanel('Salesman','This panel is reserved for the exact sales workflow you will provide next.'),
+    more:renderMore
+  };
   (pages[route]||renderDashboard)(p);
 }
+function renderMore(p){
+  const extra=[];
+  if(currentUser.role==='admin') extra.push(
+    ['inventory','📦','Stock & inventory','See balances and stock movements'],
+    ['reports','📊','Reports','Review production and usage'],
+    ['users','👥','People','Manage staff and roles'],
+    ['naan','🫓','Naan / Leposhka','Open the naan workflow'],
+    ['sales','💰','Sales','Open the sales workspace'],
+    ['recipe','🧪','Recipe','Edit the working recipe']
+  );
+  else if(currentUser.role==='hamurchi') extra.push(
+    ['recipe','🧪','Recipe','Edit the working recipe']
+  );
+  else if(currentUser.role==='naan') extra.push(
+    ['naan','🫓','Naan / Leposhka','Open the naan workflow']
+  );
+  else if(currentUser.role==='sales') extra.push(
+    ['sales','💰','Sales','Open the sales workspace']
+  );
 
+  p.innerHTML=`
+    <div class="page-head compact-head">
+      <div><div class="eyebrow">More</div><h1>Everything else</h1><p>Keep the daily workflow focused. Less-used tools live here.</p></div>
+    </div>
+    <div class="more-grid">
+      ${extra.map(([r,icon,title,desc])=>`<button class="more-card" data-more-route="${r}"><span class="more-icon">${icon}</span><span><b>${title}</b><small>${desc}</small></span><span class="chevron">›</span></button>`).join('')}
+      <button class="more-card danger-card" id="moreLogout"><span class="more-icon">↪</span><span><b>Log out</b><small>Sign out from this device</small></span><span class="chevron">›</span></button>
+    </div>`;
+  p.querySelectorAll('[data-more-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.moreRoute;render();}));
+  p.querySelector('#moreLogout')?.addEventListener('click',logout);
+}
 function renderDashboard(p){
   const prod=isDemo?db.productions:liveState.productions;
   const todayRuns=prod.filter(x=>(isDemo?x.date:x.production_date)===today());
   const totalM=todayRuns.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
   const totalPieces=todayRuns.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
   const stockRows=MATERIALS.map(m=>{const s=getStock(m.code);return {...m,stock:s};});
-  p.innerHTML=`<div class="page-head"><div><h1>Good ${new Date().getHours()<12?'morning':'day'}, ${esc(currentUser.name.split(' ')[0])}</h1><p>${today()} · role: ${roleName(currentUser.role)}</p></div>${currentUser.role==='admin'?'<button class="btn primary" id="quickProduction">+ Production</button>':''}</div>${currentUser.role==='admin'?`<div class="grid grid-4"><div class="card"><div class="kpi-label">Today’s mishoks</div><div class="kpi">${fmt(totalM)}</div></div><div class="card"><div class="kpi-label">Today’s pieces</div><div class="kpi">${fmt(totalPieces)}</div></div><div class="card"><div class="kpi-label">Production runs</div><div class="kpi">${todayRuns.length}</div></div><div class="card"><div class="kpi-label">Recipe version</div><div class="kpi">v${db?.recipe?.version||1}</div></div></div><div style="height:16px"></div><div class="grid grid-2"><div class="card"><h3>Stock snapshot</h3><div class="table-wrap"><table><thead><tr><th>Material</th><th>Stock</th><th>Status</th></tr></thead><tbody>${stockRows.map(m=>`<tr><td>${esc(m.name)}</td><td>${fmt(m.stock)} ${m.unit}</td><td><span class="status ${m.stock<=0?'danger':m.stock<10?'warn':'ok'}">${m.stock<=0?'Out':m.stock<10?'Low':'OK'}</span></td></tr>`).join('')}</tbody></table></div></div><div class="card"><h3>Quick rules</h3><div class="notice">1 operational mishok is always counted as <b>1</b>, even when the flour is around 48–52 kg. Half mishok is <b>0.5</b>, even around 24–27 kg. Piece count is always actual and editable.</div></div></div>`:roleDashboard(p)}`;
+  const firstName=esc(currentUser.name.split(' ')[0]);
+  p.innerHTML=`
+    <div class="welcome">
+      <div><div class="eyebrow">${today()}</div><h1>Good day, ${firstName}</h1><p>Your bakery at a glance.</p></div>
+      ${currentUser.role==='admin'?'<button class="btn primary hero-btn" id="quickProduction">＋ New production</button>':''}
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card emphasis"><span>Today</span><strong>${fmt(totalM)}</strong><small>mishoks</small></div>
+      <div class="stat-card"><span>Output</span><strong>${fmt(totalPieces)}</strong><small>pieces</small></div>
+      <div class="stat-card"><span>Runs</span><strong>${todayRuns.length}</strong><small>production runs</small></div>
+      <div class="stat-card"><span>Recipe</span><strong>v${db?.recipe?.version||liveState.recipe?.version||1}</strong><small>active version</small></div>
+    </div>
+    <div class="section-head"><div><h2>Stock</h2><p>Current balance by material.</p></div>${currentUser.role==='admin'?'<button class="text-button" id="openInventory">View all</button>':''}</div>
+    <div class="card stock-card"><div class="stock-list">
+      ${stockRows.map(m=>`<div class="stock-row"><div class="stock-name"><span class="stock-dot ${m.stock<=0?'danger':m.stock<10?'warn':'ok'}"></span><b>${esc(m.name)}</b></div><span class="stock-value">${fmt(m.stock)} ${m.unit}</span></div>`).join('')}
+    </div></div>
+    <div class="quick-strip"><span class="quick-icon">✦</span><div><b>Keep it simple</b><small>1 full mishok = 1.0 · half = 0.5 · pieces are actual.</small></div></div>`;
   document.getElementById('quickProduction')?.addEventListener('click',()=>{route='production';render();});
+  document.getElementById('openInventory')?.addEventListener('click',()=>{route='inventory';render();});
 }
-
 function roleDashboard(p){
   if(currentUser.role==='hamurchi') p.innerHTML=`<div class="grid grid-2"><div class="card"><h2>Today</h2><div class="kpi">${isDemo?fmt(db.productions.filter(x=>x.date===today()&&x.createdBy===currentUser.name).reduce((a,b)=>a+b.mishokCount,0)):'—'} mishok</div><div class="small">Enter your mishoks and actual pieces from the Production panel.</div></div><div class="card"><h2>Recipe</h2><div class="kpi">v${db?.recipe?.version||1}</div><div class="small">You may update the working recipe. Future production uses the new version.</div></div></div>`;
   else if(currentUser.role==='naan') p.innerHTML=`<div class="card"><h2>Naan / Leposhka</h2><div class="notice">Panel ready. We will add the exact process after you provide it.</div></div>`;
@@ -164,7 +212,7 @@ function batchesFor(mishokCount){
 function renderProduction(p){
   const existing=isDemo?db.productions.filter(x=>x.date===today()):liveState.productions.filter(x=>x.production_date===today());
   const recipe=isDemo?db.recipe:liveState.recipe;
-  p.innerHTML=`<div class="page-head"><div><h1>Production</h1><p>Enter mishoks and actual pieces. Expected consumption is calculated from the current recipe and remains editable.</p></div></div><div class="grid grid-2"><div class="card"><h2>New production</h2><div class="field"><label>Mishok count</label><input id="mishokCount" type="number" min="0.5" step="0.5" value="1"></div><div id="batchEditor"></div><div style="height:10px"></div><h3>Material consumption</h3><div id="consumptionEditor"></div><div class="notice" style="margin:12px 0">Mishok is an operational unit. Full = 1.0, half = 0.5. Actual batch flour may be around 48–52 kg (or half-batch around 24–27 kg) without changing the mishok count.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveProduction">Complete production</button><button class="btn secondary" id="clearProduction">Clear</button></div></div><div class="card"><h2>Today’s production</h2>${existing.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Mishok</th><th>Pieces</th><th>Recipe</th></tr></thead><tbody>${existing.map(r=>{const bs=isDemo?r.batches:r.production_batches||[]; return `<tr><td>${esc(isDemo?r.timeLabel:new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt(bs.reduce((s,z)=>s+Number(z.pieces||0),0))}</td><td>v${isDemo?r.recipeVersion:(liveState.recipe?.version||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No production saved today.</div>'}</div></div>`;
+  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">Daily workflow</div><h1>Production</h1><p>Choose the batch size, enter actual pieces, then complete.</p></div></div><div class="grid grid-2"><div class="card"><h2>New production</h2><div class="field"><label>Mishok count</label><div class="mishok-picker"><button type="button" class="mishok-choice active" data-mishok="1">1</button><button type="button" class="mishok-choice" data-mishok="1.5">1.5</button><button type="button" class="mishok-choice" data-mishok="2">2</button><button type="button" class="mishok-choice" data-mishok="3">3</button></div><input id="mishokCount" class="sr-only" type="number" min="0.5" step="0.5" value="1"></div><div id="batchEditor"></div><div style="height:10px"></div><h3>Material consumption</h3><div id="consumptionEditor"></div><div class="notice" style="margin:12px 0">Mishok is an operational unit. Full = 1.0, half = 0.5. Actual batch flour may be around 48–52 kg (or half-batch around 24–27 kg) without changing the mishok count.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveProduction">Complete production</button><button class="btn secondary" id="clearProduction">Clear</button></div></div><div class="card"><h2>Today’s production</h2>${existing.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Mishok</th><th>Pieces</th><th>Recipe</th></tr></thead><tbody>${existing.map(r=>{const bs=isDemo?r.batches:r.production_batches||[]; return `<tr><td>${esc(isDemo?r.timeLabel:new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt(bs.reduce((s,z)=>s+Number(z.pieces||0),0))}</td><td>v${isDemo?r.recipeVersion:(liveState.recipe?.version||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No production saved today.</div>'}</div></div>`;
   const editor=document.getElementById('batchEditor');
   const consumption=document.getElementById('consumptionEditor');
   const rebuild=()=>{
@@ -172,7 +220,16 @@ function renderProduction(p){
     editor.innerHTML=`<h3>Batches</h3>${bs.map((b,i)=>`<div class="batch-row"><div class="batch-index">#${i+1}</div><div class="batch-kind">${b.mishok===1?'1.0':'0.5'} mishok</div><input type="number" min="0" step="1" data-pieces="${i}" placeholder="Actual pieces"></div>`).join('')}`;
     consumption.innerHTML=(recipe?.items||[]).map(it=>{const expected=Number(it.qty||0)*m;return `<div class="field-row"><div class="field"><label>${esc(it.name)} expected (${esc(it.unit)})</label><input class="expected-consumption" data-code="${esc(it.code)}" value="${expected}" disabled></div><div class="field"><label>Actual (${esc(it.unit)})</label><input class="actual-consumption" data-code="${esc(it.code)}" type="number" min="0" step="0.001" value="${expected}"></div></div>`}).join('');
   };
-  rebuild();document.getElementById('mishokCount').addEventListener('input',rebuild);
+  rebuild();
+  document.getElementById('mishokCount').addEventListener('input',()=>{
+    document.querySelectorAll('.mishok-choice').forEach(x=>x.classList.toggle('active',Number(x.dataset.mishok)===Number(document.getElementById('mishokCount').value)));
+    rebuild();
+  });
+  document.querySelectorAll('.mishok-choice').forEach(x=>x.addEventListener('click',()=>{
+    document.getElementById('mishokCount').value=x.dataset.mishok;
+    document.querySelectorAll('.mishok-choice').forEach(y=>y.classList.toggle('active',y===x));
+    rebuild();
+  }));
   document.getElementById('clearProduction').addEventListener('click',()=>{document.getElementById('mishokCount').value=1;rebuild();});
   document.getElementById('saveProduction').addEventListener('click',async()=>{
     const count=Number(document.getElementById('mishokCount').value||0); if(!(count>0)){alert('Enter a valid mishok count.');return;}
