@@ -364,7 +364,7 @@ function renderDashboard(p){
     "<section class='metric-grid'>"+
       "<div class='metric-card metric-green'><div class='metric-head'><span>🧺</span><b>"+t('Today’s',lang)+"<br>"+t('Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>▥</i></div>"+
       "<div class='metric-card metric-orange'><div class='metric-head'><span>🥯</span><b>"+t('Today’s',lang)+"<br>"+t('Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>◔</i></div>"+
-      "<div class='metric-card metric-purple'><div class='metric-head'><span>▶</span><b>"+t('Production',lang)+"<br>"+t('Runs',lang)+"</b></div><strong>"+todayRuns.length+"</strong><i>▥</i></div>"+
+      "<div class='metric-card metric-purple'><div class='metric-head'><span>▶</span><b>"+t('Production',lang)+"<br>"+t('Runs',lang)+"</b></div><strong>"+totalRuns+"</strong><i>▥</i></div>"+
       "<div class='metric-card metric-blue'><div class='metric-head'><span>▦</span><b>"+t('Recipe',lang)+"<br>"+t('Version',lang)+"</b></div><strong>v"+(db?.recipe?.version||liveState.recipe?.version||1)+"</strong><i>⟳</i></div>"+
     "</section>"+
     "<section class='portal-panel production-panel'>"+
