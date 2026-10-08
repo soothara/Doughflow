@@ -396,21 +396,26 @@ function renderProduction(p){
     editor.innerHTML=`<h3>Batches</h3>${bs.map((b,i)=>`<div class="batch-row"><div class="batch-index">#${i+1}</div><div class="batch-kind">${b.sack===1?'1.0':'0.5'} sack</div><input type="number" min="0" step="1" data-pieces="${i}" placeholder="Actual pieces"></div>`).join('')}`;
     consumption.innerHTML=(recipe?.items||[]).map(it=>{const expected=Number(it.qty||0)*m;return `<div class="field-row"><div class="field"><label>${esc(it.name)} expected (${esc(it.unit)})</label><input class="expected-consumption" data-code="${esc(it.code)}" value="${expected}" disabled></div><div class="field"><label>Actual (${esc(it.unit)})</label><input class="actual-consumption" data-code="${esc(it.code)}" type="number" min="0" step="0.001" value="${expected}"></div></div>`}).join('');
   };
+  const syncSackChoices=()=>{
+    const total=Number(document.getElementById('sackCount').value||0);
+    document.querySelectorAll('.sack-choice').forEach(y=>y.classList.toggle('active',Number(y.dataset.sack)===Math.floor(total)));
+    document.querySelector('[data-half]')?.classList.toggle('active',total%1===0.5);
+  };
   rebuild();
+  syncSackChoices();
   document.getElementById('sackCount').addEventListener('input',()=>{
     document.getElementById('sackCount').value=normalizeSackCount(document.getElementById('sackCount').value);
     rebuild();
+    syncSackChoices();
   });
   document.querySelectorAll('.sack-choice').forEach(x=>x.addEventListener('click',()=>{
     const current=normalizeSackCount(document.getElementById('sackCount').value);
     document.getElementById('sackCount').value=x.dataset.sack ? Number(x.dataset.sack) : Math.min(9.5,Math.round((current+0.5)*2)/2);
     rebuild();
-    const total=Number(document.getElementById('sackCount').value);
-    document.querySelectorAll('.sack-choice').forEach(y=>y.classList.toggle('active',Number(y.dataset.sack)===Math.floor(total)));
-    document.querySelector('[data-half]')?.classList.toggle('active',total%1===0.5);
+    syncSackChoices();
   }));
-  document.getElementById('resetSack').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();});
-  document.getElementById('clearProduction').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();});
+  document.getElementById('resetSack').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();syncSackChoices();});
+  document.getElementById('clearProduction').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();syncSackChoices();});
   document.getElementById('saveProduction').addEventListener('click',async()=>{
     const count=normalizeSackCount(document.getElementById('sackCount').value); if(!(count>=0.5&&count<=9.5)){alert(t('Sack count must be between 0.5 and 9.5.',lang));return;}
     if(!recipe?.items?.length){alert(t('No active recipe found.',lang));return;}
