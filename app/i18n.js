@@ -212,6 +212,21 @@ Object.assign(DICT.ru,{
   'Actual consumption cannot be negative':'Фактический расход не может быть отрицательным.'
 });
 
+
+Object.assign(DICT.ky,{
+  'Recipe cannot be empty':'Рецепт бош боло албайт.',
+  'Recipe contains duplicate materials':'Рецептте кайталанган материалдар бар.',
+  'Recipe quantities cannot be negative':'Ингредиенттердин саны терс боло албайт.',
+  'Recipe contains an unknown material':'Рецептте белгисиз материал бар.',
+  'Recipe unit does not match the material base unit':'Рецепттин өлчөм бирдиги материалдын негизги бирдигине туура келбейт.',
+  'Batches do not match the selected sack count':'Партиялар тандалган кап санына туура келбейт.',
+  'Each batch must be 1.0 or 0.5 sack':'Ар бир партия 1,0 же 0,5 кап болушу керек.',
+  'Batch numbers must be sequential starting at 1':'Партия номерлери 1ден баштап иреттүү болушу керек.',
+  'Consumption contains duplicate materials':'Керектөөдө кайталанган материалдар бар.',
+  'Consumption contains an unknown material':'Керектөөдө белгисиз материалдар бар.',
+  'Actual consumption cannot be negative':'Чыныгы керектөө терс боло албайт.'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
