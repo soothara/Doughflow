@@ -280,43 +280,45 @@ function renderDashboard(p){
   const stockRows=STOCK_MATERIALS.map(m=>({...m,stock:getStock(m.code)}));
   const recipe=isDemo?db.recipe:liveState.recipe;
   const firstName=esc(currentUser.name.split(' ')[0]);
-  const recipeCards=(recipe?.items||[]).map(it=>'<div class="recipe-photo-card"><div class="recipe-visual '+esc(it.code)+'"><span>'+materialIcon(it.code)+'</span></div><b>'+esc(it.name)+'</b><strong>'+fmt(it.qty)+' '+esc(it.unit)+'</strong></div>').join('');
-  const stockCards=stockRows.map(m=>'<div class="stock-item"><div class="stock-item-icon '+esc(m.code)+'">'+materialIcon(m.code)+'</div><div><b>'+esc(m.name)+'</b><strong class="'+(m.stock<=0?'empty-stock':'')+'">'+fmt(m.stock)+' '+m.unit+' <em>!</em></strong></div><span>›</span></div>').join('');
-  p.innerHTML=
-    '<section class="portal-hero">'+
-      '<div class="portal-hero-photo"></div><div class="portal-hero-shade"></div>'+
-      '<div class="portal-hero-content">'+
-        '<div class="hero-topline">'+
-          '<div class="df-badge">DF</div><div class="hero-brand"><b>DoughFlow</b><small>Bakery control</small></div><div class="hero-spacer"></div>'+
-          '<div class="hero-language">${languageFlag()} <span>${languageName()}</span><b>⌄</b></div>'+
-          '<div class="hero-user"><span class="hero-avatar">'+esc(String(currentUser.name||'A')[0].toUpperCase())+'</span><span><b>'+esc(currentUser.name)+'</b><small>'+roleName(currentUser.role)+'</small></span></div>'+
-        '</div>'+
-        '<div class="hero-copy"><div class="hero-date">🇰🇬 '+today()+'</div><h1>${t('Good day',lang)}, '+firstName+' <span>👋</span></h1><p>${t('Let’s make great leposhka today!',lang)}</p></div>'+
-      '</div>'+
-    '</section>'+
-    '<section class="metric-grid">'+
-      '<div class="metric-card metric-green"><div class="metric-head"><span>🧺</span><b>${t('Today’s',lang)}<br>${t('Sacks',lang)}</b></div><strong>'+fmt(totalSacks)+'</strong><i>▥</i></div>'+
-      '<div class="metric-card metric-orange"><div class="metric-head"><span>🥯</span><b>${t('Today’s',lang)}<br>${t('Pieces',lang)}</b></div><strong>'+fmt(totalPieces)+'</strong><i>◔</i></div>'+
-      '<div class="metric-card metric-purple"><div class="metric-head"><span>▶</span><b>${t('Production',lang)}<br>${t('Runs',lang)}</b></div><strong>'+todayRuns.length+'</strong><i>▥</i></div>'+
-      '<div class="metric-card metric-blue"><div class="metric-head"><span>▦</span><b>${t('Recipe',lang)}<br>${t('Version',lang)}</b></div><strong>v'+(db?.recipe?.version||liveState.recipe?.version||1)+'</strong><i>⟳</i></div>'+
-    '</section>'+
-    '<section class="portal-panel production-panel">'+
-      '<div class="panel-photo-strip"><div class="panel-photo"></div><div class="panel-photo-shade"></div><div class="panel-title-wrap"><div class="panel-sticker coral">🍞</div><div><h2>${t('New Production',lang)}</h2><p>${t('Select total sacks (you can add 0.5)',lang)}</p></div></div></div>'+
-      '<div class="portal-panel-inner">'+
-        '<div class="portal-section-title"><div class="section-icon green">🧺</div><div><h3>${t('Sack Count',lang)}</h3><span>ⓘ 1–9 ${t('Sacks',lang)} + 0.5</span></div></div>'+
-        '<div class="dashboard-sack-grid">'+Array.from({length:9},(_,i)=>'<button class="dashboard-sack-btn" data-dashboard-sack="'+(i+1)+'">'+(i+1)+'</button>').join('')+'</div>'+
-        '<div class="dashboard-sack-row"><button class="dashboard-half-btn" id="dashboardHalf">＋ <b>0.5</b></button><div class="dashboard-total"><small>Total</small><strong id="dashboardTotal">0</strong></div><button class="dashboard-reset" id="dashboardReset">↻ <span>Reset</span></button></div>'+
-        '<div class="portal-section-title recipe-title"><div class="section-icon mint">▦</div><div><h3>${t('Recipe',lang)} <small>(${t('per 1 sack',lang)}</small></h3><span>${t('Automatically calculated',lang)} ⚙</span></div></div>'+
-        '<div class="recipe-photo-grid">'+recipeCards+'</div>'+
-        '<button class="start-production-button" id="dashboardStart">▶ <span>${t('Start Production',lang)}<small>${t('Calculate ingredients and enter pieces',lang)}</small></span><b>›</b></button>'+
-      '</div>'+
-    '</section>'+
-    '<section class="portal-panel stock-panel">'+
-      '<div class="portal-section-title stock-title"><div class="section-icon brown">📦</div><div><h3>${t('Stock Overview',lang)}</h3><span>${t('Current available stock in inventory',lang)}</span></div>'+
-      (currentUser.role==='admin'?'<button class="stock-view-all" id="openInventory">${t('View All',lang)} »</button>':'')+
-      '</div><div class="stock-grid">'+stockCards+'</div>'+
-    '</section>'+
-    '<section class="made-by-card"><div class="made-by-symbol">✦</div><div><small>${t('Designed & built with care',lang)}</small><strong>Сделано Али</strong></div><div class="made-by-kyrgyz">🇰🇬</div></section>';
+  const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
+  const stockCards=stockRows.map(m=>"<div class='stock-item'><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div><b>"+esc(t(m.name,lang))+"</b><strong class='"+(m.stock<=0?'empty-stock':'')+"'>"+fmt(m.stock)+" "+m.unit+" <em>!</em></strong></div><span>›</span></div>").join('');
+  p.innerHTML =
+    "<section class='portal-hero'>"+
+      "<div class='portal-hero-photo'></div><div class='portal-hero-shade'></div>"+
+      "<div class='portal-hero-content'>"+
+        "<div class='hero-topline'>"+
+          "<div class='df-badge'>DF</div><div class='hero-brand'><b>DoughFlow</b><small>"+t('Bakery control',lang)+"</small></div><div class='hero-spacer'></div>"+
+          "<div class='hero-language'>"+languageFlag()+" <span>"+languageName()+"</span><b>⌄</b></div>"+
+          "<div class='hero-user'><span class='hero-avatar'>"+esc(String(currentUser.name||'A')[0].toUpperCase())+"</span><span><b>"+esc(currentUser.name)+"</b><small>"+roleName(currentUser.role)+"</small></span></div>"+
+        "</div>"+
+        "<div class='hero-copy'><div class='hero-date'>🇰🇬 "+today()+"</div><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+t('Let’s make great leposhka today!',lang)+"</p></div>"+
+      "</div>"+
+    "</section>"+
+    "<section class='metric-grid'>"+
+      "<div class='metric-card metric-green'><div class='metric-head'><span>🧺</span><b>"+t('Today’s',lang)+"<br>"+t('Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>▥</i></div>"+
+      "<div class='metric-card metric-orange'><div class='metric-head'><span>🥯</span><b>"+t('Today’s',lang)+"<br>"+t('Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>◔</i></div>"+
+      "<div class='metric-card metric-purple'><div class='metric-head'><span>▶</span><b>"+t('Production',lang)+"<br>"+t('Runs',lang)+"</b></div><strong>"+todayRuns.length+"</strong><i>▥</i></div>"+
+      "<div class='metric-card metric-blue'><div class='metric-head'><span>▦</span><b>"+t('Recipe',lang)+"<br>"+t('Version',lang)+"</b></div><strong>v"+(db?.recipe?.version||liveState.recipe?.version||1)+"</strong><i>⟳</i></div>"+
+    "</section>"+
+    "<section class='portal-panel production-panel'>"+
+      "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker coral'>🍞</div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
+      "<div class='portal-panel-inner'>"+
+        "<div class='portal-section-title'><div class='section-icon green'>🧺</div><div><h3>"+t('Sack Count',lang)+"</h3><span>ⓘ 1–9 "+t('Sacks',lang)+" + 0.5</span></div></div>"+
+        "<div class='dashboard-sack-grid'>"+Array.from({length:9},(_,i)=>"<button class='dashboard-sack-btn' data-dashboard-sack='"+(i+1)+"'>"+(i+1)+"</button>").join('')+"</div>"+
+        "<div class='dashboard-sack-row'><button class='dashboard-half-btn' id='dashboardHalf'>＋ <b>0.5</b></button><div class='dashboard-total'><small>"+t('Total',lang)+"</small><strong id='dashboardTotal'>0</strong></div><button class='dashboard-reset' id='dashboardReset'>↻ <span>"+t('Reset',lang)+"</span></button></div>"+
+        "<div class='portal-section-title recipe-title'><div class='section-icon mint'>▦</div><div><h3>"+t('Recipe',lang)+" <small>("+t('per 1 sack',lang)+")</small></h3><span>"+t('Automatically calculated',lang)+" ⚙</span></div></div>"+
+        "<div class='recipe-photo-grid'>"+recipeCards+"</div>"+
+        "<button class='start-production-button' id='dashboardStart'>▶ <span>"+t('Start Production',lang)+"<small>"+t('Calculate ingredients and enter pieces',lang)+"</small></span><b>›</b></button>"+
+      "</div>"+
+    "</section>"+
+    "<section class='portal-panel stock-panel'>"+
+      "<div class='portal-section-title stock-title'><div class='section-icon brown'>📦</div><div><h3>"+t('Stock Overview',lang)+"</h3><span>"+t('Current available stock in inventory',lang)+"</span></div>"+
+      (currentUser.role==='admin'?"<button class='stock-view-all' id='openInventory'>"+t('View All',lang)+" »</button>":"")+
+      "</div><div class='stock-grid'>"+stockCards+"</div>"+
+    "</section>"+
+    "<a class='made-by-card made-by-link' href='https://wa.me/996509512786' target='_blank' rel='noopener' aria-label='WhatsApp Ali'>"+
+      "<div class='made-by-symbol'>✦</div><div><small>"+t('Designed & built with care',lang)+"</small><strong>Сделано Али</strong></div><div class='made-by-kyrgyz'>🇰🇬</div>"+
+    "</a>";
 
   let selected=0;
   const sync=()=>{
@@ -332,7 +334,7 @@ function renderDashboard(p){
   const openProduction=()=>{
     route='production';render();
     setTimeout(()=>{
-      const input=document.getElementById('mishokCount');
+      const input=document.getElementById('sackCount');
       if(input){input.value=selected||0;input.dispatchEvent(new Event('input',{bubbles:true}));}
     },0);
   };
