@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v2-ui';
+const CACHE = 'doughflow-v3-20261008';
 
 const CORE_ASSETS = [
   './',
@@ -38,6 +38,20 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+
+  // Always refresh app shell/navigation so a deployment never leaves the phone on an old UI.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request, {cache:'no-store'})
+        .then(response => {
+          const clone=response.clone();
+          caches.open(CACHE).then(cache=>cache.put('./index.html',clone));
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
 
   if (NETWORK_FIRST.has(url.pathname)) {
     event.respondWith(
