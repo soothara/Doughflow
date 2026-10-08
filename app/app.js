@@ -60,7 +60,7 @@ function inventoryCountLabel(kind,count,language=lang){
   if(kind==='carton') return n===1?'carton':'cartons';
   if(kind==='box') return n===1?'box':'boxes';
   if(kind==='bundle') return n===1?'bundle':'bundles';
-  return 'pc';
+  return n===1?'pc':'pcs';
 }
 function packageCombination(remainder,packages,language=lang){
   const usable=packages.filter(p=>Number(p.qty)>0);
