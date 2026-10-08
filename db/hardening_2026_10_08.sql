@@ -372,3 +372,23 @@ $$;
 
 revoke all on function public.production_summary(date,date) from public;
 grant execute on function public.production_summary(date,date) to authenticated;
+
+
+create or replace function public.set_preferred_language(p_language text)
+returns void
+language plpgsql
+security definer
+set search_path=public
+as $$
+begin
+  if auth.uid() is null then raise exception 'Not authorized'; end if;
+  if p_language not in ('en','ru','ky') then raise exception 'Invalid language'; end if;
+  update public.profiles
+  set preferred_language=p_language, updated_at=now()
+  where id=auth.uid();
+  if not found then raise exception 'Profile not found'; end if;
+end;
+$$;
+
+revoke all on function public.set_preferred_language(text) from public;
+grant execute on function public.set_preferred_language(text) to authenticated;
