@@ -58,6 +58,8 @@ const app=document.getElementById('app');
 const modalRoot=document.getElementById('modalRoot');
 
 function saveDemo(){ if(isDemo) localStorage.setItem(KEY,JSON.stringify(db)); }
+const ICONS={flour:'🌾',water:'💧',oil:'🫒',yeast:'🧫',salt:'🧂',sugar:'🍚'};
+function materialIcon(code){return ICONS[code]||'📦';}
 function roleName(r){return ({admin:t('Admin',lang),hamurchi:t('Hamurchi',lang),naan:t('Naan / Leposhka Maker',lang),sales:t('Salesman',lang)})[r]||r;}
 function setLanguage(next){ lang=saveLang(currentUser?.id||'guest',next); if(currentUser) currentUser.lang=lang; if(isDemo && db?.session) { db.session.lang=lang; saveDemo(); } render(); if(!isDemo) { supabase.from('profiles').update({preferred_language:lang}).eq('id',currentUser.id).then(()=>{}); } }
 function languageSwitcher(){ return `<select id="languageSelect" class="language-select" aria-label="Language">${languageOptions(lang)}</select>`; }
@@ -237,10 +239,10 @@ function renderDashboard(p){
       ${currentUser.role==='admin'?'<button class="btn primary hero-btn" id="quickProduction">＋ New production</button>':''}
     </div>
     <div class="stats-grid">
-      <div class="stat-card emphasis"><span>🧺 Today’s Sacks</span><strong>${fmt(totalM)}</strong><small>full + half sacks</small></div>
-      <div class="stat-card"><span>🥯 Today’s Pieces</span><strong>${fmt(totalPieces)}</strong><small>pieces</small></div>
-      <div class="stat-card"><span>▶️ Production Runs</span><strong>${todayRuns.length}</strong><small>production runs</small></div>
-      <div class="stat-card"><span>📖 Recipe</span><strong>v${db?.recipe?.version||liveState.recipe?.version||1}</strong><small>active version</small></div>
+      <div class="stat-card emphasis"><span class="metric-label"><i class="metric-icon sacks">🧺</i>Today’s Sacks</span><strong>${fmt(totalM)}</strong><small>full + half sacks</small></div>
+      <div class="stat-card"><span class="metric-label"><i class="metric-icon pieces">🥯</i>Today’s Pieces</span><strong>${fmt(totalPieces)}</strong><small>pieces</small></div>
+      <div class="stat-card"><span class="metric-label"><i class="metric-icon runs">▶</i>Production Runs</span><strong>${todayRuns.length}</strong><small>production runs</small></div>
+      <div class="stat-card"><span class="metric-label"><i class="metric-icon recipe">▦</i>Recipe Version</span><strong>v${db?.recipe?.version||liveState.recipe?.version||1}</strong><small>active version</small></div>
     </div>
     <div class="section-head"><div><h2>📦 Stock Overview</h2><p>Current available stock in inventory.</p></div>${currentUser.role==='admin'?'<button class="text-button" id="openInventory">View all</button>':''}</div>
     <div class="card stock-card"><div class="stock-list">
