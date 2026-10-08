@@ -148,13 +148,13 @@ function restoreRouteDraft(draft){
       input.dispatchEvent(new Event('input',{bubbles:true}));
       [...document.querySelectorAll('[data-pieces]')].forEach((el,i)=>{if(draft.pieces[i]!==undefined) el.value=draft.pieces[i];});
       draft.consumption.forEach(item=>{
-        const el=document.querySelector(\`.actual-consumption[data-code="\${CSS.escape(item.code)}"]\`);
+        const el=document.querySelector(`.actual-consumption[data-code="${CSS.escape(item.code)}"]`);
         if(el) el.value=item.value;
       });
     }
   }else if(draft.type==='recipe'){
     draft.quantities.forEach(item=>{
-      const el=document.querySelector(\`.recipe-qty[data-code="\${CSS.escape(item.code)}"]\`);
+      const el=document.querySelector(`.recipe-qty[data-code="${CSS.escape(item.code)}"]`);
       if(el) el.value=item.value;
     });
   }
