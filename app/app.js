@@ -8,12 +8,13 @@ const supabase = isDemo ? null : createClient(CFG.supabaseUrl, CFG.supabaseAnonK
 
 const MATERIALS = [
   {code:'flour', name:'Flour', unit:'kg', decimals:2, packages:[{label:'Bulk',qty:1}]},
-  {code:'water', name:'Water', unit:'kg', decimals:2, packages:[{label:'Bulk',qty:1}]},
+  {code:'water', name:'Water', unit:'kg', decimals:2, packages:[{label:'Bulk',qty:1}], inventoryTracked:false},
   {code:'oil', name:'Oil', unit:'kg', decimals:2, packages:[{label:'20 kg carton',qty:20}]},
   {code:'salt', name:'Salt', unit:'kg', decimals:3, packages:[{label:'1 kg packet',qty:1},{label:'750 g packet',qty:.75},{label:'20 × 1 kg bundle',qty:20}]},
   {code:'sugar', name:'Sugar', unit:'kg', decimals:2, packages:[{label:'Bulk',qty:1}]},
   {code:'yeast', name:'Yeast', unit:'kg', decimals:3, packages:[{label:'500 g packet',qty:.5},{label:'20 × 500 g box',qty:10}]}
 ];
+const STOCK_MATERIALS=MATERIALS.filter(m=>m.inventoryTracked!==false);
 
 const DEFAULT_RECIPE = [
   {code:'flour', name:'Flour', qty:50, unit:'kg', note:'1 operational sack; actual batch can be 48–52 kg and is still counted as 1 sack'},
@@ -62,7 +63,9 @@ const ICONS={flour:'🌾',water:'💧',oil:'🫒',yeast:'🧫',salt:'🧂',sugar
 function materialIcon(code){return ICONS[code]||'📦';}
 function roleName(r){return ({admin:t('Admin',lang),hamurchi:t('Hamurchi',lang),naan:t('Naan / Leposhka Maker',lang),sales:t('Salesman',lang)})[r]||r;}
 function setLanguage(next){ lang=saveLang(currentUser?.id||'guest',next); if(currentUser) currentUser.lang=lang; if(isDemo && db?.session) { db.session.lang=lang; saveDemo(); } render(); if(!isDemo) { supabase.from('profiles').update({preferred_language:lang}).eq('id',currentUser.id).then(()=>{}); } }
-function languageSwitcher(){ return `<select id="languageSelect" class="language-select" aria-label="Language">${languageOptions(lang)}</select>`; }
+function languageFlag(){ return lang==='ru'?'🇷🇺':lang==='ky'?'🇰🇬':'🇬🇧'; }
+function languageName(){ return LANGUAGES[lang]||'English'; }
+function languageSwitcher(){ return `<select id="languageSelect" class="language-select" aria-label="${t('Language',lang)}">${languageOptions(lang)}</select>`; }
 function applyCurrentLanguage(){ applyTranslations(document,lang); const sel=document.getElementById('languageSelect'); if(sel) sel.value=lang; document.documentElement.lang = lang==='ru'?'ru':lang==='ky'?'ky':'en'; }
 function can(role, section){
   if(section==='more') return true;
@@ -151,11 +154,53 @@ function render(){
 }
 
 function loginHTML(){
-  return `<div class="login-wrap"><div class="login-card"><div style="display:flex;justify-content:flex-end;margin-bottom:8px"><select id="languageSelect" class="language-select" aria-label="Language">${languageOptions(lang)}</select></div><div class="logo-large">DF</div><h1>DoughFlow</h1><p>Production + inventory management for your bakery workflow.</p>${isDemo?`<div class="alert info">Demo mode is active. Choose a role below. Real multi-user login is enabled after you connect Supabase.</div><div class="grid grid-2">${['admin','hamurchi','naan','sales'].map(r=>`<button class="btn ${r==='admin'?'primary':'secondary'} demo-login" data-role="${r}">${roleName(r)}</button>`).join('')}</div>`:`<form id="loginForm"><div class="field"><label>Email</label><input required type="email" name="email" autocomplete="username"></div><div class="field"><label>Password</label><input required type="password" name="password" autocomplete="current-password"></div><button class="btn primary" style="width:100%">Sign in</button><div id="loginError" class="small" style="margin-top:10px;color:#b91c1c"></div></form>`}</div></div>`;
+  return `<div class="login-portal">
+    <div class="login-photo"></div><div class="login-shade"></div>
+    <div class="login-shell">
+      <div class="login-brand-row">
+        <div class="login-logo">DF</div>
+        <div><strong>DoughFlow</strong><small>Bakery control</small></div>
+        <div class="login-lang">${languageFlag()} ${languageSwitcher()}</div>
+      </div>
+      <div class="login-main-card">
+        <div class="login-badge">🥖</div>
+        <div class="eyebrow login-eyebrow">${t('Kyrgyz bakery portal',lang)}</div>
+        <h1>${t('Welcome back',lang)} 👋</h1>
+        <p>${t('Sign in to manage production, recipes and stock.',lang)}</p>
+        ${isDemo?`
+          <div class="login-note">${t('Demo mode is active. Choose a role below.',lang)}</div>
+          <div class="login-role-grid">${['admin','hamurchi','naan','sales'].map(r=>`<button class="login-role-btn ${r==='admin'?'featured':''} demo-login" data-role="${r}"><span>${r==='admin'?'👑':r==='hamurchi'?'🥣':r==='naan'?'🫓':'💰'}</span>${roleName(r)}<b>›</b></button>`).join('')}</div>
+        `:`
+          <form id="loginForm" class="modern-login-form">
+            <div class="field"><label>${t('Username',lang)}</label><input required type="text" name="login" value="askat" placeholder="askat" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+            <div class="field"><label>${t('Password',lang)}</label><input required type="password" name="password" autocomplete="current-password"></div>
+            <button class="login-submit" type="submit"><span>↪</span>${t('Sign in',lang)}<b>›</b></button>
+            <div id="loginError" class="login-error"></div>
+          </form>
+        `}
+        <div class="login-footer-line"><span>🇰🇬 Bishkek</span><span>•</span><span>DoughFlow</span></div>
+      </div>
+      <div class="login-credit"><span>✦</span> Сделано Али</div>
+    </div>
+  </div>`;
 }
 function wireLogin(){
-  if(isDemo){document.querySelectorAll('.demo-login').forEach(b=>b.addEventListener('click',()=>{db.session={user:{id:`demo-${b.dataset.role}`,name:roleName(b.dataset.role)},role:b.dataset.role,lang:getSavedLang(`demo-${b.dataset.role}`)};currentUser={id:db.session.user.id,name:db.session.user.name,role:b.dataset.role,lang:db.session.lang};lang=currentUser.lang;route='dashboard';saveDemo();render();}));return;}
-  document.getElementById('loginForm')?.addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const {error}=await supabase.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(error)document.getElementById('loginError').textContent=error.message;});
+  if(isDemo){
+    document.querySelectorAll('.demo-login').forEach(b=>b.addEventListener('click',()=>{
+      db.session={user:{id:`demo-${b.dataset.role}`,name:roleName(b.dataset.role)},role:b.dataset.role,lang:getSavedLang(`demo-${b.dataset.role}`)};
+      currentUser={id:db.session.user.id,name:db.session.user.name,role:b.dataset.role,lang:db.session.lang};
+      lang=currentUser.lang;route='dashboard';saveDemo();render();
+    }));
+    return;
+  }
+  document.getElementById('loginForm')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const f=new FormData(e.currentTarget);
+    const raw=String(f.get('login')||'').trim();
+    const email=raw.includes('@')?raw:`${raw}@gmail.com`;
+    const {error}=await supabase.auth.signInWithPassword({email,password:f.get('password')});
+    if(error) document.getElementById('loginError').textContent=error.message;
+  });
 }
 async function logout(){ if(isDemo){db.session=null;currentUser=null;lang=getSavedLang('guest');saveDemo();render();return;} await supabase.auth.signOut(); }
 
@@ -232,7 +277,7 @@ function renderDashboard(p){
   const todayRuns=prod.filter(x=>(isDemo?x.date:x.production_date)===today());
   const totalSacks=todayRuns.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
   const totalPieces=todayRuns.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
-  const stockRows=MATERIALS.map(m=>({...m,stock:getStock(m.code)}));
+  const stockRows=STOCK_MATERIALS.map(m=>({...m,stock:getStock(m.code)}));
   const recipe=isDemo?db.recipe:liveState.recipe;
   const firstName=esc(currentUser.name.split(' ')[0]);
   const recipeCards=(recipe?.items||[]).map(it=>'<div class="recipe-photo-card"><div class="recipe-visual '+esc(it.code)+'"><span>'+materialIcon(it.code)+'</span></div><b>'+esc(it.name)+'</b><strong>'+fmt(it.qty)+' '+esc(it.unit)+'</strong></div>').join('');
@@ -243,35 +288,35 @@ function renderDashboard(p){
       '<div class="portal-hero-content">'+
         '<div class="hero-topline">'+
           '<div class="df-badge">DF</div><div class="hero-brand"><b>DoughFlow</b><small>Bakery control</small></div><div class="hero-spacer"></div>'+
-          '<div class="hero-language">🇬🇧 <span>English</span><b>⌄</b></div>'+
+          '<div class="hero-language">${languageFlag()} <span>${languageName()}</span><b>⌄</b></div>'+
           '<div class="hero-user"><span class="hero-avatar">'+esc(String(currentUser.name||'A')[0].toUpperCase())+'</span><span><b>'+esc(currentUser.name)+'</b><small>'+roleName(currentUser.role)+'</small></span></div>'+
         '</div>'+
-        '<div class="hero-copy"><div class="hero-date">🇰🇬 '+today()+'</div><h1>Good day, '+firstName+' <span>👋</span></h1><p>Let’s make great leposhka today!</p></div>'+
+        '<div class="hero-copy"><div class="hero-date">🇰🇬 '+today()+'</div><h1>${t('Good day',lang)}, '+firstName+' <span>👋</span></h1><p>${t('Let’s make great leposhka today!',lang)}</p></div>'+
       '</div>'+
     '</section>'+
     '<section class="metric-grid">'+
-      '<div class="metric-card metric-green"><div class="metric-head"><span>🧺</span><b>Today’s<br>Sacks</b></div><strong>'+fmt(totalSacks)+'</strong><i>▥</i></div>'+
-      '<div class="metric-card metric-orange"><div class="metric-head"><span>🥯</span><b>Today’s<br>Pieces</b></div><strong>'+fmt(totalPieces)+'</strong><i>◔</i></div>'+
-      '<div class="metric-card metric-purple"><div class="metric-head"><span>▶</span><b>Production<br>Runs</b></div><strong>'+todayRuns.length+'</strong><i>▥</i></div>'+
-      '<div class="metric-card metric-blue"><div class="metric-head"><span>▦</span><b>Recipe<br>Version</b></div><strong>v'+(db?.recipe?.version||liveState.recipe?.version||1)+'</strong><i>⟳</i></div>'+
+      '<div class="metric-card metric-green"><div class="metric-head"><span>🧺</span><b>${t('Today’s',lang)}<br>${t('Sacks',lang)}</b></div><strong>'+fmt(totalSacks)+'</strong><i>▥</i></div>'+
+      '<div class="metric-card metric-orange"><div class="metric-head"><span>🥯</span><b>${t('Today’s',lang)}<br>${t('Pieces',lang)}</b></div><strong>'+fmt(totalPieces)+'</strong><i>◔</i></div>'+
+      '<div class="metric-card metric-purple"><div class="metric-head"><span>▶</span><b>${t('Production',lang)}<br>${t('Runs',lang)}</b></div><strong>'+todayRuns.length+'</strong><i>▥</i></div>'+
+      '<div class="metric-card metric-blue"><div class="metric-head"><span>▦</span><b>${t('Recipe',lang)}<br>${t('Version',lang)}</b></div><strong>v'+(db?.recipe?.version||liveState.recipe?.version||1)+'</strong><i>⟳</i></div>'+
     '</section>'+
     '<section class="portal-panel production-panel">'+
-      '<div class="panel-photo-strip"><div class="panel-photo"></div><div class="panel-photo-shade"></div><div class="panel-title-wrap"><div class="panel-sticker coral">🍞</div><div><h2>New Production</h2><p>Select total sacks (you can add 0.5)</p></div></div></div>'+
+      '<div class="panel-photo-strip"><div class="panel-photo"></div><div class="panel-photo-shade"></div><div class="panel-title-wrap"><div class="panel-sticker coral">🍞</div><div><h2>${t('New Production',lang)}</h2><p>${t('Select total sacks (you can add 0.5)',lang)}</p></div></div></div>'+
       '<div class="portal-panel-inner">'+
-        '<div class="portal-section-title"><div class="section-icon green">🧺</div><div><h3>Sack Count</h3><span>ⓘ 1–9 sacks + 0.5</span></div></div>'+
+        '<div class="portal-section-title"><div class="section-icon green">🧺</div><div><h3>${t('Sack Count',lang)}</h3><span>ⓘ 1–9 ${t('Sacks',lang)} + 0.5</span></div></div>'+
         '<div class="dashboard-sack-grid">'+Array.from({length:9},(_,i)=>'<button class="dashboard-sack-btn" data-dashboard-sack="'+(i+1)+'">'+(i+1)+'</button>').join('')+'</div>'+
         '<div class="dashboard-sack-row"><button class="dashboard-half-btn" id="dashboardHalf">＋ <b>0.5</b></button><div class="dashboard-total"><small>Total</small><strong id="dashboardTotal">0</strong></div><button class="dashboard-reset" id="dashboardReset">↻ <span>Reset</span></button></div>'+
-        '<div class="portal-section-title recipe-title"><div class="section-icon mint">▦</div><div><h3>Recipe <small>(per 1 sack)</small></h3><span>Automatically calculated ⚙</span></div></div>'+
+        '<div class="portal-section-title recipe-title"><div class="section-icon mint">▦</div><div><h3>${t('Recipe',lang)} <small>(${t('per 1 sack',lang)}</small></h3><span>${t('Automatically calculated',lang)} ⚙</span></div></div>'+
         '<div class="recipe-photo-grid">'+recipeCards+'</div>'+
-        '<button class="start-production-button" id="dashboardStart">▶ <span>Start Production<small>Calculate ingredients and enter pieces</small></span><b>›</b></button>'+
+        '<button class="start-production-button" id="dashboardStart">▶ <span>${t('Start Production',lang)}<small>${t('Calculate ingredients and enter pieces',lang)}</small></span><b>›</b></button>'+
       '</div>'+
     '</section>'+
     '<section class="portal-panel stock-panel">'+
-      '<div class="portal-section-title stock-title"><div class="section-icon brown">📦</div><div><h3>Stock Overview</h3><span>Current available stock in inventory</span></div>'+
-      (currentUser.role==='admin'?'<button class="stock-view-all" id="openInventory">View All »</button>':'')+
+      '<div class="portal-section-title stock-title"><div class="section-icon brown">📦</div><div><h3>${t('Stock Overview',lang)}</h3><span>${t('Current available stock in inventory',lang)}</span></div>'+
+      (currentUser.role==='admin'?'<button class="stock-view-all" id="openInventory">${t('View All',lang)} »</button>':'')+
       '</div><div class="stock-grid">'+stockCards+'</div>'+
     '</section>'+
-    '<section class="made-by-card"><div class="made-by-symbol">✦</div><div><small>Designed & built with care</small><strong>Сделано Али</strong></div><div class="made-by-kyrgyz">🇰🇬</div></section>';
+    '<section class="made-by-card"><div class="made-by-symbol">✦</div><div><small>${t('Designed & built with care',lang)}</small><strong>Сделано Али</strong></div><div class="made-by-kyrgyz">🇰🇬</div></section>';
 
   let selected=0;
   const sync=()=>{
@@ -311,7 +356,7 @@ function batchesFor(mishokCount){
 }
 function normalizeSackCount(value){
   const n=Number(value);
-  if(!Number.isFinite(n)) return 1;
+  if(!Number.isFinite(n)) return 0;
   return Math.max(0,Math.min(9.5,Math.round(n*2)/2));
 }
 
@@ -354,7 +399,7 @@ function renderProduction(p){
       db.productions.push(run); applyProductionConsumption(count,run.id,run.consumption); saveDemo(); alert(`Saved ${count} sack.`); render();
     } else {
       const batchPayload=batchesFor(count).map((b,i)=>({batch_no:i+1,mishok_fraction:b.mishok,pieces:pieces[i]||0}));
-      const payload=consumptionItems.map(x=>({material_code:x.code,actual_qty:Number(x.actual)}));
+      const payload=consumptionItems.filter(x=>x.code!=='water').map(x=>({material_code:x.code,actual_qty:Number(x.actual)}));
       const recipeId=await activeRecipeId(); const {error}=await supabase.rpc('complete_production',{p_production_date:today(),p_mishok_count:count,p_recipe_version_id:recipeId,p_batches:batchPayload,p_consumption:payload});
       if(error){alert(error.message);return;} await refreshLiveState(); alert('Production saved.'); render();
     }
@@ -362,7 +407,7 @@ function renderProduction(p){
 }
 
 function applyProductionConsumption(count,productionId){
-  db.recipe.items.forEach(item=>{
+  db.recipe.items.filter(item=>item.code!=='water').forEach(item=>{
     const qty=Number(item.qty)*count;
     const inv=db.inventory[item.code]||{stock:0,tx:[]};
     inv.stock-=qty;
@@ -387,16 +432,16 @@ function renderRecipe(p){
 async function renderInventory(p){
   if(currentUser.role!=='admin'){p.innerHTML='<div class="card"><h2>Inventory</h2><div class="alert error">Admin access only.</div></div>';return;}
   if(!isDemo) await refreshLiveState();
-  p.innerHTML=`<div class="page-head"><div><h1>Inventory</h1><p>Current theoretical stock plus package-aware receiving.</p></div><button class="btn primary" id="stockIn">+ Stock in</button></div><div class="grid grid-3">${MATERIALS.map(m=>`<div class="card"><div class="kpi-label">${esc(m.name)}</div><div class="kpi">${fmt(getStock(m.code))}</div><div class="small">${m.unit}</div></div>`).join('')}</div><div style="height:16px"></div><div class="card"><h2>Material details</h2><div class="table-wrap"><table><thead><tr><th>Material</th><th>Stock</th><th>Package options</th></tr></thead><tbody>${MATERIALS.map(m=>`<tr><td>${esc(m.name)}</td><td>${fmt(getStock(m.code))} ${m.unit}</td><td>${m.packages.map(x=>esc(x.label)).join(', ')}</td></tr>`).join('')}</tbody></table></div></div>`;
+  p.innerHTML=`<div class="page-head"><div><h1>Inventory</h1><p>Current theoretical stock plus package-aware receiving.</p></div><button class="btn primary" id="stockIn">+ Stock in</button></div><div class="grid grid-3">${STOCK_MATERIALS.map(m=>`<div class="card"><div class="kpi-label">${esc(m.name)}</div><div class="kpi">${fmt(getStock(m.code))}</div><div class="small">${m.unit}</div></div>`).join('')}</div><div style="height:16px"></div><div class="card"><h2>Material details</h2><div class="table-wrap"><table><thead><tr><th>Material</th><th>Stock</th><th>Package options</th></tr></thead><tbody>${STOCK_MATERIALS.map(m=>`<tr><td>${esc(m.name)}</td><td>${fmt(getStock(m.code))} ${m.unit}</td><td>${m.packages.map(x=>esc(x.label)).join(', ')}</td></tr>`).join('')}</tbody></table></div></div>`;
   document.getElementById('stockIn').addEventListener('click',()=>openStockModal());
 }
 
 function openStockModal(){
-  const opts=MATERIALS.map(m=>`<option value="${m.code}">${esc(m.name)}</option>`).join('');
+  const opts=STOCK_MATERIALS.map(m=>`<option value="${m.code}">${esc(m.name)}</option>`).join('');
   modalRoot.innerHTML=`<div class="modal-backdrop show"><div class="modal"><div class="modal-head"><h2>Receive stock</h2><button id="closeModal">×</button></div><div class="field"><label>Material</label><select id="stockMaterial">${opts}</select></div><div id="packageChooser"></div><div class="field"><label>Notes</label><input id="stockNote" placeholder="Supplier / delivery note"></div><div class="modal-footer"><button class="btn secondary" id="cancelModal">Cancel</button><button class="btn primary" id="saveStock">Add stock</button></div></div></div>`;
-  const update=()=>{const m=MATERIALS.find(x=>x.code===document.getElementById('stockMaterial').value);document.getElementById('packageChooser').innerHTML=`<div class="field"><label>Package</label><select id="stockPackage">${m.packages.map((x,i)=>`<option value="${i}">${esc(x.label)}</option>`).join('')} </select></div><div class="field"><label>Number of packages</label><input id="packageCount" type="number" min="0.001" step="1" value="1"></div><div class="small">The system will convert package quantity into the inventory base unit.</div>`;};
+  const update=()=>{const m=STOCK_MATERIALS.find(x=>x.code===document.getElementById('stockMaterial').value);document.getElementById('packageChooser').innerHTML=`<div class="field"><label>Package</label><select id="stockPackage">${m.packages.map((x,i)=>`<option value="${i}">${esc(x.label)}</option>`).join('')} </select></div><div class="field"><label>Number of packages</label><input id="packageCount" type="number" min="0.001" step="1" value="1"></div><div class="small">The system will convert package quantity into the inventory base unit.</div>`;};
   update();document.getElementById('stockMaterial').addEventListener('change',update);document.getElementById('closeModal').addEventListener('click',closeModal);document.getElementById('cancelModal').addEventListener('click',closeModal);
-  document.getElementById('saveStock').addEventListener('click',async()=>{const code=document.getElementById('stockMaterial').value;const m=MATERIALS.find(x=>x.code===code);const pi=Number(document.getElementById('stockPackage').value);const count=Number(document.getElementById('packageCount').value||0);if(!(count>0))return;const qty=m.packages[pi].qty*count;const reason=document.getElementById('stockNote').value||'Stock received';if(isDemo){const inv=db.inventory[code];inv.stock+=qty;inv.tx.push({id:uid(),dir:'in',qty,packages:count,packageLabel:m.packages[pi].label,reason,at:new Date().toISOString(),by:currentUser.name});saveDemo();closeModal();render();}else{const {error}=await supabase.from('inventory_transactions').insert({material_code:code,direction:'in',qty_base:qty,package_count:count,package_label:m.packages[pi].label,reason,created_by:currentUser.id});if(error){alert(error.message);return;}await refreshLiveState();closeModal();render();}});
+  document.getElementById('saveStock').addEventListener('click',async()=>{const code=document.getElementById('stockMaterial').value;const m=STOCK_MATERIALS.find(x=>x.code===code);const pi=Number(document.getElementById('stockPackage').value);const count=Number(document.getElementById('packageCount').value||0);if(!(count>0))return;const qty=m.packages[pi].qty*count;const reason=document.getElementById('stockNote').value||'Stock received';if(isDemo){const inv=db.inventory[code];inv.stock+=qty;inv.tx.push({id:uid(),dir:'in',qty,packages:count,packageLabel:m.packages[pi].label,reason,at:new Date().toISOString(),by:currentUser.name});saveDemo();closeModal();render();}else{const {error}=await supabase.from('inventory_transactions').insert({material_code:code,direction:'in',qty_base:qty,package_count:count,package_label:m.packages[pi].label,reason,created_by:currentUser.id});if(error){alert(error.message);return;}await refreshLiveState();closeModal();render();}});
 }
 function closeModal(){modalRoot.innerHTML='';}
 
@@ -421,7 +466,7 @@ window.DoughFlow={resetDemo(){localStorage.removeItem(KEY);location.reload();},i
 
 if(isDemo){
   // Seed a few realistic stock quantities for an immediately useful preview.
-  if(!db.__seededStock){db.inventory.flour.stock=1500;db.inventory.water.stock=4000;db.inventory.oil.stock=80;db.inventory.salt.stock=25;db.inventory.sugar.stock=40;db.inventory.yeast.stock=5;db.__seededStock=true;saveDemo();}
+  if(!db.__seededStock){db.inventory.flour.stock=1500;db.inventory.oil.stock=80;db.inventory.salt.stock=25;db.inventory.sugar.stock=40;db.inventory.yeast.stock=5;db.__seededStock=true;saveDemo();}
 }
 
 init();
