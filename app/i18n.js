@@ -197,6 +197,21 @@ Object.assign(DICT.ky,{
   'Panel ready. We will add the exact sales process after you provide it.':'Панель даяр. Так сатуу процессин сиз бергенден кийин кошобуз.'
 });
 
+
+Object.assign(DICT.ru,{
+  'Recipe cannot be empty':'Рецепт не может быть пустым.',
+  'Recipe contains duplicate materials':'В рецепте есть повторяющиеся материалы.',
+  'Recipe quantities cannot be negative':'Количество ингредиентов не может быть отрицательным.',
+  'Recipe contains an unknown material':'Рецепт содержит неизвестный материал.',
+  'Recipe unit does not match the material base unit':'Единица измерения рецепта не совпадает с базовой единицей материала.',
+  'Batches do not match the selected sack count':'Партии не соответствуют выбранному количеству мешков.',
+  'Each batch must be 1.0 or 0.5 sack':'Каждая партия должна быть 1,0 или 0,5 мешка.',
+  'Batch numbers must be sequential starting at 1':'Номера партий должны идти последовательно, начиная с 1.',
+  'Consumption contains duplicate materials':'В расходе есть повторяющиеся материалы.',
+  'Consumption contains an unknown material':'Расход содержит неизвестный материал.',
+  'Actual consumption cannot be negative':'Фактический расход не может быть отрицательным.'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
