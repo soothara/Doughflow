@@ -635,3 +635,25 @@ button:active{transform:scale(.965)}
 @media(prefers-reduced-motion:reduce){
   .portal-hero-photo,.hero-copy h1 span,.total-pop{animation:none!important}
 }
+
+/* Dashboard is a self-contained iOS-style portal */
+.dashboard-mode .topbar{display:none}
+.dashboard-mode main{padding-top:18px}
+.dashboard-mode .layout{min-height:100vh}
+.dashboard-mode .sidebar{top:0;height:100vh}
+.sack-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.sack-choice{
+  height:51px;border:1px solid #ded9d2;background:#fff;color:#182338;border-radius:15px;
+  font-weight:850;box-shadow:0 3px 10px rgba(30,40,55,.04);
+  transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s ease,background .2s ease
+}
+.sack-choice:hover{transform:translateY(-1px)}
+.sack-choice.active{background:linear-gradient(135deg,#197eff,#0865dc);border-color:#0865dc;color:#fff;box-shadow:0 9px 20px rgba(20,120,255,.20)}
+@media(max-width:1000px){
+  .dashboard-mode .sidebar{top:auto;height:auto}
+}
+@media(max-width:640px){
+  .dashboard-mode main{padding-top:10px}
+  .dashboard-mode .sidebar{left:10px;right:10px;bottom:10px}
+  .sack-picker{gap:6px}.sack-choice{height:49px;border-radius:14px}
+}
