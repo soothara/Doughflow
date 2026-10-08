@@ -1,9 +1,18 @@
 {
-  "name": "DoughFlow",
+  "name": "DoughFlow — Bakery Control",
   "short_name": "DoughFlow",
-  "start_url": ".",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f2f2f7",
-  "theme_color": "#f2f2f7",
-  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+  "display_override": ["window-controls-overlay","standalone"],
+  "orientation": "portrait-primary",
+  "background_color": "#f5f2ed",
+  "theme_color": "#0b1220",
+  "categories": ["business","productivity"],
+  "description": "Production, recipe and inventory control for a bakery.",
+  "icons": [
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
 }
