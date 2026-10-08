@@ -91,7 +91,7 @@ function showToast(message,type='info',duration=2600){
   toast.className='toast '+type;
   toast.setAttribute('role',type==='error'?'alert':'status');
   const icon=type==='success'?'✓':type==='error'?'!':'i';
-  toast.innerHTML=\`<span class="toast-icon">\${icon}</span><span class="toast-text"></span><button class="toast-close" aria-label="\${esc(t('Close',lang))}">×</button>\`;
+  toast.innerHTML=`<span class="toast-icon">${icon}</span><span class="toast-text"></span><button class="toast-close" aria-label="${esc(t('Close',lang))}">×</button>`;
   toast.querySelector('.toast-text').textContent=String(message);
   toast.querySelector('.toast-close').addEventListener('click',()=>toast.remove());
   toastRoot.appendChild(toast);
