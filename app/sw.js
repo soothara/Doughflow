@@ -57,10 +57,8 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
         .then(response => {
-          if (url.pathname !== '/config.js') {
-            const clone = response.clone();
-            caches.open(CACHE).then(cache => cache.put(event.request, clone));
-          }
+          const clone = response.clone();
+          caches.open(CACHE).then(cache => cache.put(event.request, clone));
           return response;
         })
         .catch(() => caches.match(event.request))
