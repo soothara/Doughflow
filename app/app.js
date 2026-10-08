@@ -317,7 +317,7 @@ function renderDashboard(p){
       "</div><div class='stock-grid'>"+stockCards+"</div>"+
     "</section>"+
     "<a class='made-by-card made-by-link' href='https://wa.me/996509512786' target='_blank' rel='noopener' aria-label='WhatsApp Ali'>"+
-      "<div class='made-by-symbol'>✦</div><div><small>"+t('Designed & built with care',lang)+"</small><strong>Сделано Али</strong></div><div class='made-by-kyrgyz'>🇰🇬</div>"+
+      "<div class='made-by-symbol'>✦</div><div><small>"+t('Designed & built with care',lang)+"</small><strong>Сделано Али</strong><small class='photo-credit'>Photo: ElenaLitera / Wikimedia Commons · CC BY-SA 4.0</small></div><div class='made-by-kyrgyz'>🇰🇬</div>"+
     "</a>";
 
   let selected=0;
