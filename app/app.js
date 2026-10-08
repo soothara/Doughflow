@@ -754,7 +754,7 @@ window.DoughFlow={resetDemo(){localStorage.removeItem(KEY);location.reload();},i
 
 if(isDemo){
   // Seed a few realistic stock quantities for an immediately useful preview.
-  if(!db.__seededStock){db.inventory.flour.stock=1500;db.inventory.oil.stock=80;db.inventory.salt.stock=25;db.inventory.sugar.stock=40;db.inventory.yeast.stock=5;db.__seededStock=true;saveDemo();}
+  if(!db.__seededStock){db.inventory.flour.stock=325;db.inventory.oil.stock=26.5;db.inventory.salt.stock=43;db.inventory.sugar.stock=65;db.inventory.yeast.stock=10.293;db.__seededStock=true;saveDemo();}
 }
 
 init();
