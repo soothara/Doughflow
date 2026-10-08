@@ -797,3 +797,5 @@ button:active{transform:scale(.965)}
 @media(prefers-reduced-motion:reduce){
   .panel-photo,.recipe-visual span,.portal-panel.production-panel:after,.login-photo{animation:none!important}
 }
+
+.photo-credit{display:block!important;margin-top:7px!important;color:rgba(255,255,255,.52)!important;font-size:8px!important;font-weight:600!important}
