@@ -96,6 +96,16 @@ Object.assign(DICT.ky, {
 Object.assign(DICT.ru, {'sack':'мешок','sacks':'мешков','Sack count':'Количество мешков','sack count':'количество мешков'});
 Object.assign(DICT.ky, {'sack':'кап','sacks':'кап','Sack count':'Каптын саны','sack count':'каптын саны'});
 
+
+Object.assign(DICT.ru, {
+  'Home':'Главная','More':'Ещё','Bakery control':'Управление пекарней',
+  'Designed & built with care':'Создано с заботой'
+});
+Object.assign(DICT.ky, {
+  'Home':'Башкы бет','More':'Дагы','Bakery control':'Наабайкананы башкаруу',
+  'Designed & built with care':'Көңүл коюу менен жасалды'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
