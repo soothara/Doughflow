@@ -139,6 +139,7 @@ async function refreshLiveState(){
 }
 
 function render(){
+  document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard');
   if(!currentUser){ app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage(); document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value)); return; }
   if(!can(currentUser.role,route)) route='dashboard';
   app.innerHTML=appShellHTML();
