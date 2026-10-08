@@ -151,6 +151,7 @@ function render(){
   renderPage();
   applyCurrentLanguage();
   document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
+  document.getElementById('heroLanguageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
 }
 
 function loginHTML(){
