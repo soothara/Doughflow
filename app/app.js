@@ -172,8 +172,25 @@ function showToast(message,type='info',duration=2600){
 }
 
 function saveDemo(){ if(isDemo) localStorage.setItem(KEY,JSON.stringify(db)); }
-const ICONS={flour:'🌾',water:'💧',oil:'🫒',yeast:'🧫',salt:'🧂',sugar:'🍚'};
-function materialIcon(code){return ICONS[code]||'📦';}
+function leposhkaIcon(size=48){
+  return '<svg class="leposhka-svg" width="'+size+'" height="'+size+'" viewBox="0 0 64 64" aria-hidden="true">'+
+    '<defs><radialGradient id="lpBread" cx="35%" cy="28%"><stop offset="0" stop-color="#ffe8a4"/><stop offset=".52" stop-color="#e9a23b"/><stop offset="1" stop-color="#a95816"/></radialGradient></defs>'+
+    '<ellipse cx="32" cy="35" rx="25" ry="17" fill="rgba(0,0,0,.13)"/>'+
+    '<ellipse cx="32" cy="30" rx="24" ry="18" fill="url(#lpBread)" stroke="#8c4615" stroke-width="1.5"/>'+
+    '<ellipse cx="32" cy="30" rx="18" ry="11" fill="none" stroke="#b86a1f" stroke-width="2.5" opacity=".75"/>'+
+    '<path d="M24 23c2 5 2 10 0 14M40 23c-2 5-2 10 0 14M18 29c4 1 7 1 10 0M46 29c-4 1-7 1-10 0" fill="none" stroke="#8f4d19" stroke-width="2" stroke-linecap="round" opacity=".7"/>'+
+    '<g fill="#fff2bd"><ellipse cx="20" cy="24" rx="1.4" ry=".8" transform="rotate(-24 20 24)"/><ellipse cx="29" cy="20" rx="1.5" ry=".8" transform="rotate(18 29 20)"/><ellipse cx="39" cy="22" rx="1.4" ry=".8" transform="rotate(-13 39 22)"/><ellipse cx="46" cy="27" rx="1.4" ry=".8" transform="rotate(20 46 27)"/><ellipse cx="25" cy="33" rx="1.3" ry=".8" transform="rotate(14 25 33)"/><ellipse cx="36" cy="35" rx="1.4" ry=".8" transform="rotate(-20 36 35)"/></g>'+
+    '</svg>';
+}
+const ICONS={
+  flour:'<svg class="material-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M20 19h24l5 8v25H15V27l5-8Z" fill="#e3c697"/><path d="M20 19h24l5 8H15l5-8Z" fill="#f4ddb0"/><path d="M22 19v-5h20v5" fill="none" stroke="#9b6e3b" stroke-width="3" stroke-linecap="round"/><path d="M21 35h22M21 41h16" stroke="#a6773d" stroke-width="2.5" stroke-linecap="round"/></svg>',
+  water:'<svg class="material-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 8C25 19 16 28 16 39a16 16 0 0 0 32 0C48 28 39 19 32 8Z" fill="#70cfff" stroke="#2494d0" stroke-width="2"/><path d="M23 40c0-5 3-9 6-13" fill="none" stroke="#e9f9ff" stroke-width="4" stroke-linecap="round"/></svg>',
+  oil:'<svg class="material-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M28 10h8v7h5v35H23V17h5Z" fill="#f3c94f" stroke="#bd8b1c" stroke-width="2"/><path d="M27 25h12M25 47h14" stroke="#fff1a7" stroke-width="3" stroke-linecap="round"/><path d="M29 10h6" stroke="#8c6514" stroke-width="3" stroke-linecap="round"/></svg>',
+  yeast:'<svg class="material-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="14" width="24" height="37" rx="7" fill="#c5a6ff" stroke="#7854b8" stroke-width="2"/><path d="M19 18h26v-6H19z" fill="#7452b3"/><circle cx="32" cy="34" r="8" fill="#fff4d9"/><circle cx="29" cy="31" r="2" fill="#9a6c28"/><circle cx="35" cy="36" r="2" fill="#9a6c28"/></svg>',
+  salt:'<svg class="material-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M17 31h30l-4 20H21l-4-20Z" fill="#f9fbff" stroke="#bdc4ce" stroke-width="2"/><ellipse cx="32" cy="31" rx="15" ry="6" fill="#fff" stroke="#c9cfd8" stroke-width="2"/><path d="M23 20h18v7H23z" fill="#dfe4ea" stroke="#aeb6c1" stroke-width="2"/><circle cx="28" cy="22" r="1" fill="#9aa3ae"/><circle cx="33" cy="22" r="1" fill="#9aa3ae"/><circle cx="38" cy="22" r="1" fill="#9aa3ae"/></svg>',
+  sugar:'<svg class="material-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M17 31h30l-4 20H21l-4-20Z" fill="#fffdfa" stroke="#bdb7af" stroke-width="2"/><ellipse cx="32" cy="31" rx="15" ry="6" fill="#fff" stroke="#d5cec4" stroke-width="2"/><path d="M23 20h18v7H23z" fill="#ebe5dc" stroke="#b9b0a4" stroke-width="2"/></svg>'
+};
+function materialIcon(code){return ICONS[code]||'<svg class="material-svg" viewBox="0 0 64 64"><rect x="14" y="14" width="36" height="36" rx="10" fill="#d8dde4"/></svg>';}
 const NAV_ICONS={
   home:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3l8.5 7.5"/><path d="M5.5 9.5v10h13v-10"/><path d="M9 19.5v-6h6v6"/></svg>',
   production:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16M6.5 4v3.5M17.5 4v3.5"/><rect x="4" y="7.5" width="16" height="12.5" rx="2"/><path d="M8 12h8M8 15.5h5"/></svg>',
