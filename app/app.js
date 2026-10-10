@@ -2,9 +2,11 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import './config.js';
 import { LANGUAGES, getSavedLang, saveLang, languageOptions, t, applyTranslations } from './i18n.js';
 
-const CFG = window.DOUGHFLOW_CONFIG || { supabaseUrl:'', supabaseAnonKey:'', appName:'DoughFlow' };
-const isDemo = !(CFG.supabaseUrl && CFG.supabaseAnonKey);
-const supabase = isDemo ? null : createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+const CFG = window.DOUGHFLOW_CONFIG || {};
+const isDemo = CFG.demoMode === true;
+const hasLiveConfig = Boolean(CFG.supabaseUrl && CFG.supabaseAnonKey);
+const configError = !isDemo && !hasLiveConfig;
+const supabase = (!isDemo && hasLiveConfig) ? createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
 
 const MATERIALS = [
   {code:'flour', name:'Flour', unit:'kg', decimals:2, packages:[{label:'50 kg sack',qty:50,kind:'sack'}]},
@@ -27,7 +29,7 @@ const DEFAULT_RECIPE = [
 
 const KEY='doughflow_demo_v1';
 const uid=()=>crypto.randomUUID();
-const today=()=>{const d=new Date();const pad=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}; const dateLocale=()=>lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-US'; const formatToday=()=>new Intl.DateTimeFormat(dateLocale(),{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(new Date());
+const today=()=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bishkek',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}`;}; const dateLocale=()=>lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-US'; const formatToday=()=>new Intl.DateTimeFormat(dateLocale(),{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(new Date());
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:3});
 const money=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -327,7 +329,9 @@ function navItems(role){
   return base;
 }
 async function init(){
-  if(!isDemo){
+  if(configError){
+    authError='DoughFlow configuration is missing. Contact the administrator.';
+  } else if(!isDemo){
     const {data:{session}}=await supabase.auth.getSession();
     if(session) await loadUser(session.user);
     supabase.auth.onAuthStateChange((event,s)=>{
@@ -421,7 +425,17 @@ async function refreshLiveState(){
 }
 async function render(){
   document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard');
-  if(!currentUser){ app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage(); document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value)); document.getElementById('loginError')?.setAttribute('data-auth-error','1'); if(authError) document.getElementById('loginError').textContent=authError; return; }
+  if(!currentUser){
+    app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage();
+    document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
+    document.getElementById('loginError')?.setAttribute('data-auth-error','1');
+    if(configError){
+      const errorNode=document.getElementById('loginError');
+      if(errorNode) errorNode.textContent=t('DoughFlow configuration is missing. Contact the administrator.',lang);
+      document.querySelectorAll('#loginForm input, #loginForm button').forEach(el=>{el.disabled=true;});
+    } else if(authError) document.getElementById('loginError').textContent=authError;
+    return;
+  }
   if(!can(currentUser.role,route)) route='dashboard';
   app.innerHTML=appShellHTML();
   document.querySelectorAll('[data-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.route;render();}));
@@ -469,14 +483,6 @@ function loginHTML(){
           <button class="login-submit" type="submit"><span>⌁</span>${t('Unlock DoughFlow',lang)}<b>›</b></button>
           <div id="loginError" class="login-error">${esc(authError)}</div>
         </form>
-        <button type="button" id="legacyLoginToggle" class="legacy-login-link" hidden>${t('Use password sign-in temporarily',lang)}</button>
-        <form id="legacyLoginForm" class="modern-login-form legacy-login-form" hidden>
-          <div class="field"><label for="legacyEmail">${t('Email',lang)}</label><input id="legacyEmail" type="email" autocomplete="username" value="askat@gmail.com" required></div>
-          <div class="field"><label for="legacyPassword">${t('Password',lang)}</label><input id="legacyPassword" type="password" autocomplete="current-password" required></div>
-          <button type="submit" class="login-submit"><span>↪</span>${t('Sign in',lang)}<b>›</b></button>
-          <button type="button" id="backToPin" class="legacy-login-link">${t('Back to PIN sign-in',lang)}</button>
-          <div id="legacyLoginError" class="login-error"></div>
-        </form>
         <div class="login-footer-line"><span>🇰🇬 ${t('Bishkek',lang)}</span><span>•</span><span>DoughFlow</span></div>
       </div>
       <div class="login-credit"><span>✦</span> Сделано Али</div>
@@ -498,35 +504,6 @@ function ensureDemoPins(){
   saveDemo();
 }
 function wireLogin(){
-  const pinForm=document.getElementById('loginForm');
-  const legacyForm=document.getElementById('legacyLoginForm');
-  const legacyToggle=document.getElementById('legacyLoginToggle');
-  legacyToggle?.addEventListener('click',()=>{
-    if(pinForm) pinForm.hidden=true;
-    legacyToggle.hidden=true;
-    if(legacyForm) legacyForm.hidden=false;
-    document.getElementById('legacyEmail')?.focus();
-  });
-  document.getElementById('backToPin')?.addEventListener('click',()=>{
-    if(legacyForm) legacyForm.hidden=true;
-    if(pinForm) pinForm.hidden=false;
-    if(legacyToggle) legacyToggle.hidden=true;
-    document.getElementById('loginPin')?.focus();
-  });
-  legacyForm?.addEventListener('submit',async e=>{
-    e.preventDefault();
-    const email=String(document.getElementById('legacyEmail')?.value||'').trim();
-    const password=String(document.getElementById('legacyPassword')?.value||'');
-    const errorEl=document.getElementById('legacyLoginError');
-    const submit=legacyForm.querySelector('button[type="submit"]');
-    if(submit) submit.disabled=true;
-    if(errorEl) errorEl.textContent='';
-    try{
-      const {error}=await supabase.auth.signInWithPassword({email,password});
-      if(error && errorEl) errorEl.textContent=friendlyError(error);
-    }catch(error){if(errorEl) errorEl.textContent=friendlyError(error);}
-    finally{if(submit) submit.disabled=false;}
-  });
   const pinInput=document.getElementById('loginPin');
   const pinError=document.getElementById('loginError');
   document.getElementById('togglePin')?.addEventListener('click',()=>{
@@ -578,8 +555,7 @@ function wireLogin(){
       const payload=await response.json().catch(()=>({}));
       if(!response.ok){
         if(response.status===404||response.status>=500){
-          pinError.textContent=t('PIN login service is not deployed or configured yet. Use the temporary sign-in option below.',lang);
-          if(legacyToggle) legacyToggle.hidden=false;
+          pinError.textContent=t('PIN login is temporarily unavailable. Please contact the administrator.',lang);
           return;
         }
         const key=response.status===429?'Too many attempts. Try again later.':(payload.error==='Username or PIN is incorrect'?'Username or PIN is incorrect':payload.error||'Username or PIN is incorrect');
@@ -591,9 +567,8 @@ function wireLogin(){
       if(error) throw error;
     }catch(error){
       const message=String(error?.message||'');
-      if(/fetch|network|load failed/i.test(message) && legacyToggle){
-        pinError.textContent=t('PIN login service is not deployed or configured yet. Use the temporary sign-in option below.',lang);
-        legacyToggle.hidden=false;
+      if(/fetch|network|load failed/i.test(message)){
+        pinError.textContent=t('PIN login is temporarily unavailable. Please contact the administrator.',lang);
       }else pinError.textContent=friendlyError(error);
     }finally{
       if(submit) submit.disabled=false;
