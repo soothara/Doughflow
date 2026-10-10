@@ -177,6 +177,16 @@ function seed(){
 let db = isDemo ? seed() : null;
 let currentUser = null;
 let authError = '';
+let pinLocked = false;
+let pinMode = 'unlock';
+let pinStep = 'enter';
+let pinAttempt = '';
+let pinFirst = '';
+let pinError = '';
+let pinUnavailable = false;
+let pinNoticeShown = false;
+let pinReturnRoute = 'dashboard';
+const PIN_LOCAL_PREFIX='doughflow_pin_v1:';
 let lang = getSavedLang('guest');
 let liveState = {recipe:null, productions:[], balances:[], users:[], summaryToday:null, summaryAll:null, syncError:null};
 let summaryRpcAvailable=true;
@@ -425,12 +435,12 @@ function loginHTML(){
     <div class="login-photo"></div><div class="login-shade"></div>
     <div class="login-shell">
       <div class="login-brand-row">
-        <div class="login-logo">"+leposhkaIcon(42)+"</div>
+        <div class="login-logo">${leposhkaIcon(42)}</div>
         <div><strong>DoughFlow</strong><small>Bakery control</small></div>
         <div class="login-lang">${languageFlag()} ${languageSwitcher()}</div>
       </div>
       <div class="login-main-card">
-        <div class="login-badge">🥖</div>
+        <div class="login-badge">${leposhkaIcon(42)}</div>
         <div class="eyebrow login-eyebrow">${t('Kyrgyz bakery portal',lang)}</div>
         <h1>${t('Welcome back',lang)} 👋</h1>
         <p>${t('Sign in to manage production, recipes and stock.',lang)}</p>
@@ -486,7 +496,7 @@ function appShellHTML(){
   return `
     <div class="topbar">
       <div class="brand">
-        <div class="brand-mark">"+leposhkaIcon(30)+"</div>
+        <div class="brand-mark">${leposhkaIcon(30)}</div>
         <div class="brand-copy"><strong>DoughFlow</strong><span>Bakery control</span></div>
       </div>
       <div class="top-actions">
