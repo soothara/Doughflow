@@ -431,47 +431,47 @@ async function render(){
 }
 
 function loginHTML(){
-  return \`<div class="login-portal">
+  return `<div class="login-portal">
     <div class="login-photo"></div><div class="login-shade"></div>
     <div class="login-shell">
       <div class="login-brand-row">
-        <div class="login-logo">\${leposhkaIcon(42)}</div>
-        <div><strong>DoughFlow</strong><small>\${t('Bakery control',lang)}</small></div>
-        <div class="login-lang">\${languageFlag()} \${languageSwitcher()}</div>
+        <div class="login-logo">${leposhkaIcon(42)}</div>
+        <div><strong>DoughFlow</strong><small>${t('Bakery control',lang)}</small></div>
+        <div class="login-lang">${languageFlag()} ${languageSwitcher()}</div>
       </div>
       <div class="login-main-card">
-        <div class="login-badge">\${leposhkaIcon(42)}</div>
-        <div class="eyebrow login-eyebrow">\${t('Kyrgyz bakery portal',lang)}</div>
-        <h1>\${t('Welcome back',lang)} 👋</h1>
-        <p>\${t('Enter your username and four-digit PIN.',lang)}</p>
+        <div class="login-badge">${leposhkaIcon(42)}</div>
+        <div class="eyebrow login-eyebrow">${t('Kyrgyz bakery portal',lang)}</div>
+        <h1>${t('Welcome back',lang)} 👋</h1>
+        <p>${t('Enter your username and four-digit PIN.',lang)}</p>
         <form id="loginForm" class="modern-login-form pin-login-form">
           <div class="field">
-            <label for="loginAlias">\${t('Username',lang)}</label>
+            <label for="loginAlias">${t('Username',lang)}</label>
             <input required id="loginAlias" type="text" name="login" value="askat" placeholder="askat" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32">
           </div>
           <div class="field">
-            <label for="loginPin">\${t('4-digit PIN',lang)}</label>
+            <label for="loginPin">${t('4-digit PIN',lang)}</label>
             <div class="pin-display-wrap">
               <input required id="loginPin" class="pin-input" type="password" name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="one-time-code" placeholder="••••" aria-describedby="pinHint">
-              <button type="button" class="pin-visibility" id="togglePin" aria-label="\${t('Show PIN',lang)}">◉</button>
+              <button type="button" class="pin-visibility" id="togglePin" aria-label="${t('Show PIN',lang)}">◉</button>
             </div>
-            <small id="pinHint" class="pin-hint">\${t('Your PIN is personal. Five failed attempts temporarily lock the account.',lang)}</small>
+            <small id="pinHint" class="pin-hint">${t('Your PIN is personal. Five failed attempts temporarily lock the account.',lang)}</small>
           </div>
-          <div class="pin-keypad" aria-label="\${t('PIN keypad',lang)}">
-            \${[1,2,3,4,5,6,7,8,9,'clear',0,'back'].map(k=>k==='clear'
-              ? \`<button type="button" class="pin-key utility" data-pin-key="clear">\${t('Clear',lang)}</button>\`
+          <div class="pin-keypad" aria-label="${t('PIN keypad',lang)}">
+            ${[1,2,3,4,5,6,7,8,9,'clear',0,'back'].map(k=>k==='clear'
+              ? `<button type="button" class="pin-key utility" data-pin-key="clear">${t('Clear',lang)}</button>`
               : k==='back'
-                ? \`<button type="button" class="pin-key utility" data-pin-key="back" aria-label="\${t('Delete last digit',lang)}">⌫</button>\`
-                : \`<button type="button" class="pin-key" data-pin-key="\${k}">\${k}</button>\`).join('')}
+                ? `<button type="button" class="pin-key utility" data-pin-key="back" aria-label="${t('Delete last digit',lang)}">⌫</button>`
+                : `<button type="button" class="pin-key" data-pin-key="${k}">${k}</button>`).join('')}
           </div>
-          <button class="login-submit" type="submit"><span>⌁</span>\${t('Unlock DoughFlow',lang)}<b>›</b></button>
-          <div id="loginError" class="login-error">\${esc(authError)}</div>
+          <button class="login-submit" type="submit"><span>⌁</span>${t('Unlock DoughFlow',lang)}<b>›</b></button>
+          <div id="loginError" class="login-error">${esc(authError)}</div>
         </form>
-        <div class="login-footer-line"><span>🇰🇬 \${t('Bishkek',lang)}</span><span>•</span><span>DoughFlow</span></div>
+        <div class="login-footer-line"><span>🇰🇬 ${t('Bishkek',lang)}</span><span>•</span><span>DoughFlow</span></div>
       </div>
       <div class="login-credit"><span>✦</span> Сделано Али</div>
     </div>
-  </div>\`;
+  </div>`;
 }
 function ensureDemoPins(){
   if(!isDemo||!db) return;
