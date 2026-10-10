@@ -263,7 +263,7 @@ function updatePinGateUI(){
  const error=document.getElementById('pinError');if(error)error.textContent=pinError;
 }
 function resetPinAttempt(message=''){
- pinAttempt='';pinError=message;updatePinGateUI();const input=document.getElementById('pinInput');if(input){input.value='';input.focus({preventScroll:true);}
+ pinAttempt='';pinError=message;updatePinGateUI();const input=document.getElementById('pinInput');if(input){input.value='';input.focus({preventScroll:true});}
 }
 async function savePinForCurrentUser(pin){
  if(isDemo){await saveLocalPin(currentUser.id,pin);return true;}
@@ -293,7 +293,7 @@ function wirePinGate(){
  const input=document.getElementById('pinInput');
  const commit=()=>{if(pinAttempt.length===4){const pin=pinAttempt;document.querySelectorAll('.pin-key').forEach(b=>b.disabled=true);setTimeout(()=>finishPinEntry(pin),80);}};
  document.querySelectorAll('[data-pin-digit]').forEach(b=>b.addEventListener('click',()=>{if(pinAttempt.length>=4)return;pinAttempt+=b.dataset.pinDigit;updatePinGateUI();commit();}));
- input?.addEventListener('input',()=>{pinAttempt=String(input.value||'').replace(/\\D/g,'').slice(0,4);updatePinGateUI();commit();});
+ input?.addEventListener('input',()=>{pinAttempt=String(input.value||'').replace(/\D/g,'').slice(0,4);updatePinGateUI();commit();});
  document.getElementById('pinBackspace')?.addEventListener('click',()=>{pinAttempt=pinAttempt.slice(0,-1);pinError='';updatePinGateUI();});
  document.getElementById('pinClear')?.addEventListener('click',()=>{pinAttempt='';pinError='';updatePinGateUI();});
  document.getElementById('pinLanguageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
