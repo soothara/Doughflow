@@ -1094,6 +1094,17 @@ window.DoughFlow={resetDemo(){localStorage.removeItem(KEY);location.reload();},i
 if(isDemo){
   // Seed a few realistic stock quantities for an immediately useful preview.
   if(!db.__seededStock){db.inventory.flour.stock=325;db.inventory.oil.stock=26.5;db.inventory.salt.stock=43;db.inventory.sugar.stock=65;db.inventory.yeast.stock=10.293;db.__seededStock=true;saveDemo();}
+  if(db.__seededHistory){
+    let migrated=false;
+    STOCK_MATERIALS.forEach(m=>{
+      (db.inventory[m.code]?.tx||[]).forEach(tx=>{
+        if(tx.reason==='Opening balance' && tx.effectiveDate!=='2026-01-01'){
+          tx.effectiveDate='2026-01-01';migrated=true;
+        }
+      });
+    });
+    if(migrated) saveDemo();
+  }
   if(!db.__seededHistory){
     STOCK_MATERIALS.forEach(m=>{
       const inv=db.inventory[m.code]||{stock:0,tx:[]};
