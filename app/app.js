@@ -1031,12 +1031,77 @@ function renderReports(p){
 }
 
 async function renderUsers(p){
-  if(currentUser.role!=='admin'){p.innerHTML='<div class="card"><h2>Users</h2><div class="alert error">Admin access only.</div></div>';return;}
-  if(!isDemo) await refreshLiveState();
-  const users=isDemo?db.users:liveState.users;
-  p.innerHTML=`<div class="page-head"><div><h1>Users</h1><p>Four role model. User creation can be managed in Supabase Auth + profiles.</p></div></div><div class="card"><div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Access</th></tr></thead><tbody>${users.map(u=>`<tr><td>${esc(isDemo?u.name:u.full_name)}</td><td><span class="status neutral">${roleName(u.role)}</span></td><td>${u.role==='admin'?'Full':'Role-limited'}</td></tr>`).join('')}</tbody></table></div></div>`;
+  if(currentUser.role!=='admin'){
+    p.innerHTML='<div class="card"><h2>'+t(\'Users\',lang)+'</h2><div class="alert error">'+t(\'Admin access only.\',lang)+'</div></div>';return;
+  }
+  let users=[];
+  if(isDemo){
+    ensureDemoPins();
+    users=(db.users||[]).map(u=>({...u,pin_configured:!!u.pin}));
+  }else{
+    const {data,error}=await supabase.rpc('admin_list_pin_users');
+    if(error){
+      p.innerHTML='<div class="card"><h2>'+t(\'People & PIN access\',lang)+'</h2><div class="alert error">'+esc(friendlyError(error))+'</div><p>'+t(\'Apply the PIN login database migration to enable PIN management.\',lang)+'</p></div>';
+      return;
+    }
+    users=data||[];
+  }
+  const rows=users.map(u=>{
+    const name=isDemo?u.name:u.full_name;
+    const alias=String(u.loginAlias||u.login_alias||'');
+    const configured=isDemo?!!u.pin:!!u.pin_configured;
+    const locked=!!(u.locked_until&&new Date(u.locked_until)>new Date());
+    return '<tr><td><b>'+esc(name)+'</b><small class="table-secondary">'+esc(alias)+'</small></td>'+
+      '<td><span class="status neutral">'+esc(roleName(u.role))+'</span></td>'+
+      '<td><span class="pin-status '+(configured?'configured':'not-configured')+'">'+(configured?'● '+t(\'PIN configured\',lang):'○ '+t(\'PIN not set\',lang))+'</span>'+(locked?'<small class="table-secondary">'+t(\'Temporarily locked\',lang)+'</small>':'')+'</td>'+
+      '<td><button type="button" class="btn secondary pin-manage-button" data-pin-user="'+esc(u.user_id||u.id)+'">'+(configured?t(\'Reset PIN\',lang):t(\'Set PIN\',lang))+' ⚙</button></td></tr>';
+  }).join('');
+  p.innerHTML='<div class="page-head"><div><div class="eyebrow">'+t(\'Secure access\',lang)+'</div><h1>👥 '+t(\'People & PIN access\',lang)+'</h1><p>'+t(\'Each user has a unique username and four-digit PIN. PINs are hashed; Admin can set or reset them here.\',lang)+'</p></div></div>'+
+    '<div class="pin-admin-banner"><div class="pin-admin-symbol">🔐</div><div><b>'+t(\'Individual access controls\',lang)+'</b><small>'+t(\'Five failed PIN attempts trigger a temporary account lock.\',lang)+'</small></div><span>'+users.filter(u=>isDemo?!!u.pin:!!u.pin_configured).length+' / '+users.length+' '+t(\'ready\',lang)+'</span></div>'+
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>'+t(\'User\',lang)+'</th><th>'+t(\'Role\',lang)+'</th><th>'+t(\'PIN status\',lang)+'</th><th>'+t(\'Manage\',lang)+'</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+    '<div class="small pin-security-note">🛡️ '+t(\'Use a different PIN for every person. The admin PIN 1214 is only for the Admin account.\',lang)+'</div>';
+  p.querySelectorAll('[data-pin-user]').forEach(button=>button.addEventListener('click',()=>{
+    const user=users.find(x=>String(x.user_id||x.id)===button.dataset.pinUser);
+    if(user) openPinUserModal(user,isDemo);
+  }));
 }
 
+function openPinUserModal(user,demo){
+  const alias=String(user.loginAlias||user.login_alias||'');
+  const name=String(demo?user.name:user.full_name||'');
+  modalRoot.innerHTML='<div class="modal-backdrop show"><div class="modal pin-manage-modal"><div class="modal-head"><div><div class="eyebrow">'+t(\'Secure access\',lang)+'</div><h2>🔐 '+t(\'Set user PIN\',lang)+'</h2></div><button id="closePinModal" aria-label="'+t(\'Close\',lang)+'">×</button></div>'+
+    '<p class="pin-modal-user">'+esc(name)+' · '+esc(roleName(user.role))+'</p>'+
+    '<div class="field"><label for="pinUsername">'+t(\'Username\',lang)+'</label><input id="pinUsername" type="text" maxlength="32" autocomplete="off" value="'+esc(alias)+'" autocapitalize="none" spellcheck="false"></div>'+
+    '<div class="field"><label for="pinNewValue">'+t(\'New 4-digit PIN\',lang)+'</label><input id="pinNewValue" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" placeholder="••••"></div>'+
+    '<div class="field"><label for="pinConfirmValue">'+t(\'Confirm PIN\',lang)+'</label><input id="pinConfirmValue" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" placeholder="••••"></div>'+
+    '<div id="pinManageError" class="login-error"></div><div class="modal-footer"><button class="btn secondary" id="cancelPinModal">'+t(\'Cancel\',lang)+'</button><button class="btn primary" id="saveUserPin">✓ '+t(\'Save PIN\',lang)+'</button></div></div></div>';
+  const digits=id=>{const el=document.getElementById(id);el.value=el.value.replace(/\\D/g,'').slice(0,4);};
+  ['pinNewValue','pinConfirmValue'].forEach(id=>document.getElementById(id).addEventListener('input',()=>digits(id)));
+  const close=()=>{modalRoot.innerHTML='';};
+  document.getElementById('closePinModal').addEventListener('click',close);
+  document.getElementById('cancelPinModal').addEventListener('click',close);
+  document.getElementById('saveUserPin').addEventListener('click',async()=>{
+    const loginAlias=document.getElementById('pinUsername').value.trim().toLowerCase();
+    const pin=document.getElementById('pinNewValue').value;
+    const confirmation=document.getElementById('pinConfirmValue').value;
+    const err=document.getElementById('pinManageError');
+    if(!/^[a-z0-9][a-z0-9._-]{1,31}$/.test(loginAlias)){err.textContent=t(\'Enter a valid username (2–32 characters).\',lang);return;}
+    if(!/^\\d{4}$/.test(pin)){err.textContent=t(\'PIN must contain exactly four digits.\',lang);return;}
+    if(pin!==confirmation){err.textContent=t(\'PINs do not match.\',lang);return;}
+    const button=document.getElementById('saveUserPin');button.disabled=true;err.textContent='';
+    try{
+      if(demo){
+        const target=db.users.find(x=>x.id===user.id);
+        if(!target) throw new Error('Profile not found');
+        target.loginAlias=loginAlias;target.pin=pin;saveDemo();
+      }else{
+        const {error}=await supabase.rpc('admin_set_user_pin',{p_user_id:user.user_id,p_pin:pin,p_login_alias:loginAlias});
+        if(error) throw error;
+      }
+      close();showToast(t(\'User PIN saved successfully.\',lang),'success');await render();
+    }catch(error){err.textContent=friendlyError(error);button.disabled=false;}
+  });
+}
 function placeholderPanel(title,text){
   const p=document.getElementById('page');
   p.innerHTML=`<div class="page-head"><div><h1>${esc(t(title,lang))}</h1><p>${t('Panel is reserved and protected.',lang)}</p></div></div><div class="card"><div class="notice">${esc(t(text,lang))}</div></div>`;
