@@ -51,10 +51,13 @@ The hardening file is additive; do not delete existing production data.
 
 ## 8. Four-digit PIN sign-in (existing installation)
 
-After the previous database migrations, run these two files in the Supabase SQL Editor:
+After the existing schema and hardening migration, run these files in Supabase SQL Editor in order:
 
 1. `db/admin_inventory_history_2026_10_10.sql` — effective-date inventory ledger, production-date trigger, and Admin-only history/correction RPCs.
 2. `db/pin_login_2026_10_10.sql` — per-user PIN credentials, username aliases, Admin PIN management, lockout rules, and the initial Admin PIN.
+3. `db/security_fixes_2026_10_11.sql` — server-side production-date/batch/consumption validation, recipe unit validation, and historical balance safety checks.
+
+Back up the database first. These files are additive and must be applied to the same Supabase project used by the live site.
 
 The PIN migration sets the existing Admin account whose Auth email is `askat@gmail.com` to username **`askat`** and initial PIN **`1214`**, but only when that account has not already configured a PIN. Change this PIN after initial access. Other accounts receive generated aliases; Admin can assign a memorable alias and set/reset each person's PIN in **More → People & PIN access**.
 
@@ -73,7 +76,7 @@ Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to Edge Functio
 
 The Edge Function rate-limits incorrect PINs. The database lockout escalates after five incorrect attempts. Each user has a separate PIN; a PIN is not a replacement for secure device access, so lock the app/device when leaving a shared workstation.
 
-If the PIN function returns a deployment/configuration error or the network request fails, the login page reveals a temporary password-sign-in fallback so you are not locked out during setup. Once the Edge Function is deployed and PIN sign-in is verified, normal login uses the PIN form. Do not remove the fallback until you have confirmed recovery access.
+Production login intentionally does not fall back to email/password authentication when PIN login is unavailable. The screen will report that PIN login is temporarily unavailable; restore the Edge Function and its secrets rather than re-enabling an alternate production login path. Keep a separate, administrator-controlled recovery procedure for service outages.
 
 Do not run the older `db/pin_inventory_history.sql` stub; it is superseded and kept only to prevent schema confusion.
 
@@ -82,7 +85,7 @@ Do not run the older `db/pin_inventory_history.sql` stub; it is superseded and k
 Open **Stock → Date-wise inventory editor**, select a material and historical date, enter full physical packages plus any open remainder, and give a reason. Saving creates a dated, auditable correction transaction; it does not delete or rewrite the original inventory entries. Check the “current as of date” preview carefully before saving.
 
 ## Demo mode
-Before Supabase is configured, the app runs in local demo mode. Demo data is stored only in that browser. PIN demo accounts are `askat / 1214` (Admin), `hamurchi / 2468`, `naan / 1357`, and `sales / 8642`. These are local-demo credentials only; live users must have unique PINs configured in Supabase. Never reuse the demo PINs for the live users.
+Demo mode is opt-in via `demoMode: true` in `app/config.js`. The checked-in production config sets `demoMode: false`; if live Supabase configuration is missing, the app fails closed instead of silently opening a local demo. For local interface testing, explicitly enable demo mode; data stays in that browser. Demo PINs are `askat / 1214`, `hamurchi / 2468`, `naan / 1357`, and `sales / 8642`. These credentials are for isolated local testing only and must never be reused for live accounts.
 
 ### Stock display
 Inventory is stored in exact base units, but the UI converts balances back into the configured physical package model. Examples include:
