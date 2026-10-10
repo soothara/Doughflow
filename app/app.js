@@ -458,6 +458,14 @@ function loginHTML(){
           <button class="login-submit" type="submit"><span>⌁</span>${t('Unlock DoughFlow',lang)}<b>›</b></button>
           <div id="loginError" class="login-error">${esc(authError)}</div>
         </form>
+        <button type="button" id="legacyLoginToggle" class="legacy-login-link" hidden>${t('Use password sign-in temporarily',lang)}</button>
+        <form id="legacyLoginForm" class="modern-login-form legacy-login-form" hidden>
+          <div class="field"><label for="legacyEmail">${t('Email',lang)}</label><input id="legacyEmail" type="email" autocomplete="username" value="askat@gmail.com" required></div>
+          <div class="field"><label for="legacyPassword">${t('Password',lang)}</label><input id="legacyPassword" type="password" autocomplete="current-password" required></div>
+          <button type="submit" class="login-submit"><span>↪</span>${t('Sign in',lang)}<b>›</b></button>
+          <button type="button" id="backToPin" class="legacy-login-link">${t('Back to PIN sign-in',lang)}</button>
+          <div id="legacyLoginError" class="login-error"></div>
+        </form>
         <div class="login-footer-line"><span>🇰🇬 ${t('Bishkek',lang)}</span><span>•</span><span>DoughFlow</span></div>
       </div>
       <div class="login-credit"><span>✦</span> Сделано Али</div>
@@ -479,6 +487,35 @@ function ensureDemoPins(){
   saveDemo();
 }
 function wireLogin(){
+  const pinForm=document.getElementById('loginForm');
+  const legacyForm=document.getElementById('legacyLoginForm');
+  const legacyToggle=document.getElementById('legacyLoginToggle');
+  legacyToggle?.addEventListener('click',()=>{
+    if(pinForm) pinForm.hidden=true;
+    legacyToggle.hidden=true;
+    if(legacyForm) legacyForm.hidden=false;
+    document.getElementById('legacyEmail')?.focus();
+  });
+  document.getElementById('backToPin')?.addEventListener('click',()=>{
+    if(legacyForm) legacyForm.hidden=true;
+    if(pinForm) pinForm.hidden=false;
+    if(legacyToggle) legacyToggle.hidden=true;
+    document.getElementById('loginPin')?.focus();
+  });
+  legacyForm?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const email=String(document.getElementById('legacyEmail')?.value||'').trim();
+    const password=String(document.getElementById('legacyPassword')?.value||'');
+    const errorEl=document.getElementById('legacyLoginError');
+    const submit=legacyForm.querySelector('button[type="submit"]');
+    if(submit) submit.disabled=true;
+    if(errorEl) errorEl.textContent='';
+    try{
+      const {error}=await supabase.auth.signInWithPassword({email,password});
+      if(error && errorEl) errorEl.textContent=friendlyError(error);
+    }catch(error){if(errorEl) errorEl.textContent=friendlyError(error);}
+    finally{if(submit) submit.disabled=false;}
+  });
   const pinInput=document.getElementById('loginPin');
   const pinError=document.getElementById('loginError');
   document.getElementById('togglePin')?.addEventListener('click',()=>{
@@ -529,6 +566,11 @@ function wireLogin(){
       });
       const payload=await response.json().catch(()=>({}));
       if(!response.ok){
+        if(response.status===404||response.status>=500){
+          pinError.textContent=t('PIN login service is not deployed or configured yet. Use the temporary sign-in option below.',lang);
+          if(legacyToggle) legacyToggle.hidden=false;
+          return;
+        }
         const key=response.status===429?'Too many attempts. Try again later.':(payload.error==='Username or PIN is incorrect'?'Username or PIN is incorrect':payload.error||'Username or PIN is incorrect');
         pinError.textContent=t(key,lang);
         return;
