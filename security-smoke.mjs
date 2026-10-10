@@ -41,3 +41,14 @@ assert.match(schema, /create policy inventory_admin_insert/i);
 assert.match(worker, /doughflow-v11-20261011-security/);
 
 console.log("DoughFlow static security smoke checks passed.");
+
+const interactive = read("./app/interactive.css");
+assert.match(app, /function uiIcon\(/);
+assert.match(app, /function wireSimulatorInteractions\(/);
+assert.match(app, /Visual simulation only/);
+assert.match(app, /data-tilt/);
+assert.match(app, /timeZone:'Asia\/Bishkek'/);
+assert.match(interactive, /\.simulator-stage/);
+assert.match(interactive, /\.sim-immersive/);
+assert.match(interactive, /prefers-reduced-motion:reduce/);
+assert.match(worker, /doughflow-v12-20261011-immersive/);
