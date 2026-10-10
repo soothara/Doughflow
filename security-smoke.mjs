@@ -38,7 +38,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v11-20261011-security/);
+assert.match(worker, /doughflow-v12-20261011-immersive/);
 
 console.log("DoughFlow static security smoke checks passed.");
 
