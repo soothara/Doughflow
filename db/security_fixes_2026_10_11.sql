@@ -6,6 +6,55 @@
 begin;
 set local search_path = public, extensions;
 
+-- Protect inventory integrity even when a caller bypasses the UI and writes to
+-- the table directly. Future business dates and non-positive movements are
+-- rejected in the database; production movements inherit their run's date.
+create or replace function public.set_inventory_transaction_effective_date()
+returns trigger
+language plpgsql
+set search_path=public
+as $
+begin
+  if new.production_run_id is not null then
+    select r.production_date into new.effective_date
+    from public.production_runs r
+    where r.id=new.production_run_id;
+    if not found then
+      raise exception 'Production run was not found';
+    end if;
+  elsif new.effective_date is null then
+    new.effective_date=(coalesce(new.created_at,now()) at time zone 'Asia/Bishkek')::date;
+  end if;
+
+  if new.effective_date is null
+     or new.effective_date>(now() at time zone 'Asia/Bishkek')::date then
+    raise exception 'Choose today or a past date';
+  end if;
+  if new.qty_base is null or new.qty_base<=0 then
+    raise exception 'Inventory movement quantity must be greater than zero';
+  end if;
+  if new.package_count is not null and new.package_count<=0 then
+    raise exception 'Package count must be greater than zero';
+  end if;
+  if nullif(trim(coalesce(new.reason,'')),'') is null then
+    raise exception 'Inventory movement reason is required';
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists inventory_transaction_effective_date_trg on public.inventory_transactions;
+create trigger inventory_transaction_effective_date_trg
+before insert or update on public.inventory_transactions
+for each row execute function public.set_inventory_transaction_effective_date();
+
+do $
+begin
+  alter table public.inventory_transactions
+    add constraint inventory_transactions_qty_positive_chk check (qty_base>0) not valid;
+exception when duplicate_object then null;
+end $;
+
 -- Production creation must not be backdated/future-dated through a direct RPC,
 -- and every batch / consumption payload is validated server-side.
 create or replace function public.complete_production(
@@ -231,13 +280,15 @@ begin
           r.material_code, v_stock, v_actual;
       end if;
 
-      insert into public.inventory_transactions(
-        material_code,direction,qty_base,reason,production_run_id,created_by
-      )
-      values(
-        r.material_code,'out',v_actual,
-        'Automatic production consumption',v_run,auth.uid()
-      );
+      if v_actual > 0 then
+        insert into public.inventory_transactions(
+          material_code,direction,qty_base,reason,production_run_id,created_by
+        )
+        values(
+          r.material_code,'out',v_actual,
+          'Automatic production consumption',v_run,auth.uid()
+        );
+      end if;
     end if;
   end loop;
 
