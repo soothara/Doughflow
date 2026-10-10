@@ -73,7 +73,9 @@ Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to Edge Functio
 
 The Edge Function rate-limits incorrect PINs. The database lockout escalates after five incorrect attempts. Each user has a separate PIN; a PIN is not a replacement for secure device access, so lock the app/device when leaving a shared workstation.
 
-If the PIN function is not deployed yet, the login page shows a temporary password sign-in fallback. Deploy and test PIN sign-in before hiding that fallback.
+If the PIN function returns a deployment/configuration error or the network request fails, the login page reveals a temporary password-sign-in fallback so you are not locked out during setup. Once the Edge Function is deployed and PIN sign-in is verified, normal login uses the PIN form. Do not remove the fallback until you have confirmed recovery access.
+
+Do not run the older `db/pin_inventory_history.sql` stub; it is superseded and kept only to prevent schema confusion.
 
 ## 9. Admin inventory corrections
 
