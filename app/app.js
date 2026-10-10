@@ -727,6 +727,25 @@ function renderDashboard(p){
     const view=stockBreakdown(m,m.stock,lang);
     return "<"+tag+" class='stock-item"+(currentUser.role==='admin'?' stock-open':'')+"'"+attrs+"><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div class='stock-item-copy'><b>"+esc(t(m.name,lang))+"</b><strong class='"+(m.stock<=0?'empty-stock':'')+"'>"+esc(view.primary)+(m.stock<=0?" <em>!</em>":"")+"</strong><small>"+esc(view.secondary)+"</small></div><span>›</span></"+tag+">";
   }).join('');
+  const questKey='doughflow_quest_reward_'+currentUser.id+'_'+today();
+  const rewardClaimed=localStorage.getItem(questKey)==='1';
+  const questProgress=Math.min(100,Math.round((totalSacks/6)*100));
+  const questLevel=totalSacks>=6?t('Master Baker',lang):totalSacks>=3?t('Dough Ranger',lang):totalSacks>=1?t('Oven Rookie',lang):t('Rising Dough',lang);
+  const questHtml="<section class='quest-panel'>"+
+    "<div class='quest-glow'></div><div class='quest-main'>"+
+    "<div class='quest-emblem'>"+leposhkaIcon(54)+"<span>✦</span></div>"+
+    "<div class='quest-copy'><div class='quest-eyebrow'>🎮 "+t('BAKERY QUEST',lang)+" · "+t('DAILY MISSION',lang)+"</div>"+
+    "<h2>"+t('The Daily Bake',lang)+"</h2><p>"+t('Bake 6 sacks to unlock your Master Baker badge.',lang)+"</p>"+
+    "<div class='quest-progress-track'><span style='width:"+questProgress+"%'></span></div>"+
+    "<div class='quest-progress-meta'><span>"+fmt(totalSacks)+" / 6 "+t('sacks completed',lang)+"</span><b>"+Math.round(totalSacks*100)+" XP</b></div></div></div>"+
+    "<div class='quest-footer'><div class='quest-level'><small>"+t('CURRENT LEVEL',lang)+"</small><strong>"+questLevel+"</strong></div>"+
+    "<div class='quest-badges'>"+
+      "<div class='quest-badge "+(totalSacks>=1?'unlocked':'locked')+"'><span>🔥</span><small>"+t('Oven Rookie',lang)+"</small></div>"+
+      "<div class='quest-badge "+(totalSacks>=3?'unlocked':'locked')+"'><span>⚡</span><small>"+t('Steady Hands',lang)+"</small></div>"+
+      "<div class='quest-badge "+(totalSacks>=6?'unlocked':'locked')+"'><span>🏆</span><small>"+t('Master Baker',lang)+"</small></div>"+
+    "</div><div class='quest-actions'><button class='quest-play' id='questPlay'>▶ "+t('Start a batch',lang)+"</button>"+
+    "<button class='quest-reward' id='claimQuest' "+(totalSacks>=6&&!rewardClaimed?'':'disabled')+">"+(rewardClaimed?'🏆 '+t('Badge claimed',lang):'🎁 '+t('Claim reward',lang))+"</button></div></div>"+
+    "</section>";
   p.innerHTML =
     "<section class='portal-hero'>"+
       "<div class='portal-hero-photo'></div><div class='portal-hero-shade'></div>"+
@@ -746,6 +765,7 @@ function renderDashboard(p){
       "<div class='metric-card metric-purple'><div class='metric-head'><span>▶</span><b>"+t('Production Runs',lang)+"</b></div><strong>"+totalRuns+"</strong><i>▥</i></div>"+
       "<div class='metric-card metric-blue'><div class='metric-head'><span>▦</span><b>"+t('Recipe Version',lang)+"</b></div><strong>v"+(db?.recipe?.version||liveState.recipe?.version||1)+"</strong><i>⟳</i></div>"+
     "</section>"+
+    questHtml+
     "<section class='portal-panel production-panel'>"+
       "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker coral'>"+leposhkaIcon(34)+"</div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
       "<div class='portal-panel-inner'>"+
@@ -788,6 +808,20 @@ function renderDashboard(p){
     },0);
   };
   document.getElementById('dashboardStart')?.addEventListener('click',openProduction);
+  document.getElementById('questPlay')?.addEventListener('click',()=>{
+    if(selected===0){selected=1;sync();}
+    document.querySelector('.production-panel')?.scrollIntoView({behavior:'smooth',block:'start'});
+    showToast(t('Mission started — make your first batch!',lang),'info',2200);
+  });
+  document.getElementById('claimQuest')?.addEventListener('click',()=>{
+    if(totalSacks<6||localStorage.getItem(questKey)==='1')return;
+    localStorage.setItem(questKey,'1');
+    showToast(t('Master Baker badge unlocked! +600 XP',lang),'success',3600);
+    const burst=document.createElement('div');burst.className='quest-confetti';
+    for(let i=0;i<18;i++){const part=document.createElement('span');part.textContent=['✦','★','●','🫓'][i%4];part.style.setProperty('--i',i);burst.appendChild(part);}
+    document.body.appendChild(burst);setTimeout(()=>burst.remove(),1800);
+    const b=document.getElementById('claimQuest');if(b){b.disabled=true;b.textContent='🏆 '+t('Badge claimed',lang);}
+  });
   document.querySelectorAll('[data-stock-open]').forEach(b=>b.addEventListener('click',()=>{route='inventory';render();}));
   document.getElementById('openInventory')?.addEventListener('click',()=>{route='inventory';render();});
 }
