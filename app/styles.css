@@ -1121,3 +1121,93 @@ body{min-height:100dvh}
   animation:pageIn .24s ease both
 }
 .legacy-login-form[hidden],#legacyLoginToggle[hidden]{display:none!important}
+
+
+/* DoughFlow immersive 3D bakery-floor UI — CSS-only for fast, offline-friendly rendering */
+.df-icon{display:inline-block;vertical-align:middle;flex:none}
+.metric-card,.stock-item,.recipe-photo-card{transform:perspective(850px) rotateX(var(--card-rx,0deg)) rotateY(var(--card-ry,0deg)) translateZ(0);transform-style:preserve-3d;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.metric-card:hover,.stock-item:hover,.recipe-photo-card:hover,.tilt-focused{box-shadow:0 18px 36px rgba(20,40,70,.13);z-index:2}
+.metric-icon-svg{width:37px;height:37px;border-radius:13px;display:grid;place-items:center;background:#ffffffb8;box-shadow:inset 0 1px #fff,0 5px 12px #2030400d}
+.metric-card>i{display:grid;place-items:center;font-style:normal;opacity:.13;right:12px;bottom:6px}
+.metric-card>i .df-icon{width:54px;height:54px}
+.stock-chevron{display:grid;place-items:center;opacity:.45;transition:transform .2s}
+.stock-item:hover .stock-chevron{transform:translateX(3px);opacity:1}
+.recipe-photo-card{transform-style:preserve-3d}
+.recipe-photo-card .recipe-visual,.recipe-photo-card>b,.recipe-photo-card>strong{transform:translateZ(8px)}
+.simulator-panel{position:relative;isolation:isolate;margin:0 0 22px;padding:16px;border-radius:28px;background:linear-gradient(145deg,#111b31,#1b2944 55%,#18243a);color:#eef5ff;border:1px solid #ffffff14;box-shadow:0 24px 55px #111c3224;overflow:hidden}
+.simulator-panel:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 80% 10%,#60e4c01a,transparent 40%),radial-gradient(ellipse at 0 100%,#4a8fff18,transparent 48%)}
+.simulator-topline{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:0 2px 14px}
+.simulator-kicker{display:flex;align-items:center;gap:6px;color:#82e5c6;font-size:9px;font-weight:950;letter-spacing:.14em}
+.simulator-topline h2{font-size:21px;letter-spacing:-.55px;margin:7px 0 3px;color:#f4f7ff}
+.simulator-topline p{font-size:11px;color:#aab9d0;margin:0}
+.sim-mode-toggle{display:flex;align-items:center;gap:7px;border:1px solid #ffffff21;background:#ffffff0b;color:#dce8fb;border-radius:13px;padding:9px 10px;font-size:10px;font-weight:850;white-space:nowrap}
+.toggle-track{width:27px;height:16px;border-radius:99px;background:#536078;display:inline-flex;align-items:center;padding:2px;transition:background .2s}
+.toggle-track i{width:12px;height:12px;background:#fff;border-radius:50%;transition:transform .2s}
+.sim-mode-toggle.enabled .toggle-track{background:#29bc91}.sim-mode-toggle.enabled .toggle-track i{transform:translateX(11px)}
+.simulator-stage{position:relative;min-height:340px;border-radius:22px;overflow:hidden;background:radial-gradient(ellipse at 50% 65%,#294766 0,#192b45 45%,#101b30 100%);border:1px solid #ffffff14;isolation:isolate}
+.sim-stars{position:absolute;inset:0;opacity:.45;background-image:radial-gradient(circle at 14% 20%,#b6f4e8 0 1px,transparent 1.6px),radial-gradient(circle at 83% 26%,#fff 0 1px,transparent 1.6px),radial-gradient(circle at 65% 12%,#8edaff 0 1px,transparent 1.6px),radial-gradient(circle at 33% 32%,#fff 0 1px,transparent 1.6px),radial-gradient(circle at 93% 65%,#fff 0 1px,transparent 1.6px);background-size:170px 130px}
+.sim-orbit{position:absolute;left:50%;top:54%;width:300px;height:130px;border:1px solid #7fd9d52b;border-radius:50%;transform:translate(-50%,-50%) rotate(-17deg);pointer-events:none}
+.orbit-two{width:370px;height:160px;transform:translate(-50%,-50%) rotate(23deg);border-color:#8eaaff1a}
+.sim-hud{position:absolute;z-index:4;top:13px;display:flex;flex-direction:column;gap:5px;padding:10px 12px;border:1px solid #ffffff1b;border-radius:14px;background:#081326a6;backdrop-filter:blur(10px);min-width:135px;box-shadow:0 8px 18px #0002}
+.sim-hud-left{left:12px}.sim-hud-right{right:12px}
+.sim-hud small{display:flex;align-items:center;gap:5px;font-size:8px;font-weight:950;letter-spacing:.1em;color:#a9bfd8}
+.sim-hud>b,.sim-hud b{font-size:19px;letter-spacing:-.4px;color:#fff}.sim-hud b em{font-size:11px;font-style:normal;color:#9eb4cc}
+.sim-hud span{font-size:8px;color:#b7c8dd;display:flex;align-items:center;gap:5px}
+.sim-status-dot{width:6px;height:6px;border-radius:50%;background:#5de2b6;box-shadow:0 0 10px #5de2b6}
+.sim-target-track{height:4px;border-radius:99px;background:#ffffff19;overflow:hidden}.sim-target-track i{display:block;height:100%;background:linear-gradient(90deg,#56dfb5,#d2f89b);border-radius:99px}
+.sim-world{--tilt-x:0deg;--tilt-y:0deg;position:absolute;left:50%;top:53%;width:min(440px,82%);height:230px;transform:translate(-50%,-43%) perspective(850px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));transform-style:preserve-3d;transition:transform .18s ease;z-index:2}
+.sim-floor-grid{position:absolute;left:0;right:0;bottom:0;height:120px;transform:rotateX(61deg) translateY(14px) scale(1.22);transform-origin:bottom center;background-image:linear-gradient(#6ca7d62a 1px,transparent 1px),linear-gradient(90deg,#6ca7d62a 1px,transparent 1px);background-size:24px 24px;mask-image:linear-gradient(to bottom,transparent,#000 25%,#000)}
+.sim-machine-shadow{position:absolute;left:18%;bottom:23px;width:63%;height:50px;background:#0007;filter:blur(16px);border-radius:50%;transform:rotateX(60deg)}
+.sim-bakery-machine{position:absolute;left:32%;top:25px;width:43%;height:145px;transform-style:preserve-3d;transform:rotateY(-13deg) rotateX(3deg);filter:drop-shadow(10px 12px 0 #09142550)}
+.machine-top{position:absolute;left:-5%;top:-10px;width:110%;height:24px;border-radius:8px 8px 3px 3px;background:linear-gradient(110deg,#a9c0d5,#f4f7ff 22%,#6f8eaa 65%,#b8c8d7);transform:translateZ(8px);box-shadow:inset 0 -4px #526c85}
+.machine-bolt{display:inline-block;width:4px;height:4px;border-radius:50%;background:#445d75;margin:6px 10%}
+.machine-sign{position:absolute;left:8%;top:5px;z-index:2;width:84%;padding:5px 2px;border-radius:4px;background:linear-gradient(120deg,#132d48,#274d6c);text-align:center;font-size:8px;letter-spacing:.12em;font-weight:1000;color:#dff9f2;box-shadow:0 2px 0 #0c1b2e}
+.machine-sign span{color:#65e3b8}
+.machine-window{position:absolute;left:9%;top:32px;width:82%;height:76px;border:5px solid #809bb4;border-radius:9px;background:linear-gradient(145deg,#10263b,#234963 50%,#12283e);box-shadow:inset 0 0 15px #0008;overflow:hidden}
+.machine-loaf{position:absolute;width:30px;height:18px;border-radius:55% 55% 40% 40%;background:radial-gradient(ellipse at 30% 25%,#ffe2a0,#db8c3d 60%,#864b2d);box-shadow:inset 0 -3px 0 #96542e,0 3px 6px #0006;transform:rotate(-12deg)}
+.loaf-a{left:9%;top:45px}.loaf-b{left:38%;top:30px;transform:rotate(10deg)}.loaf-c{right:8%;top:44px;transform:rotate(23deg)}
+.machine-shine{position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,#fff2 48%,transparent 64%);transform:translateX(-100%);animation:machineShine 5s ease-in-out infinite}
+@keyframes machineShine{50%,100%{transform:translateX(100%)}}
+.machine-controls{position:absolute;left:11%;right:11%;top:116px;height:17px;border-radius:5px;background:linear-gradient(#d5e1ed,#819ab2);display:flex;align-items:center;gap:6px;padding:0 7px}
+.machine-controls i{width:5px;height:5px;border-radius:50%;background:#22c994;box-shadow:0 0 5px #22c994}
+.machine-controls i:nth-child(2){background:#ffbd66;box-shadow:0 0 5px #ffbd66}.machine-controls i:nth-child(3){background:#ff6f7d;box-shadow:0 0 5px #ff6f7d}
+.machine-dial{margin-left:auto;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#59758f 55%,#233d58);border:1px solid #4e657e}
+.machine-base{position:absolute;left:4%;right:4%;bottom:0;height:16px;border-radius:3px 3px 7px 7px;background:linear-gradient(#718ca6,#3b5570);box-shadow:0 5px 0 #13273b}
+.sim-sack{position:absolute;bottom:31px;width:57px;height:75px;border-radius:40% 40% 12px 12px;background:linear-gradient(105deg,#c4a17b,#f1d8ac 40%,#ad8159);box-shadow:inset -8px 0 #79563835,0 7px 8px #0003;transform:rotate(-7deg) translateZ(18px)}
+.sim-sack:before{content:"";position:absolute;top:-5px;left:14px;width:29px;height:13px;border-radius:50%;background:#e5c89d;border:2px solid #a87d50}
+.sim-sack span{position:absolute;top:28px;left:0;right:0;text-align:center;font-size:9px;font-weight:1000;letter-spacing:.08em;color:#6f4d2e}
+.sim-sack i{position:absolute;left:50%;top:12px;width:2px;height:12px;background:#98734c}
+.sack-a{left:8%;bottom:24px}.sack-b{left:20%;bottom:20px;transform:rotate(8deg) scale(.84) translateZ(8px);filter:brightness(.86)}
+.sim-crate{position:absolute;right:1%;bottom:28px;width:58px;height:49px;border:4px solid #c18b52;border-bottom-width:7px;background:repeating-linear-gradient(0deg,#8a5837 0 7px,#a56b43 7px 10px);transform:skewY(-7deg) rotateY(-16deg);box-shadow:5px 6px 0 #09162955}
+.sim-crate i{position:relative;display:inline-block;width:9px;height:9px;margin:3px;border-radius:50%;background:#e9b66c;box-shadow:inset -2px -2px #a3672d}
+.sim-conveyor{position:absolute;left:9%;right:5%;bottom:13px;height:26px;transform:skewY(-5deg);z-index:3}
+.conveyor-belt{position:absolute;inset:0;border-radius:5px;background:linear-gradient(#94a9ba,#354e66 40%,#152c42);border:2px solid #91a8bd;display:flex;align-items:center;justify-content:space-around;overflow:hidden}
+.conveyor-belt i{width:3px;height:14px;background:#c3d5e3;border-radius:2px;opacity:.65}
+.conveyor-loaf{position:absolute;left:46%;top:-11px;width:26px;height:17px;border-radius:50% 50% 35% 35%;background:linear-gradient(#ffdc91,#cc7c32);box-shadow:inset 0 -3px #8b4c2a,0 5px 9px #0005}
+.conveyor-leg{position:absolute;top:21px;height:31px;width:7px;background:linear-gradient(90deg,#405a73,#7d95ab,#30465c);z-index:-1}
+.leg-a{left:12%}.leg-b{right:12%}
+.sim-label{position:absolute;z-index:3;display:flex;align-items:center;gap:5px;padding:7px 9px;border-radius:10px;background:#12243bbf;border:1px solid #ffffff17;color:#d0e2f6;font-size:8px;font-weight:850;backdrop-filter:blur(6px)}
+.label-machine{left:calc(50% - 160px);bottom:55px}.label-stock{right:calc(50% - 190px);bottom:70px}
+.simulator-bottomline{position:absolute;z-index:4;bottom:11px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sim-hint{display:flex;align-items:center;gap:5px;font-size:9px;color:#a6bbd2}
+.sim-run-button{display:flex;align-items:center;gap:6px;border:1px solid #8ef3d044;border-radius:12px;background:linear-gradient(135deg,#26c99a,#11856f);color:#052b2a;font-size:10px;font-weight:950;padding:10px 12px;box-shadow:0 6px 18px #1ed3a21f;transition:transform .2s,filter .2s}
+.sim-run-button:hover{transform:translateY(-2px);filter:brightness(1.08)}.sim-run-button.running{background:linear-gradient(135deg,#ffcf7b,#f49b48);color:#40250b}
+.simulator-footnote{display:flex;align-items:center;gap:7px;padding:12px 4px 1px;color:#a9b8ce;font-size:9px;line-height:1.45}
+.simulator-stage.sim-running .conveyor-belt i{animation:conveyorMove .6s linear infinite}
+.simulator-stage.sim-running .conveyor-loaf{animation:loafTravel 3s ease-in-out infinite alternate}
+.simulator-stage.sim-running .machine-loaf{animation:loafPulse 1s ease-in-out infinite alternate}
+.simulator-stage.sim-running .sim-status-dot{background:#ffcc7a;box-shadow:0 0 10px #ffcc7a}
+@keyframes conveyorMove{to{transform:translateX(-9px)}}
+@keyframes loafTravel{to{left:70%}}
+@keyframes loafPulse{to{transform:translateY(-3px) rotate(4deg)}}
+.sim-immersive .sim-world{transform:translate(-50%,-43%) perspective(850px) rotateX(-4deg) rotateY(-9deg) scale(1.06)}
+.sim-immersive .sim-orbit{animation:orbitGlow 8s ease-in-out infinite alternate}
+@keyframes orbitGlow{to{opacity:.3;transform:translate(-50%,-50%) rotate(10deg) scale(1.06)}}
+.sim-immersive .sim-machine-shadow{filter:blur(21px);background:#0009}
+.sim-immersive .sim-bakery-machine{animation:machineFloat 4s ease-in-out infinite alternate}
+@keyframes machineFloat{to{transform:translateY(-4px) rotateY(-8deg)}}
+.sim-immersive .simulator-stage{box-shadow:inset 0 0 40px #7cddff12}
+.sim-immersive .sim-world{filter:drop-shadow(0 0 15px #68d6c00c)}
+@media(max-width:720px){.simulator-panel{padding:12px;border-radius:22px}.simulator-stage{min-height:355px}.sim-world{width:100%;transform:translate(-50%,-42%) perspective(850px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale(.88)}.sim-hud{top:9px;padding:8px;min-width:0;max-width:45%}.sim-hud b{font-size:16px}.sim-hud-left{left:8px}.sim-hud-right{right:8px}.sim-orbit{width:250px}.orbit-two{width:290px}.sim-label{display:none}.simulator-bottomline{left:9px;right:9px;bottom:9px}.sim-hint{max-width:42%;font-size:8px}.sim-run-button{font-size:9px;padding:10px}.simulator-topline h2{font-size:19px}.simulator-footnote{font-size:9px}}
+@media(max-width:420px){.simulator-stage{min-height:345px}.sim-hud{gap:4px}.sim-hud small{font-size:7px}.sim-world{top:54%;transform:translate(-50%,-42%) scale(.78)}.sim-run-button{padding:9px 8px}.sim-mode-toggle{gap:4px;padding:8px}.sim-mode-toggle>span:not(.toggle-track){display:none}}
+@media(prefers-reduced-motion:reduce){.machine-shine,.sim-immersive .sim-orbit,.sim-immersive .sim-bakery-machine,.sim-running .conveyor-belt i,.sim-running .conveyor-loaf,.sim-running .machine-loaf{animation:none!important}.metric-card,.stock-item,.recipe-photo-card,.sim-world{transition:none!important}}
