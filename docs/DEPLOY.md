@@ -1,7 +1,7 @@
 # DoughFlow v1 deployment
 
 ## Free stack
-- Cloudflare Pages: static PWA hosting. Static asset requests are free and unlimited on the current free Pages plan. See the Cloudflare Pages pricing docs.
+- Cloudflare Workers: DoughFlow is hosted as a static PWA behind its existing Worker deployment.
 - Supabase: Postgres + Auth + API. Check Supabase's current plan limits before production deployment.
 
 ## 1. Create Supabase project
@@ -26,13 +26,13 @@ Copy `app/config.example.js` to `app/config.js` and set:
 
 Use the browser-safe publishable key. NEVER use the service-role key in `config.js`. Supabase documents publishable keys as safe for frontend use when RLS and least-privilege grants are correctly configured.
 
-## 5. Deploy to Cloudflare Pages
-You can deploy the `app/` directory as static assets using Cloudflare Pages Direct Upload or Git integration.
+## 5. Deploy to Cloudflare Workers
+The existing DoughFlow Worker is connected to this GitHub repository. Keep the configured asset root at `app/`, build command `exit 0`, and deployment command as configured in the Cloudflare dashboard. Push changes to `main`, then verify that the newest deployment is receiving 100% of production traffic. The frontend pins `@supabase/supabase-js` to `2.117.3` for reproducible browser behavior.
 
-For Git integration, deploy the `app/` directory with no build command. The frontend pins `@supabase/supabase-js` to `2.117.3` for reproducible browser behavior.
+Live portal: `https://doughflow.soothingrainofficial.workers.dev`.
 
 ## 6. WhatsApp
-Post the resulting Cloudflare Pages URL in the existing WhatsApp group. On Android, open it and use Chrome → Add to Home screen. The PWA then opens like an app.
+Post the Cloudflare Worker URL in the existing WhatsApp group. On Android, open it and use Chrome → Add to Home screen. The PWA then opens like an app.
 
 ## 7. Production hardening (existing installations)
 
