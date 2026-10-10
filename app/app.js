@@ -579,7 +579,11 @@ function wireLogin(){
       const {error}=await supabase.auth.verifyOtp({type:'magiclink',token_hash:payload.token_hash});
       if(error) throw error;
     }catch(error){
-      pinError.textContent=friendlyError(error);
+      const message=String(error?.message||'');
+      if(/fetch|network|load failed/i.test(message) && legacyToggle){
+        pinError.textContent=t('PIN login service is not deployed or configured yet. Use the temporary sign-in option below.',lang);
+        legacyToggle.hidden=false;
+      }else pinError.textContent=friendlyError(error);
     }finally{
       if(submit) submit.disabled=false;
     }
