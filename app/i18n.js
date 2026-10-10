@@ -473,6 +473,9 @@ Object.assign(DICT.ky, {
   'Inventory history':'Кампа тарыхы'
 });
 
+Object.assign(DICT.ru, {'Stock in':'Приход','Stock out':'Расход'});
+Object.assign(DICT.ky, {'Stock in':'Кампага кириш','Stock out':'Кампадан чыгуу'});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
