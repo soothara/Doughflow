@@ -543,7 +543,7 @@ function wireLogin(){
     }
   });
 }
-async function logout(){pinReturnRoute=route;pinLocked=true;pinMode='unlock';pinStep='enter';pinAttempt='';pinFirst='';pinError='';render();}
+async function logout(){ if(isDemo){db.session=null;currentUser=null;authError='';lang=getSavedLang('guest');saveDemo();render();return;} await supabase.auth.signOut({scope:'local'}); }
 
 function appShellHTML(){
   const items=navItems(currentUser.role);
