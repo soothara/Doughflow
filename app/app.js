@@ -158,9 +158,20 @@ function friendlyError(error){
 }
 
 function seed(){
-  if(localStorage.getItem(KEY)) return JSON.parse(localStorage.getItem(KEY));
+  const saved=localStorage.getItem(KEY);
+  if(saved){
+    const data=JSON.parse(saved);
+    // Force one PIN login when upgrading from the old auto-admin demo session.
+    if(!data.__pinLoginV1){
+      data.session=null;
+      data.__pinLoginV1=true;
+      localStorage.setItem(KEY,JSON.stringify(data));
+    }
+    return data;
+  }
   const data={
-    session:{user:{id:'demo-admin',name:'Admin'},role:'admin',lang:'en'},
+    session:null,
+    __pinLoginV1:true,
     recipe:{version:1,updatedAt:new Date().toISOString(),updatedBy:'Admin',items:DEFAULT_RECIPE},
     productions:[],
     inventory:MATERIALS.reduce((a,m)=>{a[m.code]={stock:0,tx:[]};return a;},{}),
