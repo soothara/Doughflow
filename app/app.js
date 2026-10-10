@@ -424,7 +424,7 @@ async function init(){
       setTimeout(async()=>{
         if(s){
           await loadUser(s.user);
-          if(currentUser){ await refreshLiveState(); render(); }
+          if(currentUser){ await preparePinGate(); await refreshLiveState(); render(); }
           else render();
         } else { currentUser=null; authError=''; render(); }
       },0);
@@ -433,6 +433,7 @@ async function init(){
     currentUser=db.session.user ? {...db.session.user,role:db.session.role,lang:db.session.lang||getSavedLang(db.session.user.id)} : null;
     lang=currentUser?.lang||lang;
   }
+  if(currentUser) await preparePinGate();
   if(!isDemo && currentUser) await refreshLiveState();
   render();
   if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
@@ -509,8 +510,10 @@ async function refreshLiveState(){
   }
 }
 async function render(){
-  document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard');
+  document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard' && !pinLocked);
   if(!currentUser){ app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage(); document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value)); document.getElementById('loginError')?.setAttribute('data-auth-error','1'); if(authError) document.getElementById('loginError').textContent=authError; return; }
+  if(pinLocked){renderPinGateContent();return;}
+  if(pinUnavailable&&!pinNoticeShown){pinNoticeShown=true;showToast(t('PIN system needs the database migration before it can be enabled.',lang),'error',6500);}
   if(!can(currentUser.role,route)) route='dashboard';
   app.innerHTML=appShellHTML();
   document.querySelectorAll('[data-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.route;render();}));
@@ -618,7 +621,7 @@ function wireLogin(){
         }
         db.session={user:{id:user.id,name:user.name},role:user.role,lang:getSavedLang(user.id)};
         currentUser={id:user.id,name:user.name,role:user.role,lang:db.session.lang};
-        lang=currentUser.lang;authError='';route='dashboard';saveDemo();render();return;
+        lang=currentUser.lang;authError='';route='dashboard';saveDemo();preparePinGate().then(()=>render());return;
       }
       const endpoint=CFG.supabaseUrl.replace(/\/$/,'')+'/functions/v1/pin-login';
       const response=await fetch(endpoint,{
@@ -643,7 +646,7 @@ function wireLogin(){
     }
   });
 }
-async function logout(){ if(isDemo){db.session=null;currentUser=null;authError='';lang=getSavedLang('guest');saveDemo();render();return;} await supabase.auth.signOut({scope:'local'}); }
+async function logout(){pinReturnRoute=route;pinLocked=true;pinMode='unlock';pinStep='enter';pinAttempt='';pinFirst='';pinError='';render();}
 
 function appShellHTML(){
   const items=navItems(currentUser.role);
