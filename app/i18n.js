@@ -437,6 +437,14 @@ Object.assign(DICT.ky,{
   'PIN system needs the database migration before it can be enabled.':'PIN кирүүнү иштетүү үчүн адегенде маалымат базасынын миграциясын колдонуңуз.'
 });
 
+
+Object.assign(DICT.ru,{
+  'Historical correction would make current inventory negative; reconcile later transactions first.':'Эта корректировка сделает текущий складской остаток отрицательным. Сначала согласуйте более поздние операции.'
+});
+Object.assign(DICT.ky,{
+  'Historical correction would make current inventory negative; reconcile later transactions first.':'Бул оңдоо учурдагы кампадагы калдыктын терс болушуна алып келет. Адегенде кийинки операцияларды тактаңыз.'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
