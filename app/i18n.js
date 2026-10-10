@@ -476,6 +476,25 @@ Object.assign(DICT.ky, {
 Object.assign(DICT.ru, {'Stock in':'Приход','Stock out':'Расход'});
 Object.assign(DICT.ky, {'Stock in':'Кампага кириш','Stock out':'Кампадан чыгуу'});
 
+Object.assign(DICT.ru, {
+  'Origin not allowed':'Источник запроса не разрешён.',
+  'Invalid request':'Некорректный запрос.',
+  'Method not allowed':'Метод не поддерживается.',
+  'Enter a username and a four-digit PIN':'Введите имя пользователя и PIN-код из четырёх цифр.',
+  'PIN login is not configured on the server':'Вход по PIN ещё не настроен на сервере.',
+  'PIN login service unavailable':'Служба входа по PIN недоступна.',
+  'Could not start a secure session':'Не удалось создать безопасную сессию.'
+});
+Object.assign(DICT.ky, {
+  'Origin not allowed':'Сурамдын булагына уруксат жок.',
+  'Invalid request':'Сурам туура эмес.',
+  'Method not allowed':'Бул ыкмага уруксат жок.',
+  'Enter a username and a four-digit PIN':'Колдонуучу атын жана төрт орундуу PIN киргизиңиз.',
+  'PIN login is not configured on the server':'PIN менен кирүү серверде жөндөлө элек.',
+  'PIN login service unavailable':'PIN кирүү кызматы жеткиликсиз.',
+  'Could not start a secure session':'Коопсуз сессияны баштоо мүмкүн болгон жок.'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
