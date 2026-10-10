@@ -53,7 +53,7 @@ The hardening file is additive; do not delete existing production data.
 
 After the previous database migrations, run these two files in the Supabase SQL Editor:
 
-1. `db/pin_inventory_history.sql` — effective-date inventory ledger and Admin-only history/correction RPCs.
+1. `db/admin_inventory_history_2026_10_10.sql` — effective-date inventory ledger, production-date trigger, and Admin-only history/correction RPCs.
 2. `db/pin_login_2026_10_10.sql` — per-user PIN credentials, username aliases, Admin PIN management, lockout rules, and the initial Admin PIN.
 
 The PIN migration sets the existing Admin account whose Auth email is `askat@gmail.com` to username **`askat`** and initial PIN **`1214`**, but only when that account has not already configured a PIN. Change this PIN after initial access. Other accounts receive generated aliases; Admin can assign a memorable alias and set/reset each person's PIN in **More → People & PIN access**.
