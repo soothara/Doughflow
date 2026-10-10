@@ -170,7 +170,6 @@ create policy production_materials_write on public.production_materials for all 
 drop policy if exists inventory_read on public.inventory_transactions;
 create policy inventory_read on public.inventory_transactions for select using (public.is_admin() or created_by=auth.uid());
 drop policy if exists inventory_admin_insert on public.inventory_transactions;
-drop policy if exists inventory_admin_insert on public.inventory_transactions;
 create policy inventory_admin_insert on public.inventory_transactions
 for insert
 with check (
