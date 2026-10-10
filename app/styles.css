@@ -1110,3 +1110,14 @@ body{min-height:100dvh}
   .quest-panel:before,.quest-glow,.quest-emblem,.quest-badge.unlocked>span,.quest-confetti span{animation:none!important}
   .quest-progress-track span,.quest-badge,.quest-play,.quest-reward,.pin-key{transition:none!important}
 }
+
+.legacy-login-link{
+  display:block;margin:10px auto 0;border:0;background:transparent;color:#2875cb;
+  font-size:11px;font-weight:800;text-decoration:underline;text-underline-offset:3px;
+  padding:8px 10px;min-height:36px
+}
+.legacy-login-form{
+  margin-top:12px;padding-top:14px;border-top:1px solid #e9edf2;
+  animation:pageIn .24s ease both
+}
+.legacy-login-form[hidden],#legacyLoginToggle[hidden]{display:none!important}
