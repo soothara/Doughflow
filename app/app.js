@@ -628,6 +628,47 @@ async function renderPage(){
   };
   await (pages[route]||renderDashboard)(p);
 }
+function startPinChange(){
+  const pinLabel=t('Change PIN',lang);
+  modalRoot.innerHTML="<div class='modal-backdrop show'><div class='modal pin-manage-modal'><div class='modal-head'><div><div class='eyebrow'>"+t('Secure access',lang)+"</div><h2>🔐 "+pinLabel+"</h2></div><button id='closeChangePin' aria-label='"+t('Close',lang)+"'>×</button></div>"+
+    "<p class='pin-modal-user'>"+t('Your PIN is personal. Use four digits you can remember, and do not share it.',lang)+"</p>"+
+    "<div class='field'><label for='currentPin'>"+t('Current PIN',lang)+"</label><input id='currentPin' type='password' inputmode='numeric' maxlength='4' pattern='[0-9]{4}' autocomplete='current-password' placeholder='••••'></div>"+
+    "<div class='field'><label for='newPin'>"+t('New 4-digit PIN',lang)+"</label><input id='newPin' type='password' inputmode='numeric' maxlength='4' pattern='[0-9]{4}' autocomplete='new-password' placeholder='••••'></div>"+
+    "<div class='field'><label for='confirmPin'>"+t('Confirm PIN',lang)+"</label><input id='confirmPin' type='password' inputmode='numeric' maxlength='4' pattern='[0-9]{4}' autocomplete='new-password' placeholder='••••'></div>"+
+    "<div id='changePinError' class='login-error'></div><div class='modal-footer'><button class='btn secondary' id='cancelChangePin'>"+t('Cancel',lang)+"</button><button class='btn primary' id='saveChangePin'>✓ "+t('Save PIN',lang)+"</button></div></div></div>";
+  const digits=id=>{const el=document.getElementById(id);el.value=el.value.replace(/\D/g,'').slice(0,4);};
+  ['currentPin','newPin','confirmPin'].forEach(id=>document.getElementById(id).addEventListener('input',()=>digits(id)));
+  const close=()=>{modalRoot.innerHTML='';};
+  document.getElementById('closeChangePin').addEventListener('click',close);
+  document.getElementById('cancelChangePin').addEventListener('click',close);
+  document.getElementById('saveChangePin').addEventListener('click',async()=>{
+    const current=document.getElementById('currentPin').value;
+    const next=document.getElementById('newPin').value;
+    const confirm=document.getElementById('confirmPin').value;
+    const errorEl=document.getElementById('changePinError');
+    const button=document.getElementById('saveChangePin');
+    errorEl.textContent='';
+    if(!/^\d{4}$/.test(current)||!/^\d{4}$/.test(next)){errorEl.textContent=t('PIN must contain exactly four digits.',lang);return;}
+    if(next!==confirm){errorEl.textContent=t('PINs do not match.',lang);return;}
+    if(next===current){errorEl.textContent=t('Choose a different PIN from your current PIN.',lang);return;}
+    button.disabled=true;
+    try{
+      if(isDemo){
+        const target=(db.users||[]).find(u=>u.id===currentUser.id);
+        if(!target||String(target.pin||'')!==current)throw new Error('Current PIN is incorrect');
+        target.pin=next;saveDemo();
+      }else{
+        const verified=await supabase.rpc('verify_my_pin',{p_pin:current});
+        if(verified.error)throw verified.error;
+        if(verified.data!==true)throw new Error('Current PIN is incorrect');
+        const changed=await supabase.rpc('set_my_pin',{p_pin:next});
+        if(changed.error)throw changed.error;
+      }
+      close();showToast(t('PIN changed successfully.',lang),'success');
+    }catch(error){errorEl.textContent=friendlyError(error);button.disabled=false;}
+  });
+}
+
 function renderMore(p){
   const extra=[];
   if(currentUser.role==='admin') extra.push(
@@ -646,7 +687,7 @@ function renderMore(p){
     <div class="more-grid">
       ${extra.map(([r,icon,title,desc])=>`<button class="more-card" data-more-route="${r}"><span class="more-icon">${icon}</span><span><b>${t(title,lang)}</b><small>${t(desc,lang)}</small></span><span class="chevron">›</span></button>`).join('')}
       <button class="more-card" id="moreChangePin"><span class="more-icon">🔐</span><span><b>${t('Change PIN',lang)}</b><small>${t('Update your 4-digit PIN',lang)}</small></span><span class="chevron">›</span></button>
-      <button class="more-card danger-card" id="moreLogout"><span class="more-icon">🔒</span><span><b>${t('Lock app',lang)}</b><small>${t('Return to your 4-digit PIN screen',lang)}</small></span><span class="chevron">›</span></button>
+      <button class="more-card danger-card" id="moreLogout"><span class="more-icon">🔒</span><span><b>${t('Log out',lang)}</b><small>${t('Sign out from this device',lang)}</small></span><span class="chevron">›</span></button>
     </div>`;
   p.querySelectorAll('[data-more-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.moreRoute;render();}));
   p.querySelector('#moreLogout')?.addEventListener('click',logout);
