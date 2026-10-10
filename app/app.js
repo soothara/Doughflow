@@ -251,10 +251,10 @@ function uiIcon(name,size=20){
     bread:'<path d="M4 12c-1-3 1-6 4-6 1-3 7-3 8 0 3 0 5 3 4 6l-1 6H5l-1-6Z"/><path d="m9 9 1 2m4-3 1 2"/>',
     play:'<path d="m8 5 11 7-11 7V5Z" fill="currentColor" stroke="none"/>',
     recipe:'<path d="M6 4h13v16H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"/><path d="M8 8h7M8 12h7M8 16h4"/>',
-    trend:'<path d="m5 30 10-10 7 5 16-18"/><path d="M27 7h11v11"/>',
-    pieces:'<circle cx="22" cy="22" r="14"/><path d="M22 8v28M8 22h28M12 12l20 20M32 12 12 32"/>',
+    trend:'<path d="m3 17 5-5 4 3 8-9"/><path d="M15 6h5v5"/>',
+    pieces:'<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16M6.5 6.5l11 11m0-11-11 11"/>',
     layers:'<path d="m22 6 17 9-17 9-17-9 17-9Z"/><path d="m5 22 17 9 17-9M5 30l17 9 17-9"/>',
-    spark:'<path d="m12 3 2.5 7.5L22 13l-7.5 2.5L12 23l-2.5-7.5L2 13l7.5-2.5L12 3Z"/><path d="m19 20 1.5 4.5L25 26l-4.5 1.5L19 32l-1.5-4.5L13 26l4.5-1.5L19 20Z"/>',
+    spark:'<path d="m12 2 2.2 6.2L20 10l-5.8 2.1L12 18l-2.2-5.9L4 10l5.8-1.8L12 2Z"/><path d="m19 15 .9 2.7L22 19l-2.1.8L19 22l-.8-2.2L16 19l2.2-1.3L19 15Z"/>',
     cube:'<path d="m12 3 9 5v10l-9 5-9-5V8l9-5Z"/><path d="m3 8 9 5 9-5M12 13v10"/>',
     activity:'<path d="M3 12h4l3-8 5 16 3-8h4"/>',
     gauge:'<path d="M4 18a9 9 0 1 1 16 0"/><path d="m12 13 4-5M6 18h12"/>',
@@ -264,7 +264,7 @@ function uiIcon(name,size=20){
     info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>',
     chevron:'<path d="m9 5 7 7-7 7"/>'
   };
-  return '<svg class="df-icon" width="'+size+'" height="'+size+'" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.spark)+'</svg>';
+  return '<svg class="df-icon" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.spark)+'</svg>';
 }
 function wireSimulatorInteractions(){
   const stage=document.getElementById('simulatorStage');
@@ -273,7 +273,7 @@ function wireSimulatorInteractions(){
   const world=document.getElementById('simWorld');
   const run=document.getElementById('simRun');
   const status=document.getElementById('simStatus');
-  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
   mode?.addEventListener('click',()=>{
     const enabled=!stage.classList.contains('sim-immersive');
     stage.classList.toggle('sim-immersive',enabled);
@@ -290,7 +290,7 @@ function wireSimulatorInteractions(){
     if(status)status.textContent=running?t('Simulation running',lang):t('Standby',lang);
     showToast(running?t('Visual simulation started. No records changed.',lang):t('Simulation paused.',lang),'info',1800);
   });
-  if(!reduced && window.matchMedia?.('(pointer:fine)').matches){
+  if(!reduced && window.matchMedia?.('(pointer:fine)')?.matches){
     stage.addEventListener('pointermove',e=>{
       if(stage.classList.contains('sim-immersive'))return;
       const r=stage.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
@@ -299,7 +299,7 @@ function wireSimulatorInteractions(){
     });
     stage.addEventListener('pointerleave',()=>{world.style.setProperty('--tilt-x','0deg');world.style.setProperty('--tilt-y','0deg');});
   }
-  if(!reduced && window.matchMedia?.('(pointer:fine)').matches){
+  if(!reduced && window.matchMedia?.('(pointer:fine)')?.matches){
     document.querySelectorAll('[data-tilt]').forEach(card=>{
       card.addEventListener('pointermove',e=>{
         const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
