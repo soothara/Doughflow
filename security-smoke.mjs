@@ -29,6 +29,7 @@ assert.match(migration, /p_production_date <> \(now\(\) at time zone 'Asia\/Bish
 assert.match(migration, /Batch numbers must be sequential starting at 1/);
 assert.match(migration, /Consumption contains duplicate materials/);
 assert.match(migration, /Consumption contains an unknown material/);
+assert.match(migration, /Recipe unit does not match the material base unit/);
 assert.match(migration, /later daily inventory balance negative/);
 assert.match(schema, /alter table public\.inventory_transactions enable row level security/i);
 assert.match(schema, /create policy inventory_admin_insert/i);
