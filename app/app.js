@@ -902,153 +902,115 @@ function renderRecipe(p){
 }
 
 async function renderInventory(p){
-  if(currentUser.role!=='admin'){
-    p.innerHTML='<div class="card"><h2>'+t('Inventory',lang)+'</h2><div class="alert error">'+t('Admin access only.',lang)+'</div></div>';return;
-  }
+  if(currentUser.role!=='admin'){p.innerHTML='<div class="card"><h2>'+t('Inventory',lang)+'</h2><div class="alert error">'+t('Admin access only.',lang)+'</div></div>';return;}
   if(!isDemo) await refreshLiveState();
-  const materialOptions=STOCK_MATERIALS.map(m=>'<option value="'+m.code+'">'+esc(t(m.name,lang))+'</option>').join('');
-  const currentCards=STOCK_MATERIALS.map(m=>{
-    const v=stockBreakdown(m,getStock(m.code),lang);
-    return '<div class="card stock-card-premium"><div class="kpi-label">'+esc(t(m.name,lang))+'</div><div class="kpi stock-primary">'+esc(v.primary)+'</div><div class="small stock-secondary">'+esc(v.secondary)+'</div></div>';
-  }).join('');
+  const options=STOCK_MATERIALS.map(m=>'<option value="'+m.code+'">'+esc(t(m.name,lang))+'</option>').join('');
+  const cards=STOCK_MATERIALS.map(m=>{const v=stockBreakdown(m,getStock(m.code),lang);return '<div class="card stock-card-premium"><div class="kpi-label">'+esc(t(m.name,lang))+'</div><div class="kpi stock-primary">'+esc(v.primary)+'</div><div class="small stock-secondary">'+esc(v.secondary)+'</div></div>';}).join('');
   p.innerHTML=
     '<div class="page-head"><div><div class="eyebrow">'+t('Admin tools',lang)+'</div><h1>'+t('Inventory',lang)+'</h1><p>'+t('Track stock in packages and correct old balances by date.',lang)+'</p></div><button class="btn primary" id="stockIn">＋ '+t('Stock in',lang)+'</button></div>'+
-    '<div class="grid grid-3">'+currentCards+'</div>'+
+    '<div class="grid grid-3">'+cards+'</div>'+
     '<section class="inventory-game-banner"><div class="inventory-game-icon">◈</div><div><b>'+t('Inventory control center',lang)+'</b><small>'+t('Choose a date, set the correct physical quantity, and preserve an audit trail.',lang)+'</small></div><span class="inventory-live-pill">'+t('Admin',lang)+' • 🔐</span></section>'+
     '<section class="card historical-editor-card"><div class="history-card-heading"><div><div class="eyebrow">'+t('Audit-safe correction',lang)+'</div><h2>🗓️ '+t('Date-wise inventory editor',lang)+'</h2><p>'+t('Set the correct stock balance as of a past date. The system records a correction instead of deleting history.',lang)+'</p></div></div>'+
-    '<div class="history-filter-row"><div class="field"><label for="stockHistoryDate">'+t('Inventory date',lang)+'</label><input id="stockHistoryDate" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="stockEditMaterial">'+t('Material',lang)+'</label><select id="stockEditMaterial">'+materialOptions+'</select></div></div>'+
+    '<div class="history-filter-row"><div class="field"><label for="stockHistoryDate">'+t('Inventory date',lang)+'</label><input id="stockHistoryDate" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="stockEditMaterial">'+t('Material',lang)+'</label><select id="stockEditMaterial">'+options+'</select></div></div>'+
     '<div class="history-target-grid"><div class="field"><label for="stockEditPackage">'+t('Package / container',lang)+'</label><select id="stockEditPackage"></select></div><div class="field"><label for="stockEditPackages">'+t('Full packages',lang)+'</label><input id="stockEditPackages" type="number" min="0" step="1" value="0"></div><div class="field"><label for="stockEditRemainder">'+t('Open remainder',lang)+'</label><div class="unit-input-pair"><input id="stockEditRemainder" type="number" min="0" step="0.001" value="0"><select id="stockEditRemainderUnit" aria-label="'+t('Remainder unit',lang)+'"><option value="kg">kg</option><option value="g">g</option></select></div></div></div>'+
     '<div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>'+t('Target balance on selected date',lang)+'</small><strong id="stockTargetPreview">0 kg</strong></div><div class="historical-before"><small>'+t('Current as of date',lang)+'</small><b id="stockAsOfPreview">—</b></div></div>'+
     '<div class="field"><label for="stockCorrectionReason">'+t('Reason for correction',lang)+'</label><input id="stockCorrectionReason" maxlength="180" placeholder="'+t('Example: physical count found a different balance',lang)+'"></div>'+
     '<div class="history-form-footer"><small>🔒 '+t('Admin-only action. Every correction is dated and auditable.',lang)+'</small><button class="btn primary" id="saveStockByDate">✓ '+t('Save dated correction',lang)+'</button></div></section>'+
-    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 '+t('Inventory activity',lang)+'</h2><p id="historyDateCaption">'+t('Transactions for selected date',lang)+'</p></div><button type="button" class="btn secondary" id="refreshHistory">↻ '+t('Refresh',lang)+'</button></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"><div class="empty">'+t('Loading inventory history…',lang)+'</div></div></section>';
+    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 '+t('Inventory activity',lang)+'</h2><p id="historyDateCaption"></p></div><button type="button" class="btn secondary" id="refreshHistory">↻ '+t('Refresh',lang)+'</button></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"></div></section>';
 
   let snapshotMap={};
   const $=id=>document.getElementById(id);
-  const formatKg=n=>formatInventoryNumber(n,lang)+' kg';
   const getMaterial=()=>STOCK_MATERIALS.find(m=>m.code===$('stockEditMaterial').value)||STOCK_MATERIALS[0];
   const getPackage=()=>getMaterial().packages[Number($('stockEditPackage').value)]||getMaterial().packages[0];
-  const stockAtDemo=(code,date)=>{
-    const tx=db.inventory?.[code]?.tx||[];
-    return tx.reduce((sum,x)=>{
-      const day=x.effectiveDate||String(x.at||'').slice(0,10);
-      if(day>date) return sum;
-      const qty=Number(x.qty)||0;
-      return sum+(x.dir==='out'?-qty:qty);
-    },0);
+  const kgLabel=n=>formatInventoryNumber(n,lang)+' kg';
+  const stockAtDemo=(code,date)=>(db.inventory?.[code]?.tx||[]).reduce((sum,x)=>{
+    const day=x.effectiveDate||String(x.at||'').slice(0,10);
+    return day>date?sum:sum+(x.dir==='out'?-Number(x.qty||0):Number(x.qty||0));
+  },0);
+  const updateAsOf=()=>{const m=getMaterial();$('stockAsOfPreview').textContent=stockBreakdown(m,Number(snapshotMap[m.code]||0),lang).primary;};
+  const updatePreview=()=>{
+    const m=getMaterial(),pkg=getPackage();
+    const count=Math.max(0,Number($('stockEditPackages').value)||0),raw=Math.max(0,Number($('stockEditRemainder').value)||0);
+    const rem=$('stockEditRemainderUnit').value==='g'?raw/1000:raw,target=count*Number(pkg?.qty||0)+rem;
+    $('stockEditPackages').step=pkg?.kind==='sack'?'0.5':'1';
+    $('stockTargetPreview').textContent=stockBreakdown(m,target,lang).primary+' · '+kgLabel(target);
+    updateAsOf();
+  };
+  const setTargetFromSnapshot=()=>{
+    const m=getMaterial(),pkg=getPackage(),qty=Math.max(0,Number(snapshotMap[m.code]||0)),size=Number(pkg?.qty||1);
+    let count=Math.floor((qty+0.000001)/size),rem=qty-count*size;
+    if(pkg?.kind==='sack'&&Math.abs(rem-size/2)<0.00001){count+=0.5;rem=0;}
+    $('stockEditPackages').value=count;
+    if(rem>0&&rem<1){$('stockEditRemainderUnit').value='g';$('stockEditRemainder').value=Number((rem*1000).toFixed(3));}
+    else{$('stockEditRemainderUnit').value='kg';$('stockEditRemainder').value=Number(rem.toFixed(3));}
+    $('stockEditRemainderUnit').dataset.unit=$('stockEditRemainderUnit').value;
+    updatePreview();
   };
   const drawHistory=(rows,date)=>{
-    $('inventoryHistorySummary').innerHTML='<div><small>'+t('Transactions',lang)+'</small><b>'+rows.length+'</b></div><div><small>'+t('Correction date',lang)+'</small><b>'+esc(date)+'</b></div><div><small>'+t('Tracked materials',lang)+'</small><b>'+STOCK_MATERIALS.length+'</b></div>';
     $('historyDateCaption').textContent=t('Transactions for selected date',lang)+' · '+date;
+    $('inventoryHistorySummary').innerHTML='<div><small>'+t('Transactions',lang)+'</small><b>'+rows.length+'</b></div><div><small>'+t('Correction date',lang)+'</small><b>'+esc(date)+'</b></div><div><small>'+t('Tracked materials',lang)+'</small><b>'+STOCK_MATERIALS.length+'</b></div>';
     if(!rows.length){$('inventoryHistoryRows').innerHTML='<div class="empty">'+t('No inventory transactions on this date.',lang)+'</div>';return;}
     const body=rows.map(row=>{
-      const material=STOCK_MATERIALS.find(m=>m.code===row.material_code)||STOCK_MATERIALS[0];
-      const breakdown=stockBreakdown(material,Number(row.qty_base)||0,lang);
-      const incoming=row.direction==='in';
-      return '<tr><td><b>'+esc(t(row.material_name||material.name,lang))+'</b><small class="table-secondary">'+esc(row.package_label||'')+'</small></td><td><span class="movement-pill '+(incoming?'in':'out')+'">'+(incoming?'＋ '+t('Stock in',lang):'− '+t('Stock out',lang))+'</span></td><td><b>'+esc(breakdown.primary)+'</b><small class="table-secondary">'+esc(breakdown.secondary)+'</small></td><td><span class="history-reason">'+esc(row.reason||'')+'</span></td><td>'+esc(row.created_by_name||'')+'</td></tr>';
+      const m=STOCK_MATERIALS.find(x=>x.code===row.material_code)||STOCK_MATERIALS[0],v=stockBreakdown(m,Number(row.qty_base)||0,lang),inc=row.direction==='in';
+      return '<tr><td><b>'+esc(t(row.material_name||m.name,lang))+'</b><small class="table-secondary">'+esc(row.package_label||'')+'</small></td><td><span class="movement-pill '+(inc?'in':'out')+'">'+(inc?'＋ '+t('Stock in',lang):'− '+t('Stock out',lang))+'</span></td><td><b>'+esc(v.primary)+'</b><small class="table-secondary">'+esc(v.secondary)+'</small></td><td><span class="history-reason">'+esc(row.reason||'')+'</span></td><td>'+esc(row.created_by_name||'')+'</td></tr>';
     }).join('');
     $('inventoryHistoryRows').innerHTML='<table><thead><tr><th>'+t('Material',lang)+'</th><th>'+t('Movement',lang)+'</th><th>'+t('Quantity',lang)+'</th><th>'+t('Reason / audit note',lang)+'</th><th>'+t('Entered by',lang)+'</th></tr></thead><tbody>'+body+'</tbody></table>';
   };
   const loadDate=async date=>{
-    if(!date) return;
+    if(!date)return;
     if(isDemo){
       snapshotMap=Object.fromEntries(STOCK_MATERIALS.map(m=>[m.code,stockAtDemo(m.code,date)]));
-      const rows=STOCK_MATERIALS.flatMap(m=>(db.inventory?.[m.code]?.tx||[])
-        .filter(x=>(x.effectiveDate||String(x.at||'').slice(0,10))===date)
-        .map(x=>({effective_date:date,material_code:m.code,material_name:m.name,direction:x.dir,qty_base:x.qty,reason:x.reason||'Inventory movement',package_label:x.packageLabel||'',created_by_name:x.by||'Admin',created_at:x.at})))
-        .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+      const rows=STOCK_MATERIALS.flatMap(m=>(db.inventory?.[m.code]?.tx||[]).filter(x=>(x.effectiveDate||String(x.at||'').slice(0,10))===date).map(x=>({effective_date:date,material_code:m.code,material_name:m.name,direction:x.dir,qty_base:x.qty,reason:x.reason||'Inventory movement',package_label:x.packageLabel||'',created_by_name:x.by||'Admin',created_at:x.at}))).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
       drawHistory(rows,date);
     }else{
-      const [snapshotRes,historyRes]=await Promise.all([
-        supabase.rpc('admin_inventory_snapshot',{p_effective_date:date}),
-        supabase.rpc('admin_inventory_history',{p_effective_date:date})
-      ]);
-      if(snapshotRes.error||historyRes.error){
-        $('inventoryHistoryRows').innerHTML='<div class="empty">'+esc(friendlyError(snapshotRes.error||historyRes.error))+'</div>';
-        showToast(friendlyError(snapshotRes.error||historyRes.error),'error');return;
-      }
-      snapshotMap=Object.fromEntries((snapshotRes.data||[]).map(x=>[x.material_code,Number(x.stock||0)]));
-      drawHistory(historyRes.data||[],date);
+      const [snap,hist]=await Promise.all([supabase.rpc('admin_inventory_snapshot',{p_effective_date:date}),supabase.rpc('admin_inventory_history',{p_effective_date:date})]);
+      if(snap.error||hist.error){$('inventoryHistoryRows').innerHTML='<div class="empty">'+esc(friendlyError(snap.error||hist.error))+'</div>';showToast(friendlyError(snap.error||hist.error),'error');return;}
+      snapshotMap=Object.fromEntries((snap.data||[]).map(x=>[x.material_code,Number(x.stock||0)]));drawHistory(hist.data||[],date);
     }
-    syncAsOfPreview();
+    updateAsOf();
   };
-  const syncTargetPreview=()=>{
-    const m=getMaterial(),pkg=getPackage();
-    const count=Math.max(0,Number($('stockEditPackages').value)||0);
-    const remainder=Math.max(0,Number($('stockEditRemainder').value)||0);
-    const remKg=$('stockEditRemainderUnit').value==='g'?remainder/1000:remainder;
-    const target=count*Number(pkg?.qty||0)+remKg;
-    $('stockEditPackages').step=pkg?.kind==='sack'?'0.5':'1';
-    $('stockTargetPreview').textContent=stockBreakdown(m,target,lang).primary+' · '+formatKg(target);
-    syncAsOfPreview();
-  };
-  const syncAsOfPreview=()=>{
-    const m=getMaterial();
-    const previous=Number(snapshotMap[m.code]||0);
-    $('stockAsOfPreview').textContent=stockBreakdown(m,previous,lang).primary;
-  };
-  const syncPackageOptions=()=>{
+  const updatePackageOptions=()=>{
     const m=getMaterial();
     $('stockEditPackage').innerHTML=m.packages.filter(x=>x.kind!=='recipe').map(x=>'<option value="'+m.packages.indexOf(x)+'">'+esc(packageUnit(m,x,lang))+'</option>').join('');
     setTargetFromSnapshot();
   };
-  const setTargetFromSnapshot=()=>{
-    const m=getMaterial(),pkg=getPackage();
-    const qty=Math.max(0,Number(snapshotMap[m.code]||0)),size=Number(pkg?.qty||1);
-    let count=Math.floor((qty+0.000001)/size),remainder=qty-count*size;
-    if(pkg?.kind==='sack'&&Math.abs(remainder-size/2)<0.00001){count+=0.5;remainder=0;}
-    $('stockEditPackages').value=count;
-    if(remainder>0&&remainder<1){$('stockEditRemainderUnit').value='g';$('stockEditRemainder').value=Number((remainder*1000).toFixed(3));}
-    else{$('stockEditRemainderUnit').value='kg';$('stockEditRemainder').value=Number(remainder.toFixed(3));}
-    $('stockEditRemainderUnit').dataset.previous=$('stockEditRemainderUnit').value;
-    syncTargetPreview();
-  };
-  $('stockEditMaterial').addEventListener('change',syncPackageOptions);
+  $('stockEditMaterial').addEventListener('change',updatePackageOptions);
   $('stockEditPackage').addEventListener('change',setTargetFromSnapshot);
-  $('stockEditPackages').addEventListener('input',syncTargetPreview);
-  $('stockEditRemainder').addEventListener('input',syncTargetPreview);
+  $('stockEditPackages').addEventListener('input',updatePreview);
+  $('stockEditRemainder').addEventListener('input',updatePreview);
+  $('stockEditRemainderUnit').dataset.unit='kg';
   $('stockEditRemainderUnit').addEventListener('change',()=>{
     const input=$('stockEditRemainder'),old=input.dataset.unit||'kg',next=$('stockEditRemainderUnit').value;
-    if(old!==next) input.value=Number((Number(input.value||0)*(old==='g'?0.001:1000)).toFixed(3));
-    input.dataset.unit=next;syncTargetPreview();
+    if(old!==next)input.value=Number((Number(input.value||0)*(old==='g'?0.001:1000)).toFixed(3));
+    input.dataset.unit=next;updatePreview();
   });
-  $('stockHistoryDate').addEventListener('change',async()=>{
-    await loadDate($('stockHistoryDate').value);
-    setTargetFromSnapshot();
-  });
+  $('stockHistoryDate').addEventListener('change',async()=>{await loadDate($('stockHistoryDate').value);setTargetFromSnapshot();});
   $('refreshHistory').addEventListener('click',()=>loadDate($('stockHistoryDate').value));
   $('saveStockByDate').addEventListener('click',async()=>{
-    const date=$('stockHistoryDate').value;
+    const date=$('stockHistoryDate').value,m=getMaterial(),pkg=getPackage();
     if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}
-    const m=getMaterial(),pkg=getPackage(),count=Number($('stockEditPackages').value||0),raw=Number($('stockEditRemainder').value||0);
-    const remainder=$('stockEditRemainderUnit').value==='g'?raw/1000:raw;
-    const target=count*Number(pkg?.qty||0)+remainder,reason=$('stockCorrectionReason').value.trim();
-    if(count<0||remainder<0||!Number.isFinite(target)||reason.length<3){showToast(t('Enter a valid quantity and reason.',lang),'error');return;}
-    const previous=Number(snapshotMap[m.code]||0);
-    if(Math.abs(target-previous)<0.00005){showToast(t('No stock change required.',lang));return;}
+    const count=Number($('stockEditPackages').value||0),raw=Number($('stockEditRemainder').value||0),rem=$('stockEditRemainderUnit').value==='g'?raw/1000:raw;
+    const target=count*Number(pkg?.qty||0)+rem,reason=$('stockCorrectionReason').value.trim();
+    if(count<0||rem<0||!Number.isFinite(target)||reason.length<3){showToast(t('Enter a valid quantity and reason.',lang),'error');return;}
+    const prev=Number(snapshotMap[m.code]||0);
+    if(Math.abs(target-prev)<0.00005){showToast(t('No stock change required.',lang));return;}
     const button=$('saveStockByDate');button.disabled=true;
     try{
       if(isDemo){
-        const delta=target-previous,inv=db.inventory[m.code];
-        inv.stock+=delta;
+        const delta=target-prev,inv=db.inventory[m.code];inv.stock+=delta;
         inv.tx.push({id:uid(),dir:delta>0?'in':'out',qty:Math.abs(delta),reason:'Historical stock correction: '+reason,effectiveDate:date,at:new Date().toISOString(),by:currentUser.name,packageLabel:'Manual correction'});
         saveDemo();
       }else{
         const {error}=await supabase.rpc('admin_set_stock_as_of_date',{p_material_code:m.code,p_effective_date:date,p_target_stock:Number(target.toFixed(4)),p_reason:reason});
-        if(error) throw error;
+        if(error)throw error;
       }
-      $('stockCorrectionReason').value='';
-      await refreshLiveState();
-      await loadDate(date);
-      showToast(t('Stock corrected for selected date.',lang),'success');
-      render();
+      $('stockCorrectionReason').value='';await refreshLiveState();await loadDate(date);
+      showToast(t('Stock corrected for selected date.',lang),'success');render();
     }catch(error){showToast(friendlyError(error),'error');}
     finally{button.disabled=false;}
   });
   $('stockIn').addEventListener('click',()=>openStockModal());
-  syncPackageOptions();
-  await loadDate(today());
-  setTargetFromSnapshot();
+  updatePackageOptions();await loadDate(today());setTargetFromSnapshot();
 }
 function openStockModal(){
   const opts=STOCK_MATERIALS.map(m=>`<option value="${m.code}">${esc(t(m.name,lang))}</option>`).join('');
