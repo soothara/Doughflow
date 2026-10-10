@@ -583,7 +583,7 @@ alter table public.inventory_transactions add column if not exists effective_dat
 update public.inventory_transactions
 set effective_date=(created_at at time zone 'Asia/Bishkek')::date
 where effective_date is null;
-alter table public.inventory_transactions alter column effective_date set default current_date;
+alter table public.inventory_transactions alter column effective_date drop default;
 alter table public.inventory_transactions alter column effective_date set not null;
 create index if not exists inventory_tx_effective_date_idx
   on public.inventory_transactions(effective_date,material_code,created_at);
