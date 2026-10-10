@@ -2,11 +2,6 @@
 -- Apply once in Supabase SQL Editor after schema.sql and hardening_2026_10_08.sql.
 begin;
 
-alter table public.profiles
-  add column if not exists pin_hash text,
-  add column if not exists pin_failed_attempts integer not null default 0,
-  add column if not exists pin_locked_until timestamptz;
-
 alter table public.inventory_transactions
   add column if not exists effective_at timestamptz,
   add column if not exists correction_of uuid references public.inventory_transactions(id);
@@ -23,83 +18,6 @@ create index if not exists inventory_tx_effective_idx
   on public.inventory_transactions(material_code,effective_at desc);
 create index if not exists inventory_tx_correction_idx
   on public.inventory_transactions(correction_of);
-
-create or replace function public.my_pin_is_set()
-returns boolean
-language sql
-security definer
-set search_path=public
-as $$
-  select coalesce((select pin_hash is not null from public.profiles where id=auth.uid()),false);
-$$;
-
-create or replace function public.set_my_pin(p_pin text)
-returns void
-language plpgsql
-security definer
-set search_path=public,extensions
-as $$
-begin
-  if auth.uid() is null then raise exception 'Not authorized'; end if;
-  if p_pin !~ '^[0-9]{4}$' then raise exception 'PIN must contain exactly four digits'; end if;
-  update public.profiles
-  set pin_hash=crypt(p_pin,gen_salt('bf',12)),
-      pin_failed_attempts=0,
-      pin_locked_until=null,
-      updated_at=now()
-  where id=auth.uid();
-  if not found then raise exception 'Profile not found'; end if;
-end;
-$$;
-
-create or replace function public.verify_my_pin(p_pin text)
-returns boolean
-language plpgsql
-security definer
-set search_path=public,extensions
-as $$
-declare
-  v_hash text;
-  v_attempts integer;
-  v_locked_until timestamptz;
-begin
-  if auth.uid() is null then raise exception 'Not authorized'; end if;
-  if p_pin !~ '^[0-9]{4}$' then return false; end if;
-
-  select pin_hash,pin_failed_attempts,pin_locked_until
-  into v_hash,v_attempts,v_locked_until
-  from public.profiles
-  where id=auth.uid()
-  for update;
-
-  if not found or v_hash is null then return false; end if;
-  if v_locked_until is not null and v_locked_until>now() then
-    raise exception 'PIN temporarily locked. Try again later';
-  end if;
-
-  if crypt(p_pin,v_hash)=v_hash then
-    update public.profiles
-    set pin_failed_attempts=0,pin_locked_until=null,updated_at=now()
-    where id=auth.uid();
-    return true;
-  end if;
-
-  v_attempts:=coalesce(v_attempts,0)+1;
-  update public.profiles
-  set pin_failed_attempts=case when v_attempts>=5 then 0 else v_attempts end,
-      pin_locked_until=case when v_attempts>=5 then now()+interval '15 minutes' else null end,
-      updated_at=now()
-  where id=auth.uid();
-  return false;
-end;
-$$;
-
-revoke all on function public.my_pin_is_set() from public;
-revoke all on function public.set_my_pin(text) from public;
-revoke all on function public.verify_my_pin(text) from public;
-grant execute on function public.my_pin_is_set() to authenticated;
-grant execute on function public.set_my_pin(text) to authenticated;
-grant execute on function public.verify_my_pin(text) to authenticated;
 
 create or replace function public.admin_correct_inventory_transaction(
   p_original_id uuid,
