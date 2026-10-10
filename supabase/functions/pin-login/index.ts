@@ -30,7 +30,16 @@ function responseJson(status: number, body: Record<string, unknown>, origin = ""
 
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin") ?? "";
-  if (req.method === "OPTIONS") return responseJson(204, {}, origin);
+  if (req.method === "OPTIONS") {
+    const permitted = allowedOrigins.includes(origin) ? origin : allowedOrigins[0] ?? "null";
+    return new Response(null, {status:204, headers:{
+      "Access-Control-Allow-Origin": permitted,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+      "Access-Control-Max-Age": "86400",
+      "Vary": "Origin",
+    }});
+  }
   if (origin && !allowedOrigins.includes(origin)) return responseJson(403, { error: "Origin not allowed" }, origin);
   if (req.method !== "POST") return responseJson(405, { error: "Method not allowed" }, origin);
   if (!supabaseUrl || !serviceKey) return responseJson(500, { error: "PIN login is not configured on the server" }, origin);
