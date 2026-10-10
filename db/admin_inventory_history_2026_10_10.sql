@@ -3,7 +3,7 @@
 begin;
 
 alter table public.inventory_transactions add column if not exists effective_date date;
-do $
+do $$
 begin
   if exists(
     select 1 from information_schema.columns
@@ -16,7 +16,7 @@ begin
     where effective_date is null;
   end if;
 end;
-$;
+$$;
 alter table public.inventory_transactions alter column effective_date drop default;
 alter table public.inventory_transactions alter column effective_date set not null;
 create index if not exists inventory_tx_effective_date_idx
