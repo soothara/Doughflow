@@ -44,7 +44,7 @@ create or replace function public.admin_set_stock_as_of_date(
   p_material_code text,p_effective_date date,p_target_stock numeric,p_reason text
 ) returns table(previous_stock numeric,new_stock numeric,delta numeric,transaction_id uuid)
 language plpgsql security definer set search_path=public as $$
-declare v_previous numeric; v_delta numeric; v_id uuid;
+declare v_previous numeric; v_current numeric; v_delta numeric; v_id uuid;
 begin
   if auth.uid() is null or not public.is_admin() then raise exception 'Not authorized'; end if;
   if p_effective_date is null or p_effective_date>current_date then raise exception 'Choose today or a past date'; end if;
@@ -55,7 +55,16 @@ begin
   select coalesce(sum(case when direction='in' then qty_base when direction='out' then -qty_base else qty_base end),0)
     into v_previous from public.inventory_transactions
     where material_code=p_material_code and effective_date<=p_effective_date;
+  select coalesce(sum(case when direction='in' then qty_base
+                           when direction='out' then -qty_base
+                           else qty_base end),0)
+  into v_current
+  from public.inventory_transactions where material_code=p_material_code;
+
   v_delta:=p_target_stock-v_previous;
+  if v_current+v_delta < -0.00005 then
+    raise exception 'Historical correction would make current inventory negative; reconcile later transactions first';
+  end if;
   if abs(v_delta)<0.00005 then return query select v_previous,v_previous,0::numeric,null::uuid; return; end if;
   insert into public.inventory_transactions(material_code,direction,qty_base,reason,package_count,package_label,created_by,effective_date)
   values(p_material_code,case when v_delta>0 then 'in'::public.inventory_direction else 'out'::public.inventory_direction end,
