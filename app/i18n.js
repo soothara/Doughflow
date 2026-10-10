@@ -445,6 +445,24 @@ Object.assign(DICT.ky,{
   'Historical correction would make current inventory negative; reconcile later transactions first.':'Бул оңдоо учурдагы кампадагы калдыктын терс болушуна алып келет. Адегенде кийинки операцияларды тактаңыз.'
 });
 
+
+Object.assign(DICT.ru,{
+  'Current PIN':'Текущий PIN-код',
+  'Your PIN is personal. Use four digits you can remember, and do not share it.':'PIN-код индивидуальный. Выберите четыре цифры, которые сможете запомнить, и никому их не сообщайте.',
+  'Choose a different PIN from your current PIN.':'Новый PIN должен отличаться от текущего.',
+  'Current PIN is incorrect':'Текущий PIN-код неверный.',
+  'PIN changed successfully.':'PIN-код успешно изменён.',
+  'Sign out from this device':'Выйти с этого устройства'
+});
+Object.assign(DICT.ky,{
+  'Current PIN':'Учурдагы PIN',
+  'Your PIN is personal. Use four digits you can remember, and do not share it.':'PIN жеке колдонулат. Эсиңизде кала турган төрт цифраны тандап, эч кимге айтпаңыз.',
+  'Choose a different PIN from your current PIN.':'Жаңы PIN учурдагы PINден башка болушу керек.',
+  'Current PIN is incorrect':'Учурдагы PIN туура эмес.',
+  'PIN changed successfully.':'PIN ийгиликтүү өзгөртүлдү.',
+  'Sign out from this device':'Бул түзмөктөн чыгуу'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
