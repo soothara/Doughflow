@@ -13,5 +13,9 @@ Supports English, Russian, and Kyrgyz.
 - PWA support
 - English, Russian and Kyrgyz UI with live language switching
 - Mobile-first iOS-style dashboard
+- Bakery Quest daily missions, XP progress, milestone badges and reward animation
+- Username + per-user 4-digit PIN sign-in with bcrypt-hashed credentials and lockout
+- Admin tools to set/reset individual PINs
+- Date-wise inventory correction with an auditable, non-destructive ledger
 
 See `docs/DEPLOY.md` for deployment instructions.
