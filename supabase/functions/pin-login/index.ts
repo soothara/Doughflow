@@ -65,11 +65,8 @@ Deno.serve(async (req: Request) => {
 
   const result = Array.isArray(rows) ? rows[0] : rows;
   if (!result?.success) {
-    const lockedUntil = result?.retry_after ? Date.parse(result.retry_after) : 0;
-    if (lockedUntil > Date.now()) {
-      const seconds = Math.max(1, Math.ceil((lockedUntil - Date.now()) / 1000));
-      return responseJson(429, { error: "Too many attempts. Try again later.", retryAfterSeconds: seconds }, origin);
-    }
+    // Keep unknown usernames, wrong PINs, unconfigured PINs, and locked accounts
+    // indistinguishable to reduce account enumeration through response status/body.
     return responseJson(401, { error: "Username or PIN is incorrect" }, origin);
   }
 
