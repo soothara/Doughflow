@@ -27,7 +27,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists inventory_transaction_effective_date_trg on public.inventory_transactions;
 create trigger inventory_transaction_effective_date_trg
