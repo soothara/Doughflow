@@ -423,6 +423,20 @@ Object.assign(DICT.ky,{
   'Master Baker badge unlocked! +600 XP':'«Мастер-наабайчы» белгиси ачылды! +600 XP'
 });
 
+
+Object.assign(DICT.ru,{
+  'Use password sign-in temporarily':'Временно войти по паролю',
+  'Back to PIN sign-in':'Вернуться ко входу по PIN',
+  'PIN login service is not deployed or configured yet. Use the temporary sign-in option below.':'Сервис PIN-входа ещё не развёрнут или не настроен. Используйте временный вход ниже.',
+  'PIN system needs the database migration before it can be enabled.':'Для включения PIN-входа сначала нужно применить миграцию базы данных.'
+});
+Object.assign(DICT.ky,{
+  'Use password sign-in temporarily':'Убактылуу сырсөз менен кирүү',
+  'Back to PIN sign-in':'PIN менен кирүүгө кайтуу',
+  'PIN login service is not deployed or configured yet. Use the temporary sign-in option below.':'PIN кирүү кызматы орнотула элек. Төмөндөгү убактылуу кирүүнү колдонуңуз.',
+  'PIN system needs the database migration before it can be enabled.':'PIN кирүүнү иштетүү үчүн адегенде маалымат базасынын миграциясын колдонуңуз.'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
