@@ -82,7 +82,7 @@ Do not run the older `db/pin_inventory_history.sql` stub; it is superseded and k
 Open **Stock → Date-wise inventory editor**, select a material and historical date, enter full physical packages plus any open remainder, and give a reason. Saving creates a dated, auditable correction transaction; it does not delete or rewrite the original inventory entries. Check the “current as of date” preview carefully before saving.
 
 ## Demo mode
-Before Supabase is configured, the app runs in local demo mode. Demo data is stored only in that browser. Four role buttons are available so the interface can be tested without a backend.
+Before Supabase is configured, the app runs in local demo mode. Demo data is stored only in that browser. PIN demo accounts are `askat / 1214` (Admin), `hamurchi / 2468`, `naan / 1357`, and `sales / 8642`. These are local-demo credentials only; live users must have unique PINs configured in Supabase. Never reuse the demo PINs for the live users.
 
 ### Stock display
 Inventory is stored in exact base units, but the UI converts balances back into the configured physical package model. Examples include:
