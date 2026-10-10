@@ -8,9 +8,6 @@ const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const allowedOrigins = (Deno.env.get("APP_ORIGIN") ?? "https://doughflow.soothingrainofficial.workers.dev")
   .split(",").map((s) => s.trim()).filter(Boolean);
 
-const admin = createClient(supabaseUrl, serviceKey, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-});
 
 function responseJson(status: number, body: Record<string, unknown>, origin = "") {
   const permitted = allowedOrigins.includes(origin) ? origin : allowedOrigins[0] ?? "null";
@@ -43,6 +40,10 @@ Deno.serve(async (req: Request) => {
   if (origin && !allowedOrigins.includes(origin)) return responseJson(403, { error: "Origin not allowed" }, origin);
   if (req.method !== "POST") return responseJson(405, { error: "Method not allowed" }, origin);
   if (!supabaseUrl || !serviceKey) return responseJson(500, { error: "PIN login is not configured on the server" }, origin);
+
+  const admin = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
 
   let body: { username?: unknown; pin?: unknown };
   try { body = await req.json(); } catch { return responseJson(400, { error: "Invalid request" }, origin); }
