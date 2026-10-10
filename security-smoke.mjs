@@ -38,7 +38,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v12-20261011-immersive/);
+assert.match(worker, /doughflow-v13-20261011-aurora/);
 
 const interactive = read("./app/interactive.css");
 assert.match(app, /function uiIcon\(/);
@@ -50,6 +50,6 @@ assert.match(interactive, /\.simulator-stage/);
 assert.match(interactive, /\.sim-immersive/);
 assert.match(interactive, /\.simulator-stage\.sim-immersive \.sim-world/);
 assert.match(interactive, /prefers-reduced-motion:reduce/);
-assert.match(worker, /doughflow-v12-20261011-immersive/);
+assert.match(worker, /doughflow-v13-20261011-aurora/);
 
 console.log("DoughFlow static security and immersive UI smoke checks passed.");
