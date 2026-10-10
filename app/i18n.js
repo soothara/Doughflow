@@ -463,6 +463,16 @@ Object.assign(DICT.ky,{
   'Sign out from this device':'Бул түзмөктөн чыгуу'
 });
 
+
+Object.assign(DICT.ru, {
+  'PIN login service is temporarily unavailable':'Служба входа по PIN-коду временно недоступна.',
+  'Inventory history':'История запасов'
+});
+Object.assign(DICT.ky, {
+  'PIN login service is temporarily unavailable':'PIN-код менен кирүү кызматы убактылуу жеткиликсиз.',
+  'Inventory history':'Кампа тарыхы'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
