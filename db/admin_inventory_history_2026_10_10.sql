@@ -16,7 +16,7 @@ create or replace function public.set_inventory_transaction_effective_date()
 returns trigger
 language plpgsql
 set search_path=public
-as $
+as $$
 begin
   if new.production_run_id is not null then
     select r.production_date into new.effective_date
