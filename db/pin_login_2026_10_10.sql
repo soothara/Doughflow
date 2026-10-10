@@ -111,7 +111,7 @@ where c.user_id=p.id and p.role='admin' and lower(u.email)='askat@gmail.com'
   and c.pin_hash is null;
 
 commit;
- or v.pin_hash is null or extensions.crypt(p_pin,v.pin_hash)<>v.pin_hash then
+ or v.pin_hash is null or crypt(p_pin,v.pin_hash)<>v.pin_hash then
     v_attempts:=v.failed_attempts+1;
     v_level:=case when v_attempts>=5 then least(10,v.lock_level+1) else v.lock_level end;
     v_lock:=case when v_attempts>=5 then now()+(least(240,15*(2^least(v_level-1,4))::integer)*interval '1 minute') else null end;
@@ -175,7 +175,7 @@ where c.user_id=p.id and p.role='admin' and lower(u.email)='askat@gmail.com'
 commit;
  then raise exception 'PIN must contain exactly four digits'; end if;
   update public.user_pin_credentials
-  set pin_hash=extensions.crypt(p_pin,extensions.gen_salt('bf',12)),
+  set pin_hash=crypt(p_pin,gen_salt('bf',12)),
       failed_attempts=0,lock_level=0,locked_until=null,last_failed_at=null,updated_at=now()
   where user_id=auth.uid();
   if not found then raise exception 'PIN profile is not configured; ask Admin to set your username first'; end if;
