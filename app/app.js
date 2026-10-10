@@ -253,7 +253,7 @@ function uiIcon(name,size=20){
     recipe:'<path d="M6 4h13v16H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"/><path d="M8 8h7M8 12h7M8 16h4"/>',
     trend:'<path d="m3 17 5-5 4 3 8-9"/><path d="M15 6h5v5"/>',
     pieces:'<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16M6.5 6.5l11 11m0-11-11 11"/>',
-    layers:'<path d="m22 6 17 9-17 9-17-9 17-9Z"/><path d="m5 22 17 9 17-9M5 30l17 9 17-9"/>',
+    layers:'<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/>',
     spark:'<path d="m12 2 2.2 6.2L20 10l-5.8 2.1L12 18l-2.2-5.9L4 10l5.8-1.8L12 2Z"/><path d="m19 15 .9 2.7L22 19l-2.1.8L19 22l-.8-2.2L16 19l2.2-1.3L19 15Z"/>',
     cube:'<path d="m12 3 9 5v10l-9 5-9-5V8l9-5Z"/><path d="m3 8 9 5 9-5M12 13v10"/>',
     activity:'<path d="M3 12h4l3-8 5 16 3-8h4"/>',
@@ -814,10 +814,11 @@ function renderDashboard(p){
   document.getElementById('dashboardHalf')?.addEventListener('click',()=>{selected=Math.min(9.5,Math.round((selected+0.5)*2)/2);sync();});
   document.getElementById('dashboardReset')?.addEventListener('click',()=>{selected=0;sync();});
   const openProduction=()=>{
+    const initialCount=selected||1;
     route='production';render();
     setTimeout(()=>{
       const input=document.getElementById('sackCount');
-      if(input){input.value=selected||0;input.dispatchEvent(new Event('input',{bubbles:true}));}
+      if(input){input.value=initialCount;input.dispatchEvent(new Event('input',{bubbles:true}));}
     },0);
   };
   document.getElementById('dashboardStart')?.addEventListener('click',openProduction);
