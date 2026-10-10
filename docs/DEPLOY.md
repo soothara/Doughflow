@@ -49,6 +49,36 @@ This patch:
 
 The hardening file is additive; do not delete existing production data.
 
+## 8. Four-digit PIN sign-in (existing installation)
+
+After the previous database migrations, run these two files in the Supabase SQL Editor:
+
+1. `db/pin_inventory_history.sql` — effective-date inventory ledger and Admin-only history/correction RPCs.
+2. `db/pin_login_2026_10_10.sql` — per-user PIN credentials, username aliases, Admin PIN management, lockout rules, and the initial Admin PIN.
+
+The PIN migration sets the existing Admin account whose Auth email is `askat@gmail.com` to username **`askat`** and initial PIN **`1214`**, but only when that account has not already configured a PIN. Change this PIN after initial access. Other accounts receive generated aliases; Admin can assign a memorable alias and set/reset each person's PIN in **More → People & PIN access**.
+
+### Deploy the PIN Edge Function
+
+The frontend never verifies PIN hashes itself. Supabase stores bcrypt PIN hashes and the Edge Function performs verification through the service-role-only `verify_pin_login` RPC, then issues a one-time magic-link token for a normal Supabase Auth session.
+
+From a terminal with the Supabase CLI linked to the same project, run:
+
+```sh
+supabase functions deploy pin-login --no-verify-jwt
+supabase secrets set APP_ORIGIN=https://doughflow.soothingrainofficial.workers.dev
+```
+
+Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to Edge Functions. The service-role key must remain server-side; never paste it into `app/config.js`. `APP_ORIGIN` should match the site's exact origin. If you later change the Cloudflare hostname, update this secret and redeploy/verify CORS.
+
+The Edge Function rate-limits incorrect PINs. The database lockout escalates after five incorrect attempts. Each user has a separate PIN; a PIN is not a replacement for secure device access, so lock the app/device when leaving a shared workstation.
+
+If the PIN function is not deployed yet, the login page shows a temporary password sign-in fallback. Deploy and test PIN sign-in before hiding that fallback.
+
+## 9. Admin inventory corrections
+
+Open **Stock → Date-wise inventory editor**, select a material and historical date, enter full physical packages plus any open remainder, and give a reason. Saving creates a dated, auditable correction transaction; it does not delete or rewrite the original inventory entries. Check the “current as of date” preview carefully before saving.
+
 ## Demo mode
 Before Supabase is configured, the app runs in local demo mode. Demo data is stored only in that browser. Four role buttons are available so the interface can be tested without a backend.
 
