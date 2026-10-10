@@ -11,6 +11,30 @@ alter table public.inventory_transactions alter column effective_date set not nu
 create index if not exists inventory_tx_effective_date_idx
   on public.inventory_transactions(effective_date,material_code,created_at);
 
+-- Production consumption inherits the production run's local business date.
+create or replace function public.set_inventory_transaction_effective_date()
+returns trigger
+language plpgsql
+set search_path=public
+as $
+begin
+  if new.production_run_id is not null then
+    select r.production_date into new.effective_date
+    from public.production_runs r
+    where r.id=new.production_run_id;
+  elsif new.effective_date is null then
+    new.effective_date=(coalesce(new.created_at,now()) at time zone 'Asia/Bishkek')::date;
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists inventory_transaction_effective_date_trg on public.inventory_transactions;
+create trigger inventory_transaction_effective_date_trg
+before insert or update of production_run_id, effective_date
+on public.inventory_transactions
+for each row execute function public.set_inventory_transaction_effective_date();
+
 create or replace function public.admin_inventory_history(p_effective_date date)
 returns table(transaction_id uuid,effective_date date,material_code text,material_name text,
   direction text,qty_base numeric,reason text,package_count numeric,package_label text,
