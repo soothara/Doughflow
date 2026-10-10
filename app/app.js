@@ -860,7 +860,7 @@ function applyProductionConsumption(count,productionId,consumption=[]){
       : expected;
     const inv=db.inventory[item.code]||{stock:0,tx:[]};
     inv.stock-=qty;
-    inv.tx.push({id:uid(),dir:'out',qty,reason:'Production consumption',productionId,at:new Date().toISOString(),by:currentUser.name});
+    inv.tx.push({id:uid(),dir:'out',qty,reason:'Production consumption',productionId,effectiveDate:today(),at:new Date().toISOString(),by:currentUser.name});
     db.inventory[item.code]=inv;
   });
 }
@@ -970,6 +970,9 @@ async function renderInventory(p){
     const target=count*Number(pkg?.qty||0)+rem,reason=$('stockCorrectionReason').value.trim();
     if(count<0||rem<0||!Number.isFinite(target)||reason.length<3){showToast(t('Enter a valid quantity and reason.',lang),'error');return;}
     const prev=Number(snapshotMap[m.code]||0);
+    if(isDemo && Number(db.inventory[m.code]?.stock||0)+(target-prev)<-0.00005){
+      showToast(t('Historical correction would make current inventory negative; reconcile later transactions first.',lang),'error');return;
+    }
     if(Math.abs(target-prev)<0.00005){showToast(t('No stock change required.',lang));return;}
     const button=$('saveStockByDate');button.disabled=true;
     try{
@@ -994,7 +997,7 @@ function openStockModal(){
   modalRoot.innerHTML=`<div class="modal-backdrop show"><div class="modal"><div class="modal-head"><h2>${t('Receive stock',lang)}</h2><button id="closeModal">×</button></div><div class="field"><label>${t('Material',lang)}</label><select id="stockMaterial">${opts}</select></div><div id="packageChooser"></div><div class="field"><label>${t('Effective date',lang)}</label><input id="stockEffectiveDate" type="date" max="${today()}" value="${today()}"></div><div class="field"><label>${t('Notes',lang)}</label><input id="stockNote" placeholder="${t('Supplier / delivery note',lang)}"></div><div class="modal-footer"><button class="btn secondary" id="cancelModal">${t('Cancel',lang)}</button><button class="btn primary" id="saveStock">${t('Add stock',lang)}</button></div></div></div>`;
   const update=()=>{const m=STOCK_MATERIALS.find(x=>x.code===document.getElementById('stockMaterial').value);document.getElementById('packageChooser').innerHTML=`<div class="field"><label>${t('Package',lang)}</label><select id="stockPackage">${m.packages.map((x,i)=>`<option value="${i}">${esc(packageUnit(m,x,lang))}</option>`).join('')} </select></div><div class="field"><label>${t('Number of packages',lang)}</label><input id="packageCount" type="number" min="0.001" step="1" value="1"></div><div class="small">${t('The system will convert package quantity into the inventory base unit.',lang)}</div>`;};
   update();document.getElementById('stockMaterial').addEventListener('change',update);document.getElementById('closeModal').addEventListener('click',closeModal);document.getElementById('cancelModal').addEventListener('click',closeModal);
-  document.getElementById('saveStock').addEventListener('click',async()=>{const code=document.getElementById('stockMaterial').value;const m=STOCK_MATERIALS.find(x=>x.code===code);const pi=Number(document.getElementById('stockPackage').value);const count=Number(document.getElementById('packageCount').value||0);const date=document.getElementById('stockEffectiveDate').value;if(!(count>0)||!Number.isFinite(count))return;if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}const qty=m.packages[pi].qty*count;const reason=document.getElementById('stockNote').value||t('Stock received',lang);if(isDemo){const inv=db.inventory[code];inv.stock+=qty;inv.tx.push({id:uid(),dir:'in',qty,packages:count,packageLabel:m.packages[pi].label,reason,effectiveDate:date,at:new Date().toISOString(),by:currentUser.name});saveDemo();closeModal();render();}else{const {error}=await supabase.from('inventory_transactions').insert({material_code:code,direction:'in',qty_base:qty,package_count:count,package_label:m.packages[pi].label,reason,created_by:currentUser.id,effective_at:new Date(date+'T23:59:00').toISOString()});if(error){showToast(friendlyError(error),'error');return;}await refreshLiveState();closeModal();render();}});
+  document.getElementById('saveStock').addEventListener('click',async()=>{const code=document.getElementById('stockMaterial').value;const m=STOCK_MATERIALS.find(x=>x.code===code);const pi=Number(document.getElementById('stockPackage').value);const count=Number(document.getElementById('packageCount').value||0);const date=document.getElementById('stockEffectiveDate').value;if(!(count>0)||!Number.isFinite(count))return;if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}const qty=m.packages[pi].qty*count;const reason=document.getElementById('stockNote').value||t('Stock received',lang);if(isDemo){const inv=db.inventory[code];inv.stock+=qty;inv.tx.push({id:uid(),dir:'in',qty,packages:count,packageLabel:m.packages[pi].label,reason,effectiveDate:date,at:new Date().toISOString(),by:currentUser.name});saveDemo();closeModal();render();}else{const {error}=await supabase.from('inventory_transactions').insert({material_code:code,direction:'in',qty_base:qty,package_count:count,package_label:m.packages[pi].label,reason,created_by:currentUser.id,effective_date:date});if(error){showToast(friendlyError(error),'error');return;}await refreshLiveState();closeModal();render();}});
 }
 function closeModal(){modalRoot.innerHTML='';}
 
@@ -1098,7 +1101,7 @@ if(isDemo){
       inv.tx=inv.tx||[];
       const ledger=inv.tx.reduce((sum,x)=>sum+(x.dir==='out'?-Number(x.qty||0):Number(x.qty||0)),0);
       const missing=Number(inv.stock||0)-ledger;
-      if(Math.abs(missing)>0.00005) inv.tx.push({id:uid(),dir:missing>0?'in':'out',qty:Math.abs(missing),reason:'Opening balance',effectiveDate:today(),at:new Date().toISOString(),by:'System',packageLabel:'Opening balance'});
+      if(Math.abs(missing)>0.00005) inv.tx.push({id:uid(),dir:missing>0?'in':'out',qty:Math.abs(missing),reason:'Opening balance',effectiveDate:'2026-01-01',at:new Date().toISOString(),by:'System',packageLabel:'Opening balance'});
       db.inventory[m.code]=inv;
     });
     db.__seededHistory=true;saveDemo();
