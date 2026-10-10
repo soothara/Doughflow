@@ -1105,6 +1105,17 @@ if(isDemo){
     });
     if(migrated) saveDemo();
   }
+  if(db.__seededHistory){
+    let migrated=false;
+    STOCK_MATERIALS.forEach(m=>{
+      (db.inventory[m.code]?.tx||[]).forEach(tx=>{
+        if(tx.reason==='Opening balance' && tx.effectiveDate!=='2026-01-01'){
+          tx.effectiveDate='2026-01-01';migrated=true;
+        }
+      });
+    });
+    if(migrated) saveDemo();
+  }
   if(!db.__seededHistory){
     STOCK_MATERIALS.forEach(m=>{
       const inv=db.inventory[m.code]||{stock:0,tx:[]};
