@@ -1,6 +1,7 @@
 -- DoughFlow PIN login migration (2026-10-10)
 -- Requires the Supabase Edge Function at supabase/functions/pin-login/index.ts.
 begin;
+set local search_path=public, extensions;
 
 create table if not exists public.user_pin_credentials (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -28,7 +29,7 @@ on conflict(user_id) do nothing;
 
 create or replace function public.admin_list_pin_users()
 returns table(user_id uuid,full_name text,role text,login_alias text,pin_configured boolean,locked_until timestamptz)
-language plpgsql security definer set search_path=public as $$
+language plpgsql security definer set search_path=public, extensions as $
 begin
   if auth.uid() is null or not public.is_admin() then raise exception 'Not authorized'; end if;
   return query
@@ -38,7 +39,7 @@ begin
 end $$;
 
 create or replace function public.admin_set_user_pin(p_user_id uuid,p_pin text,p_login_alias text)
-returns void language plpgsql security definer set search_path=public as $$
+returns void language plpgsql security definer set search_path=public, extensions as $
 declare v_alias text;
 begin
   if auth.uid() is null or not public.is_admin() then raise exception 'Not authorized'; end if;
@@ -56,7 +57,7 @@ end $$;
 
 create or replace function public.verify_pin_login(p_alias text,p_pin text)
 returns table(success boolean,authenticated_user_id uuid,authenticated_email text,retry_after timestamptz)
-language plpgsql security definer set search_path=public as $$
+language plpgsql security definer set search_path=public, extensions as $
 declare v record; v_attempts integer; v_level integer; v_lock timestamptz;
 begin
   if coalesce(p_pin,'') !~ '^[0-9]{4}$' or coalesce(trim(p_alias),'')='' then
