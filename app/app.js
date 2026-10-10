@@ -688,33 +688,26 @@ async function renderPage(){
 function renderMore(p){
   const extra=[];
   if(currentUser.role==='admin') extra.push(
-    ['inventory','📦','Stock & inventory','See balances and stock movements'],
-    ['reports','📊','Reports','Review production and usage'],
-    ['users','👥','People','Manage staff and roles'],
-    ['naan','🫓','Naan / Leposhka','Open the naan workflow'],
-    ['sales','💰','Sales','Open the sales workspace'],
-    ['recipe','🧪','Recipe','Edit the working recipe']
+    ['inventory',NAV_ICONS.stock,'Stock & inventory','See balances and stock movements'],
+    ['reports',NAV_ICONS.sales,'Reports','Review production and usage'],
+    ['users','<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2"/></svg>','People','Manage staff and roles'],
+    ['naan',NAV_ICONS.naan,'Naan / Leposhka','Open the naan workflow'],
+    ['sales',NAV_ICONS.sales,'Sales','Open the sales workspace'],
+    ['recipe',NAV_ICONS.recipe,'Recipe','Edit the working recipe']
   );
-  else if(currentUser.role==='hamurchi') extra.push(
-    ['recipe','🧪','Recipe','Edit the working recipe']
-  );
-  else if(currentUser.role==='naan') extra.push(
-    ['naan','🫓','Naan / Leposhka','Open the naan workflow']
-  );
-  else if(currentUser.role==='sales') extra.push(
-    ['sales','💰','Sales','Open the sales workspace']
-  );
-
+  else if(currentUser.role==='hamurchi') extra.push(['recipe',NAV_ICONS.recipe,'Recipe','Edit the working recipe']);
+  else if(currentUser.role==='naan') extra.push(['naan',NAV_ICONS.naan,'Naan / Leposhka','Open the naan workflow']);
+  else if(currentUser.role==='sales') extra.push(['sales',NAV_ICONS.sales,'Sales','Open the sales workspace']);
   p.innerHTML=`
-    <div class="page-head compact-head">
-      <div><div class="eyebrow">More</div><h1>Everything else</h1><p>Keep the daily workflow focused. Less-used tools live here.</p></div>
-    </div>
+    <div class="page-head compact-head"><div><div class="eyebrow">${t('More',lang)}</div><h1>${t('Everything else',lang)}</h1><p>${t('Keep the daily workflow focused. Less-used tools live here.',lang)}</p></div></div>
     <div class="more-grid">
-      ${extra.map(([r,icon,title,desc])=>`<button class="more-card" data-more-route="${r}"><span class="more-icon">${icon}</span><span><b>${title}</b><small>${desc}</small></span><span class="chevron">›</span></button>`).join('')}
-      <button class="more-card danger-card" id="moreLogout"><span class="more-icon">↪</span><span><b>Log out</b><small>Sign out from this device</small></span><span class="chevron">›</span></button>
+      ${extra.map(([r,icon,title,desc])=>`<button class="more-card" data-more-route="${r}"><span class="more-icon">${icon}</span><span><b>${t(title,lang)}</b><small>${t(desc,lang)}</small></span><span class="chevron">›</span></button>`).join('')}
+      <button class="more-card" id="moreChangePin"><span class="more-icon">🔐</span><span><b>${t('Change PIN',lang)}</b><small>${t('Update your 4-digit PIN',lang)}</small></span><span class="chevron">›</span></button>
+      <button class="more-card danger-card" id="moreLogout"><span class="more-icon">🔒</span><span><b>${t('Lock app',lang)}</b><small>${t('Return to your 4-digit PIN screen',lang)}</small></span><span class="chevron">›</span></button>
     </div>`;
   p.querySelectorAll('[data-more-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.moreRoute;render();}));
   p.querySelector('#moreLogout')?.addEventListener('click',logout);
+  p.querySelector('#moreChangePin')?.addEventListener('click',startPinChange);
 }
 function renderDashboard(p){
   const prod=isDemo?db.productions:liveState.productions;
