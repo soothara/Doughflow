@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v11-20261011-security';
+const CACHE = 'doughflow-v12-20261011-immersive';
 
 const CORE_ASSETS = [
   './',
