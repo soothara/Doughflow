@@ -3,9 +3,20 @@
 begin;
 
 alter table public.inventory_transactions add column if not exists effective_date date;
-update public.inventory_transactions
-set effective_date=(created_at at time zone 'Asia/Bishkek')::date
-where effective_date is null;
+do $
+begin
+  if exists(
+    select 1 from information_schema.columns
+    where table_schema='public' and table_name='inventory_transactions' and column_name='effective_at'
+  ) then
+    execute 'update public.inventory_transactions set effective_date=coalesce((effective_at at time zone ''Asia/Bishkek'')::date,(created_at at time zone ''Asia/Bishkek'')::date) where effective_date is null';
+  else
+    update public.inventory_transactions
+    set effective_date=(created_at at time zone 'Asia/Bishkek')::date
+    where effective_date is null;
+  end if;
+end;
+$;
 alter table public.inventory_transactions alter column effective_date set default current_date;
 alter table public.inventory_transactions alter column effective_date set not null;
 create index if not exists inventory_tx_effective_date_idx
@@ -34,6 +45,12 @@ create trigger inventory_transaction_effective_date_trg
 before insert or update of production_run_id, effective_date
 on public.inventory_transactions
 for each row execute function public.set_inventory_transaction_effective_date();
+
+-- The legacy migration used different return columns for these RPCs.
+-- Drop those signatures before recreating the date-wise UI contract.
+drop function if exists public.admin_inventory_history(date);
+drop function if exists public.admin_inventory_snapshot(date);
+drop function if exists public.admin_set_stock_as_of_date(text,date,numeric,text);
 
 create or replace function public.admin_inventory_history(p_effective_date date)
 returns table(transaction_id uuid,effective_date date,material_code text,material_name text,
