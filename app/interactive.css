@@ -12,3 +12,41 @@
 @media(max-width:720px){.inventory-game-banner{padding:12px;border-radius:17px}.inventory-live-pill{display:none}.historical-editor-card,.inventory-history-card{padding:14px;border-radius:20px}.history-filter-row{grid-template-columns:1fr}.history-target-grid{grid-template-columns:1fr 1fr}.history-target-grid .field:last-child{grid-column:1/-1}.historical-preview{flex-wrap:wrap;gap:8px}.historical-before{margin-left:50px;padding-left:0;border:0}.history-form-footer{align-items:stretch;flex-direction:column}.history-form-footer .btn{width:100%}.inventory-history-card th,.inventory-history-card td{padding:8px 6px;font-size:10px}}
 @media(max-width:640px){.quest-panel{padding:14px;border-radius:23px}.quest-main{align-items:flex-start;gap:11px}.quest-emblem{width:63px;height:63px;border-radius:19px}.quest-emblem svg{width:50px;height:50px}.quest-copy h2{font-size:19px}.quest-copy p{font-size:10px}.quest-footer{align-items:stretch;flex-direction:column;gap:10px}.quest-level{display:flex;align-items:center;justify-content:space-between}.quest-actions{justify-content:stretch}.quest-play,.quest-reward{flex:1;min-height:42px}}
 @media(prefers-reduced-motion:reduce){.pin-backdrop,.pin-orbit:before,.pin-orbit:after,.pin-orbit-inner svg,.quest-glow,.quest-emblem svg,.quest-confetti span,.quest-badge.unlocked{animation:none!important}.quest-progress-track span{transition:none}}
+
+
+/* PIN sign-in form + Admin PIN management polish */
+.pin-login-form{gap:2px}
+.pin-display-wrap{display:flex;align-items:center;position:relative}
+.pin-display-wrap .pin-input{height:60px!important;padding:0 56px 0 18px!important;border-radius:17px!important;border:1px solid #d9e2ec!important;background:linear-gradient(180deg,#fff,#f7faff)!important;font-size:25px!important;font-weight:850;letter-spacing:.42em;text-align:center;box-shadow:inset 0 1px 0 #fff,0 5px 16px #1c37600b}
+.pin-display-wrap .pin-input:focus{border-color:#2182e7!important;box-shadow:0 0 0 4px #1680e91b}
+.pin-visibility{position:absolute;right:7px;width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:12px;background:#eef3f9;color:#66758b}
+.pin-visibility:hover{background:#e1ebf7}
+.pin-hint{display:block;margin:2px 2px 0;color:#828d9b;font-size:10px;line-height:1.35}
+.pin-login-form .pin-keypad{margin:9px auto 12px;width:100%;max-width:390px;gap:8px}
+.pin-login-form .pin-key{height:47px;border-radius:14px;font-size:19px}
+.pin-login-form .pin-key.utility{background:linear-gradient(145deg,#f1f3f7,#e7ebf1);color:#627087;font-size:11px}
+.pin-login-form .pin-key:focus-visible,.pin-visibility:focus-visible,.pin-manage-button:focus-visible{outline:3px solid #1478ff55;outline-offset:2px}
+.legacy-login-link{display:block;margin:10px auto 0;padding:9px 12px;border:0;border-radius:12px;background:transparent;color:#6c7890;font-size:11px;font-weight:850}
+.legacy-login-link:hover{background:#eff5ff;color:#0b71d7}
+.legacy-login-form{padding-top:10px;animation:pinIn .25s ease-out both}
+.pin-admin-banner{display:flex;align-items:center;gap:12px;margin:12px 0 16px;padding:14px 16px;border-radius:19px;background:linear-gradient(120deg,#162f4c,#245d75);color:#fff;box-shadow:0 12px 26px #17364b20}
+.pin-admin-symbol{width:43px;height:43px;display:grid;place-items:center;flex:none;border-radius:14px;background:#ffffff20;color:#a8efd4;font-size:22px}
+.pin-admin-banner>div:nth-child(2){display:flex;flex-direction:column;gap:4px;flex:1}
+.pin-admin-banner b{font-size:13px}
+.pin-admin-banner small{color:#ffffffb8;font-size:10px;line-height:1.4}
+.pin-admin-banner>span{padding:7px 9px;border-radius:999px;background:#ffffff19;color:#d9ffef;font-size:10px;font-weight:900;white-space:nowrap}
+.pin-status{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:850;white-space:nowrap}
+.pin-status.configured{color:#087b4a;background:#e4f8ed}
+.pin-status.not-configured{color:#925b08;background:#fff1d6}
+.pin-manage-button{padding:9px 11px;min-height:39px;font-size:11px;border-radius:12px}
+.pin-security-note{margin-top:12px;padding:12px 14px;border-radius:14px;background:#edf5ff;color:#4a6385;line-height:1.45}
+.pin-manage-modal{animation:pinIn .25s cubic-bezier(.22,1,.36,1) both}
+.pin-modal-user{margin:-4px 0 15px;padding:10px 12px;border-radius:12px;background:#f2f6fb;color:#4e627a;font-size:12px;font-weight:850}
+.pin-manage-modal .field input{font-variant-numeric:tabular-nums;letter-spacing:.08em}
+@media(max-width:640px){
+ .pin-display-wrap .pin-input{height:56px!important}
+ .pin-login-form .pin-key{height:45px}
+ .pin-admin-banner{padding:12px;border-radius:16px}
+ .pin-admin-banner>span{font-size:9px;padding:6px}
+ .pin-manage-button{padding:8px 9px}
+}
