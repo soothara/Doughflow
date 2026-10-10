@@ -431,61 +431,125 @@ async function render(){
 }
 
 function loginHTML(){
-  return `<div class="login-portal">
+  return \`<div class="login-portal">
     <div class="login-photo"></div><div class="login-shade"></div>
     <div class="login-shell">
       <div class="login-brand-row">
-        <div class="login-logo">${leposhkaIcon(42)}</div>
-        <div><strong>DoughFlow</strong><small>Bakery control</small></div>
-        <div class="login-lang">${languageFlag()} ${languageSwitcher()}</div>
+        <div class="login-logo">\${leposhkaIcon(42)}</div>
+        <div><strong>DoughFlow</strong><small>\${t('Bakery control',lang)}</small></div>
+        <div class="login-lang">\${languageFlag()} \${languageSwitcher()}</div>
       </div>
       <div class="login-main-card">
-        <div class="login-badge">${leposhkaIcon(42)}</div>
-        <div class="eyebrow login-eyebrow">${t('Kyrgyz bakery portal',lang)}</div>
-        <h1>${t('Welcome back',lang)} 👋</h1>
-        <p>${t('Sign in to manage production, recipes and stock.',lang)}</p>
-        ${isDemo?`
-          <div class="login-note">${t('Demo mode is active. Choose a role below.',lang)}</div>
-          <div class="login-role-grid">${['admin','hamurchi','naan','sales'].map(r=>`<button class="login-role-btn ${r==='admin'?'featured':''} demo-login" data-role="${r}"><span>${r==='admin'?'👑':r==='hamurchi'?'🥣':r==='naan'?'🫓':'💰'}</span>${roleName(r)}<b>›</b></button>`).join('')}</div>
-        `:`
-          <form id="loginForm" class="modern-login-form">
-            <div class="field"><label>${t('Username',lang)}</label><input required type="text" name="login" value="askat" placeholder="askat" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
-            <div class="field password-field"><label>${t('Password',lang)}</label><div class="password-wrap"><input required id="loginPassword" type="password" name="password" autocomplete="current-password"><button type="button" class="password-toggle" id="togglePassword" aria-label="${t('Show password',lang)}">◉</button></div></div>
-            <button class="login-submit" type="submit"><span>↪</span>${t('Sign in',lang)}<b>›</b></button>
-            <div id="loginError" class="login-error"></div>
-          </form>
-        `}
-        <div class="login-footer-line"><span>🇰🇬 Bishkek</span><span>•</span><span>DoughFlow</span></div>
+        <div class="login-badge">\${leposhkaIcon(42)}</div>
+        <div class="eyebrow login-eyebrow">\${t('Kyrgyz bakery portal',lang)}</div>
+        <h1>\${t('Welcome back',lang)} 👋</h1>
+        <p>\${t('Enter your username and four-digit PIN.',lang)}</p>
+        <form id="loginForm" class="modern-login-form pin-login-form">
+          <div class="field">
+            <label for="loginAlias">\${t('Username',lang)}</label>
+            <input required id="loginAlias" type="text" name="login" value="askat" placeholder="askat" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32">
+          </div>
+          <div class="field">
+            <label for="loginPin">\${t('4-digit PIN',lang)}</label>
+            <div class="pin-display-wrap">
+              <input required id="loginPin" class="pin-input" type="password" name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="one-time-code" placeholder="••••" aria-describedby="pinHint">
+              <button type="button" class="pin-visibility" id="togglePin" aria-label="\${t('Show PIN',lang)}">◉</button>
+            </div>
+            <small id="pinHint" class="pin-hint">\${t('Your PIN is personal. Five failed attempts temporarily lock the account.',lang)}</small>
+          </div>
+          <div class="pin-keypad" aria-label="\${t('PIN keypad',lang)}">
+            \${[1,2,3,4,5,6,7,8,9,'clear',0,'back'].map(k=>k==='clear'
+              ? \`<button type="button" class="pin-key utility" data-pin-key="clear">\${t('Clear',lang)}</button>\`
+              : k==='back'
+                ? \`<button type="button" class="pin-key utility" data-pin-key="back" aria-label="\${t('Delete last digit',lang)}">⌫</button>\`
+                : \`<button type="button" class="pin-key" data-pin-key="\${k}">\${k}</button>\`).join('')}
+          </div>
+          <button class="login-submit" type="submit"><span>⌁</span>\${t('Unlock DoughFlow',lang)}<b>›</b></button>
+          <div id="loginError" class="login-error">\${esc(authError)}</div>
+        </form>
+        <div class="login-footer-line"><span>🇰🇬 \${t('Bishkek',lang)}</span><span>•</span><span>DoughFlow</span></div>
       </div>
       <div class="login-credit"><span>✦</span> Сделано Али</div>
     </div>
-  </div>`;
+  </div>\`;
+}
+function ensureDemoPins(){
+  if(!isDemo||!db) return;
+  const initial=[
+    {role:'admin',alias:'askat',pin:'1214'},
+    {role:'hamurchi',alias:'hamurchi',pin:'2468'},
+    {role:'naan',alias:'naan',pin:'1357'},
+    {role:'sales',alias:'sales',pin:'8642'}
+  ];
+  db.users=(db.users||[]).map(user=>{
+    const defaults=initial.find(x=>x.role===user.role);
+    return {...user,loginAlias:user.loginAlias||defaults?.alias||String(user.name||user.role).toLowerCase().replace(/[^a-z0-9._-]/g,'').slice(0,32),pin:user.pin||defaults?.pin||''};
+  });
+  saveDemo();
 }
 function wireLogin(){
-  document.getElementById('togglePassword')?.addEventListener('click',()=>{
-    const input=document.getElementById('loginPassword');
-    const button=document.getElementById('togglePassword');
-    if(!input||!button) return;
-    const show=input.type==='password';
-    input.type=show?'text':'password';
-    button.textContent=show?'◉':'○';
-    button.setAttribute('aria-label',t(show?'Hide password':'Show password',lang));
+  const pinInput=document.getElementById('loginPin');
+  const pinError=document.getElementById('loginError');
+  document.getElementById('togglePin')?.addEventListener('click',()=>{
+    if(!pinInput) return;
+    pinInput.type=pinInput.type==='password'?'text':'password';
   });
-  if(isDemo){
-    document.querySelectorAll('.demo-login').forEach(b=>b.addEventListener('click',()=>{
-      db.session={user:{id:`demo-${b.dataset.role}`,name:roleName(b.dataset.role)},role:b.dataset.role,lang:getSavedLang(`demo-${b.dataset.role}`)};
-      currentUser={id:db.session.user.id,name:db.session.user.name,role:b.dataset.role,lang:db.session.lang};
-      lang=currentUser.lang;authError='';route='dashboard';saveDemo();render();
-    }));
-    return;
-  }
+  pinInput?.addEventListener('input',()=>{
+    pinInput.value=pinInput.value.replace(/\D/g,'').slice(0,4);
+  });
+  document.querySelectorAll('[data-pin-key]').forEach(button=>button.addEventListener('click',()=>{
+    if(!pinInput) return;
+    const key=button.dataset.pinKey;
+    if(key==='clear') pinInput.value='';
+    else if(key==='back') pinInput.value=pinInput.value.slice(0,-1);
+    else if(pinInput.value.length<4) pinInput.value+=key;
+    pinInput.dispatchEvent(new Event('input',{bubbles:true}));
+    pinInput.focus();
+  }));
+  if(isDemo) ensureDemoPins();
+
   document.getElementById('loginForm')?.addEventListener('submit',async e=>{
     e.preventDefault();
-    const f=new FormData(e.currentTarget);
-    const raw=String(f.get('login')||'').trim();
-    const email=raw.includes('@')?raw:`${raw}@gmail.com`;
-    const {error}=await supabase.auth.signInWithPassword({email,password:f.get('password')});
-    if(error) document.getElementById('loginError').textContent=friendlyError(error);
+    if(!pinInput||!pinError) return;
+    const username=String(document.getElementById('loginAlias')?.value||'').trim().toLowerCase();
+    const pin=pinInput.value;
+    if(!/^[a-z0-9][a-z0-9._-]{1,31}$/.test(username)||! /^\d{4}$/.test(pin)){
+      pinError.textContent=t('Enter a valid username and four-digit PIN.',lang);return;
+    }
+    const submit=e.currentTarget.querySelector('button[type="submit"]');
+    if(submit) submit.disabled=true;
+    pinError.textContent='';
+    try{
+      if(isDemo){
+        const user=(db.users||[]).find(u=>String(u.loginAlias||'').toLowerCase()===username);
+        if(!user||!user.pin||user.pin!==pin){
+          pinError.textContent=t('Username or PIN is incorrect',lang);return;
+        }
+        db.session={user:{id:user.id,name:user.name},role:user.role,lang:getSavedLang(user.id)};
+        currentUser={id:user.id,name:user.name,role:user.role,lang:db.session.lang};
+        lang=currentUser.lang;authError='';route='dashboard';saveDemo();render();return;
+      }
+      const endpoint=CFG.supabaseUrl.replace(/\/$/,'')+'/functions/v1/pin-login';
+      const response=await fetch(endpoint,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':CFG.supabaseAnonKey,'Authorization':'Bearer '+CFG.supabaseAnonKey},
+        body:JSON.stringify({username,pin}),
+        cache:'no-store'
+      });
+      const payload=await response.json().catch(()=>({}));
+      if(!response.ok){
+        const key=response.status===429?'Too many attempts. Try again later.':(payload.error==='Username or PIN is incorrect'?'Username or PIN is incorrect':payload.error||'Username or PIN is incorrect');
+        pinError.textContent=t(key,lang);
+        return;
+      }
+      if(!payload.token_hash) throw new Error('Secure session token was not returned.');
+      const {error}=await supabase.auth.verifyOtp({type:'magiclink',token_hash:payload.token_hash});
+      if(error) throw error;
+    }catch(error){
+      pinError.textContent=friendlyError(error);
+    }finally{
+      if(submit) submit.disabled=false;
+    }
   });
 }
 async function logout(){ if(isDemo){db.session=null;currentUser=null;authError='';lang=getSavedLang('guest');saveDemo();render();return;} await supabase.auth.signOut({scope:'local'}); }
