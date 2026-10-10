@@ -59,6 +59,9 @@ returns table(transaction_id uuid,effective_date date,material_code text,materia
 language plpgsql security definer set search_path=public as $$
 begin
   if auth.uid() is null or not public.is_admin() then raise exception 'Not authorized'; end if;
+  if p_effective_date is null or p_effective_date>(now() at time zone 'Asia/Bishkek')::date then
+    raise exception 'Choose today or a past date';
+  end if;
   return query
   select t.id,t.effective_date,t.material_code,m.name,t.direction::text,t.qty_base,t.reason,
     t.package_count,t.package_label,coalesce(p.full_name,'Unknown'),t.created_at
@@ -73,6 +76,9 @@ returns table(material_code text,stock numeric)
 language plpgsql security definer set search_path=public as $$
 begin
   if auth.uid() is null or not public.is_admin() then raise exception 'Not authorized'; end if;
+  if p_effective_date is null or p_effective_date>(now() at time zone 'Asia/Bishkek')::date then
+    raise exception 'Choose today or a past date';
+  end if;
   return query
   select m.code,coalesce(sum(case when t.direction='in' then t.qty_base
     when t.direction='out' then -t.qty_base else t.qty_base end),0)::numeric
@@ -88,7 +94,7 @@ language plpgsql security definer set search_path=public as $$
 declare v_previous numeric; v_current numeric; v_delta numeric; v_id uuid;
 begin
   if auth.uid() is null or not public.is_admin() then raise exception 'Not authorized'; end if;
-  if p_effective_date is null or p_effective_date>current_date then raise exception 'Choose today or a past date'; end if;
+  if p_effective_date is null or p_effective_date>(now() at time zone 'Asia/Bishkek')::date then raise exception 'Choose today or a past date'; end if;
   if p_target_stock is null or p_target_stock<0 then raise exception 'Stock cannot be negative'; end if;
   if length(trim(coalesce(p_reason,'')))<3 then raise exception 'Enter a reason of at least 3 characters'; end if;
   perform 1 from public.materials where code=p_material_code and active and inventory_tracked for update;
