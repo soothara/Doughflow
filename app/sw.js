@@ -1,11 +1,10 @@
-const CACHE = 'doughflow-v8-20261011';
+const CACHE = 'doughflow-v9-20261011';
 
 const CORE_ASSETS = [
   './',
   './index.html',
   './app.js',
   './styles.css',
-  './interactive.css',
   './i18n.js',
   './manifest.webmanifest',
   './icon.svg'
@@ -14,7 +13,6 @@ const CORE_ASSETS = [
 const NETWORK_FIRST = new Set([
   '/app.js',
   '/styles.css',
-  '/interactive.css',
   '/i18n.js',
   '/config.js'
 ]);
