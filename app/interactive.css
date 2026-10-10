@@ -140,3 +140,14 @@
 @media(max-width:420px){.simulator-stage{min-height:345px}.sim-hud{gap:4px}.sim-hud small{font-size:7px}.sim-world{top:54%;transform:translate(-50%,-42%) scale(.78)}.sim-run-button{padding:9px 8px}.sim-mode-toggle{gap:4px;padding:8px}.sim-mode-toggle>span:not(.toggle-track){display:none}}
 @media(prefers-reduced-motion:reduce){.machine-shine,.sim-immersive .sim-orbit,.sim-immersive .sim-bakery-machine,.sim-running .conveyor-belt i,.sim-running .conveyor-loaf,.sim-running .machine-loaf{animation:none!important}.metric-card,.stock-item,.recipe-photo-card,.sim-world{transition:none!important}}
 
+
+/* Preserve correct 3D model scale on narrow screens when immersive mode is active. */
+@media(max-width:720px){
+  .simulator-stage.sim-immersive .sim-world{transform:translate(-50%,-42%) perspective(850px) rotateX(-3deg) rotateY(-6deg) scale(.84)}
+}
+@media(max-width:420px){
+  .simulator-stage.sim-immersive .sim-world{transform:translate(-50%,-42%) perspective(850px) rotateX(-2deg) rotateY(-4deg) scale(.75)}
+}
+.simulator-stage.sim-immersive{box-shadow:inset 0 0 42px #7cddff12,0 0 0 1px #72e7ce12}
+.simulator-stage:focus-within{outline:2px solid #6fe2c2;outline-offset:3px}
+.sim-mode-toggle:focus-visible,.sim-run-button:focus-visible{outline:3px solid #8debd4;outline-offset:3px}
