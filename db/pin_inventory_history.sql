@@ -1,4 +1,4 @@
--- DoughFlow PIN gate + dated inventory audit
+-- DoughFlow dated inventory ledger + Admin correction audit
 -- Apply once in Supabase SQL Editor after schema.sql and hardening_2026_10_08.sql.
 begin;
 
