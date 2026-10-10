@@ -105,8 +105,8 @@ begin
   select
     coalesce(sum((b.x->>'mishok_fraction')::numeric),0),
     count(*)::integer,
-    count(*) filter (where (b.x->>'mishok_fraction')::numeric = 0.5)::integer,
-    count(*) filter (where (b.x->>'mishok_fraction')::numeric = 1)::integer,
+    (count(*) filter (where (b.x->>'mishok_fraction')::numeric = 0.5))::integer,
+    (count(*) filter (where (b.x->>'mishok_fraction')::numeric = 1))::integer,
     count(distinct (b.x->>'batch_no')::integer)::integer
   into v_batch_sum,v_batch_count,v_half_count,v_full_count,v_distinct_batch_count
   from jsonb_array_elements(p_batches) as b(x);
@@ -363,5 +363,114 @@ $$;
 
 revoke all on function public.admin_set_stock_as_of_date(text,date,numeric,text) from public;
 grant execute on function public.admin_set_stock_as_of_date(text,date,numeric,text) to authenticated;
+
+
+-- Recipe versions also validate units and quantity syntax inside the database
+-- so an authorized but malformed direct RPC cannot reinterpret kg as another unit.
+create or replace function public.create_recipe_version(
+  p_items jsonb,
+  p_note text default null
+) returns uuid
+language plpgsql
+security definer
+set search_path=public
+as $
+declare
+  v_version integer;
+  v_id uuid;
+  x jsonb;
+begin
+  if auth.uid() is null or not (public.is_admin() or public.is_role('hamurchi')) then
+    raise exception 'Not authorized';
+  end if;
+
+  if jsonb_typeof(p_items) is distinct from 'array' then
+    raise exception 'Recipe items must be a JSON array';
+  end if;
+  if jsonb_array_length(p_items)=0 then
+    raise exception 'Recipe cannot be empty';
+  end if;
+
+  if exists (
+    select 1 from jsonb_array_elements(p_items) as i(x)
+    where jsonb_typeof(i.x) is distinct from 'object'
+  ) then
+    raise exception 'Each recipe item must be an object';
+  end if;
+
+  if exists (
+    select 1 from jsonb_array_elements(p_items) as i(x)
+    where coalesce(i.x->>'code','') !~ '^[a-z][a-z0-9_]{0,31}
+       or coalesce(i.x->>'qty','') !~ '^[0-9]+([.][0-9]+)?
+       or coalesce(i.x->>'unit','') = ''
+  ) then
+    raise exception 'Recipe contains an invalid material code, quantity, or unit';
+  end if;
+
+  if exists (
+    select i.x->>'code'
+    from jsonb_array_elements(p_items) as i(x)
+    group by i.x->>'code'
+    having count(*) > 1
+  ) then
+    raise exception 'Recipe contains duplicate materials';
+  end if;
+
+  if exists (
+    select 1
+    from jsonb_array_elements(p_items) as i(x)
+    where not exists (
+      select 1 from public.materials m
+      where m.code=i.x->>'code' and m.active
+    )
+  ) then
+    raise exception 'Recipe contains an unknown material';
+  end if;
+
+  if exists (
+    select 1
+    from jsonb_array_elements(p_items) as i(x)
+    join public.materials m on m.code=i.x->>'code'
+    where m.active and m.base_unit<>i.x->>'unit'
+  ) then
+    raise exception 'Recipe unit does not match the material base unit';
+  end if;
+
+  perform pg_advisory_xact_lock(41720261008);
+
+  select coalesce(max(version_number),0)+1
+  into v_version
+  from public.recipe_versions;
+
+  update public.recipe_versions set active=false where active=true;
+
+  insert into public.recipe_versions(
+    version_number,active,created_by,note,effective_from
+  )
+  values(
+    v_version,true,auth.uid(),p_note,(now() at time zone 'Asia/Bishkek')::date
+  )
+  returning id into v_id;
+
+  for x in select * from jsonb_array_elements(p_items) loop
+    insert into public.recipe_items(
+      recipe_version_id,material_code,qty_per_mishok,unit,note,sort_order
+    )
+    values(
+      v_id,
+      x->>'code',
+      (x->>'qty')::numeric,
+      x->>'unit',
+      x->>'note',
+      coalesce((x->>'sort_order')::integer,0)
+    );
+  end loop;
+
+  return v_id;
+end;
+$;
+
+revoke all on function public.create_recipe_version(jsonb,text) from public;
+grant execute on function public.create_recipe_version(jsonb,text) to authenticated;
 
 commit;
