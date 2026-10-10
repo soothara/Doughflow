@@ -26,6 +26,9 @@ assert.doesNotMatch(edge, /retryAfterSeconds/);
 
 // Validate the rules in the server-side migration, not only in the UI.
 assert.match(migration, /p_production_date <> \(now\(\) at time zone 'Asia\/Bishkek'\)::date/);
+assert.match(migration, /before insert or update on public\.inventory_transactions/i);
+assert.match(migration, /Choose today or a past date/);
+assert.match(migration, /inventory_transactions_qty_positive_chk/);
 assert.match(migration, /Batch numbers must be sequential starting at 1/);
 assert.match(migration, /Consumption contains duplicate materials/);
 assert.match(migration, /Consumption contains an unknown material/);
