@@ -211,6 +211,97 @@ function showToast(message,type='info',duration=2600){
   window.setTimeout(()=>{toast.classList.remove('show');window.setTimeout(()=>toast.remove(),220);},duration);
 }
 
+
+async function derivePinHash(pin,salt){
+ const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+ const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:120000,hash:'SHA-256'},key,256);
+ return [...new Uint8Array(bits)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function saveLocalPin(userId,pin){
+ const salt=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,'0')).join('');
+ localStorage.setItem(PIN_LOCAL_PREFIX+userId,JSON.stringify({salt,hash:await derivePinHash(pin,salt),version:1}));
+}
+async function verifyLocalPin(userId,pin){
+ try{const v=JSON.parse(localStorage.getItem(PIN_LOCAL_PREFIX+userId)||'null');return !!v&&await derivePinHash(pin,v.salt)===v.hash;}catch{return false;}
+}
+async function preparePinGate(){
+ if(!currentUser){pinLocked=false;return;}
+ pinLocked=true;pinMode='unlock';pinStep='enter';pinAttempt='';pinFirst='';pinError='';pinUnavailable=false;
+ if(isDemo){
+   let exists=!!localStorage.getItem(PIN_LOCAL_PREFIX+currentUser.id);
+   if(!exists&&currentUser.role==='admin'){await saveLocalPin(currentUser.id,'1214');exists=true;}
+   pinMode=exists?'unlock':'setup';return;
+ }
+ const {data:exists,error}=await supabase.rpc('my_pin_is_set');
+ if(error){pinUnavailable=true;pinLocked=false;return;}
+ if(!exists&&currentUser.role==='admin'){
+   const {error:setError}=await supabase.rpc('set_my_pin',{p_pin:'1214'});
+   if(setError){pinUnavailable=true;pinLocked=false;return;}
+   pinMode='unlock';
+ }else pinMode=exists?'unlock':'setup';
+}
+function pinGateHTML(){
+ const setup=pinMode==='setup',change=pinMode==='change';
+ let title=t('Enter your 4-digit PIN',lang),description=t('Your PIN protects this signed-in account on this device.',lang);
+ if(setup){title=pinStep==='confirm'?t('Confirm your new PIN',lang):t('Create a 4-digit PIN',lang);description=t('Choose a private 4-digit PIN. Do not share it with coworkers.',lang);}
+ else if(change&&pinStep==='verify'){title=t('Enter your current PIN',lang);description=t('Verify your current PIN before changing it.',lang);}
+ else if(change&&pinStep==='confirm'){title=t('Confirm your new PIN',lang);description=t('Enter the new PIN again to confirm.',lang);}
+ else if(change){title=t('Create a new PIN',lang);description=t('Choose a new private 4-digit PIN.',lang);}
+ return `<div class="pin-portal"><div class="pin-backdrop"></div><div class="pin-card">
+ <div class="pin-brand"><div class="pin-logo">${leposhkaIcon(48)}</div><div><b>DoughFlow</b><small>${t('Bakery control',lang)}</small></div><label class="pin-language">${languageFlag()}<select id="pinLanguageSelect" aria-label="${t('Language',lang)}">${languageOptions(lang)}</select></label></div>
+ <div class="pin-orbit"><span class="pin-orbit-inner">${leposhkaIcon(70)}</span><span class="pin-orbit-spark">✦</span></div>
+ <div class="pin-level-chip">${currentUser.role==='admin'?'👑':currentUser.role==='hamurchi'?'🥣':currentUser.role==='naan'?'🫓':'🪙'} ${esc(roleName(currentUser.role))}</div>
+ <h1>${title}</h1><p class="pin-description">${description}</p>
+ <input id="pinInput" class="pin-input-accessible" type="password" inputmode="numeric" autocomplete="one-time-code" maxlength="4" pattern="[0-9]{4}" aria-label="${t('PIN digits',lang)}">
+ <div class="pin-dots" id="pinDots">${[0,1,2,3].map(i=>`<span class="pin-dot ${i<pinAttempt.length?'filled':''}"></span>`).join('')}</div><div class="pin-error" id="pinError" role="alert">${esc(pinError)}</div>
+ <div class="pin-keypad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button type="button" class="pin-key" data-pin-digit="${n}">${n}</button>`).join('')}<button type="button" class="pin-key pin-key-muted" id="pinClear">${t('Clear',lang)}</button><button type="button" class="pin-key" data-pin-digit="0">0</button><button type="button" class="pin-key pin-key-muted" id="pinBackspace" aria-label="${t('Delete last digit',lang)}">⌫</button></div>
+ <button type="button" class="pin-switch" id="pinSwitchAccount">${t('Sign out and switch account',lang)}</button></div><div class="pin-footer">🇰🇬 Bishkek · ${t('Сделано Али',lang)}</div></div>`;
+}
+function updatePinGateUI(){
+ const dots=document.getElementById('pinDots');if(dots)dots.querySelectorAll('.pin-dot').forEach((el,i)=>el.classList.toggle('filled',i<pinAttempt.length));
+ const input=document.getElementById('pinInput');if(input&&input.value!==pinAttempt)input.value=pinAttempt;
+ const error=document.getElementById('pinError');if(error)error.textContent=pinError;
+}
+function resetPinAttempt(message=''){
+ pinAttempt='';pinError=message;updatePinGateUI();const input=document.getElementById('pinInput');if(input){input.value='';input.focus({preventScroll:true);}
+}
+async function savePinForCurrentUser(pin){
+ if(isDemo){await saveLocalPin(currentUser.id,pin);return true;}
+ const {error}=await supabase.rpc('set_my_pin',{p_pin:pin});if(error){pinError=friendlyError(error);updatePinGateUI();return false;}return true;
+}
+async function verifyPinForCurrentUser(pin){
+ if(isDemo)return verifyLocalPin(currentUser.id,pin);
+ const {data,error}=await supabase.rpc('verify_my_pin',{p_pin:pin});if(error){pinError=friendlyError(error);return false;}return data===true;
+}
+async function finishPinEntry(pin){
+ pinAttempt='';
+ if(pinMode==='setup'||(pinMode==='change'&&pinStep!=='verify')){
+  if(pinStep==='create'){pinFirst=pin;pinStep='confirm';pinError='';renderPinGateContent();return;}
+  if(pinFirst!==pin){pinFirst='';pinStep='create';resetPinAttempt(t('PINs do not match. Start again.',lang));return;}
+  if(!await savePinForCurrentUser(pin))return;
+  pinLocked=false;pinMode='unlock';pinStep='enter';pinFirst='';pinError='';showToast(t('PIN saved successfully.',lang),'success');render();return;
+ }
+ if(pinMode==='change'&&pinStep==='verify'){
+  if(!await verifyPinForCurrentUser(pin)){resetPinAttempt(pinError||t('Incorrect PIN. Try again.',lang));return;}
+  pinStep='create';pinError='';renderPinGateContent();return;
+ }
+ if(!await verifyPinForCurrentUser(pin)){resetPinAttempt(pinError||t('Incorrect PIN. Try again.',lang));return;}
+ pinLocked=false;pinError='';pinAttempt='';pinMode='unlock';pinStep='enter';showToast(t('Welcome back!',lang),'success',1600);render();
+}
+function renderPinGateContent(){app.innerHTML=pinGateHTML();wirePinGate();applyCurrentLanguage();}
+function wirePinGate(){
+ const input=document.getElementById('pinInput');
+ const commit=()=>{if(pinAttempt.length===4){const pin=pinAttempt;document.querySelectorAll('.pin-key').forEach(b=>b.disabled=true);setTimeout(()=>finishPinEntry(pin),80);}};
+ document.querySelectorAll('[data-pin-digit]').forEach(b=>b.addEventListener('click',()=>{if(pinAttempt.length>=4)return;pinAttempt+=b.dataset.pinDigit;updatePinGateUI();commit();}));
+ input?.addEventListener('input',()=>{pinAttempt=String(input.value||'').replace(/\\D/g,'').slice(0,4);updatePinGateUI();commit();});
+ document.getElementById('pinBackspace')?.addEventListener('click',()=>{pinAttempt=pinAttempt.slice(0,-1);pinError='';updatePinGateUI();});
+ document.getElementById('pinClear')?.addEventListener('click',()=>{pinAttempt='';pinError='';updatePinGateUI();});
+ document.getElementById('pinLanguageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
+ document.getElementById('pinSwitchAccount')?.addEventListener('click',async()=>{if(isDemo){db.session=null;currentUser=null;pinLocked=false;saveDemo();render();return;}await supabase.auth.signOut({scope:'local'});currentUser=null;pinLocked=false;pinError='';render();});
+ input?.focus({preventScroll:true});
+}
+function startPinChange(){pinLocked=true;pinMode='change';pinStep='verify';pinAttempt='';pinFirst='';pinError='';render();}
+
 function saveDemo(){ if(isDemo) localStorage.setItem(KEY,JSON.stringify(db)); }
 function leposhkaIcon(size=48){
   return '<svg class="leposhka-svg" width="'+size+'" height="'+size+'" viewBox="0 0 64 64" aria-hidden="true">'+
