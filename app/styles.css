@@ -1121,3 +1121,25 @@ body{min-height:100dvh}
   animation:pageIn .24s ease both
 }
 .legacy-login-form[hidden],#legacyLoginToggle[hidden]{display:none!important}
+
+/* v14 refinement: legibility, SVG sizing and restrained blue/slate color grade */
+:root{--bg:#f3f5f9;--surface:#fff;--surface-2:#f8faff;--ink:#172033;--muted:#68758a;--line:#e0e6ef;--brand:#2878e8;--brand-soft:#eaf2ff;--success:#21865b;--warning:#b8750a;--danger:#d64545;--df-blue:#2878e8;--df-violet:#7163c9;--df-mint:#27a985}
+body{font-size:17px;color:var(--ink);background:radial-gradient(ellipse at 4% 0%,rgba(40,120,232,.055),transparent 35%),radial-gradient(ellipse at 96% 12%,rgba(113,99,201,.04),transparent 31%),var(--bg)}
+body,button,input,select,textarea{font-size:17px}
+.brand-copy strong{font-size:18px}.brand-copy span{font-size:12px}.user-meta b{font-size:13px}.user-meta small{font-size:11px}
+.nav button{font-size:15px}.nav-icon{width:34px!important;height:34px;border-radius:12px}.nav-icon svg{width:20px;height:20px;display:block}
+.page-head p,.welcome p{font-size:15px;line-height:1.5}.eyebrow{font-size:13px}.section-head h2{font-size:20px}.section-head p,.small,.kpi-label{font-size:13px}.card h2{font-size:21px}.card h3{font-size:18px}
+.more-card{grid-template-columns:48px minmax(0,1fr) auto;gap:13px;padding:16px}.more-card b{font-size:15px;line-height:1.35}.more-card small{font-size:13px;line-height:1.45}
+.more-icon{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;flex:none;color:#3266b5;background:linear-gradient(145deg,#f4f8ff,#e8effb);border:1px solid rgba(90,125,180,.12);box-shadow:inset 0 1px rgba(255,255,255,.95),0 4px 10px rgba(35,55,90,.05)}
+.more-icon svg{display:block!important;width:24px!important;height:24px!important;max-width:24px;max-height:24px;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.more-icon .df-icon{width:24px!important;height:24px!important}.more-card:hover{background:#fbfdff;border-color:rgba(40,120,232,.2)!important;transform:translateY(-1px)}
+.more-card:focus-visible{outline:3px solid rgba(40,120,232,.42)!important;outline-offset:3px}.more-card .chevron{font-size:28px;color:#8290a5;line-height:1}
+.more-card.danger-card .more-icon{color:#c13f48;background:linear-gradient(145deg,#fff4f3,#fde8e7)}.more-card.danger-card b{color:#b83c45}
+.avatar{position:relative!important;overflow:hidden;background:linear-gradient(145deg,#eaf2ff,#dce7f8)!important;color:#29466e!important;border:1px solid rgba(55,91,145,.14);font-size:12px!important;font-weight:800;letter-spacing:.02em}
+.avatar::before,.avatar::after{content:none!important;display:none!important}.user-chip .avatar{background-image:none!important}
+.user-chip{background:rgba(255,255,255,.88)!important;border:1px solid rgba(105,125,155,.12)}
+.topbar{background:rgba(246,248,252,.82)!important;border-bottom-color:rgba(92,110,140,.13)!important}.sidebar{background:rgba(249,250,253,.8)!important;border-right-color:rgba(92,110,140,.13)!important}
+.nav button.active{background:linear-gradient(110deg,rgba(40,120,232,.12),rgba(39,169,133,.055))!important;border-color:rgba(40,120,232,.12)!important}.nav button.active .nav-icon{color:#246fce;background:linear-gradient(145deg,#fff,#eaf2ff)}
+.btn.primary{background:linear-gradient(135deg,#3187f1,#246bd3)!important;box-shadow:0 6px 16px rgba(40,120,232,.18),inset 0 1px rgba(255,255,255,.25)!important}.stat-card.emphasis{background:linear-gradient(145deg,#1c2b43,#263f61)!important}
+@media(max-width:760px){body,button,input,select,textarea{font-size:16px}.more-card{grid-template-columns:44px minmax(0,1fr) auto;gap:11px;padding:14px}.more-icon{width:44px;height:44px}.more-icon svg,.more-icon .df-icon{width:23px!important;height:23px!important}.more-card b{font-size:15px}.more-card small{font-size:13px}.page-head p,.welcome p{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.more-card:hover{transform:none}}
