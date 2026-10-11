@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v30-20261012-hires-2s-carousel';
+const CACHE = 'doughflow-v31-20261012-5s-carousel';
 
 const CORE_ASSETS = [
   './',
