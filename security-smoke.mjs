@@ -53,7 +53,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v22-20261011-inventory-fast-nav/);
+assert.match(worker, /doughflow-v23-20261011-fast-auth-navigation/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -67,7 +67,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v22-20261011-inventory-fast-nav/);
+assert.match(worker, /doughflow-v23-20261011-fast-auth-navigation/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -132,4 +132,7 @@ assert.doesNotMatch(app.slice(app.indexOf("async function renderInventory(p)"), 
 assert.match(app, /void loadDate\(today\(\)\)/, "inventory history should load after first paint");
 assert.match(app, /for\(let offset=0;offset<5000;offset\+=1000\)/, "read-only fallback work must be bounded");
 
+assert.match(app, /dashboard data must never gate sign-in/, "session restore should not wait for dashboard data");
+assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching should reuse the app shell");
+assert.match(app, /document\.querySelectorAll\('\[data-route\]'\)\.forEach\(button=>button\.addEventListener\('click',\(\)=>navigateTo\(button\.dataset\.route\)\)\)/, "navigation buttons should use fast route switching");
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
