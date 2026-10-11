@@ -8,6 +8,8 @@ const edge = read("./supabase/functions/pin-login/index.ts");
 const migration = read("./db/security_fixes_2026_10_11.sql");
 const schema = read("./db/schema.sql");
 const worker = read("./app/sw.js");
+const html = read("./app/index.html");
+const dashboardCss = read("./app/dashboard.css");
 
 // Production must not silently degrade to a local app with hard-coded PINs.
 assert.match(app, /const isDemo = CFG\.demoMode === true;/);
@@ -38,7 +40,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v16-20261011-screenshot-match/);
+assert.match(worker, /doughflow-v17-20261011-dashboard-polish/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -54,10 +56,35 @@ assert.match(interactive, /\.simulator-stage/);
 assert.match(interactive, /\.sim-immersive/);
 assert.match(interactive, /\.simulator-stage\.sim-immersive \.sim-world/);
 assert.match(interactive, /prefers-reduced-motion:reduce/);
-assert.match(worker, /doughflow-v16-20261011-screenshot-match/);
+assert.match(worker, /doughflow-v17-20261011-dashboard-polish/);
 
 console.log("DoughFlow static security and immersive UI smoke checks passed.");
 
 
-assert.match(read("./app/styles.css"), /v16 screenshot-match mode/, "dashboard should preserve the supplied screenshot composition");
-assert.match(read("./app/styles.css"), /\.simulator-panel\{display:none!important\}/, "visual simulator should be hidden in screenshot-match dashboard");
+assert.match(read("./app/styles.css"), /v16 screenshot-match mode/, "legacy screenshot compatibility comment should remain findable during migration");
+assert.match(read("./app/styles.css"), /dashboard-mode \.simulator-panel\{display:none\}/, "simulator visibility should be scoped to the dashboard route");
+assert.match(html, /href="dashboard\.css"/, "dashboard design layer must load in the app shell");
+assert.match(worker, /'\.\/dashboard\.css'/, "dashboard stylesheet should be cached for offline startup");
+assert.match(worker, /'\/dashboard\.css'/, "dashboard stylesheet should be refreshed network-first");
+assert.match(app, /function renderQuest\(p\)/, "Bakery Quest should remain available outside the dashboard");
+assert.match(app, /function renderSimulator\(p\)/, "visual simulator should remain available outside the dashboard");
+assert.match(app, /\['quest',uiIcon\('spark',24\)/, "More menu should expose Bakery Quest with an SVG icon");
+assert.match(app, /\['simulator',uiIcon\('cube',24\)/, "More menu should expose the simulator with an SVG icon");
+assert.match(app, /inventoryTracked===false\?\{primary:t\('Recipe only',lang\),secondary:t\('Not tracked as inventory',lang\)\}/, "water must not be displayed as tracked zero inventory");
+const dashboard = app.slice(app.indexOf("function renderDashboard(p){"), app.indexOf("function roleDashboard(p)"));
+const sequence = ["portal-hero", "metric-grid", "portal-panel production-panel", "portal-panel stock-panel"];
+let last = -1;
+for (const marker of sequence) {
+  const next = dashboard.indexOf(marker);
+  assert.ok(next > last, "dashboard sections must follow the reference order: " + marker);
+  last = next;
+}
+assert.doesNotMatch(dashboard, /quest-panel|simulator-panel/, "quest and simulator must not interrupt the dashboard");
+assert.ok(dashboardCss.includes(".dashboard-mode .metric-grid"), "screenshot styles must exist");
+let braceDepth = 0;
+for (const char of dashboardCss) {
+  if (char === "{") braceDepth++;
+  if (char === "}") braceDepth--;
+  assert.ok(braceDepth >= 0, "dashboard CSS has an unexpected closing brace");
+}
+assert.equal(braceDepth, 0, "dashboard CSS rules must have balanced braces");
