@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Golden leposhka bread emblem">
+<defs>
+ <radialGradient id="back" cx="30%" cy="18%" r="90%"><stop offset="0" stop-color="#fff6df"/><stop offset=".55" stop-color="#f6c66b"/><stop offset="1" stop-color="#a95819"/></radialGradient>
+ <radialGradient id="bread" cx="34%" cy="25%" r="82%"><stop offset="0" stop-color="#ffe2a0"/><stop offset=".56" stop-color="#d99135"/><stop offset="1" stop-color="#8a4414"/></radialGradient>
+ <linearGradient id="crust" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0be"/><stop offset=".45" stop-color="#f6b94e"/><stop offset="1" stop-color="#b96521"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#3b1d0d" flood-opacity=".35"/></filter>
+</defs>
+<circle cx="128" cy="128" r="122" fill="#fff8e8"/>
+<circle cx="128" cy="128" r="115" fill="url(#crust)" filter="url(#shadow)"/>
+<circle cx="128" cy="128" r="105" fill="#392117"/>
+<circle cx="128" cy="128" r="96" fill="url(#bread)" stroke="#ffe4a1" stroke-width="3"/>
+<circle cx="128" cy="128" r="75" fill="none" stroke="#984f1b" stroke-width="7" opacity=".66"/>
+<circle cx="128" cy="128" r="63" fill="none" stroke="#ffdc8f" stroke-width="5" opacity=".8"/>
+<path d="M128 65 C141 82 150 94 151 111 C169 119 181 130 187 147 C166 146 151 139 139 126 C131 151 118 169 98 183 C99 158 106 140 121 126 C99 126 82 118 68 101 C91 100 108 105 123 116 C118 97 121 81 128 65Z" fill="#a85e22" opacity=".62"/>
+<g fill="#5f3117" opacity=".92">
+ <ellipse cx="108" cy="89" rx="5" ry="2.5" transform="rotate(32 108 89)"/>
+ <ellipse cx="145" cy="87" rx="5" ry="2.5" transform="rotate(-22 145 87)"/>
+ <ellipse cx="166" cy="108" rx="5" ry="2.5" transform="rotate(42 166 108)"/>
+ <ellipse cx="89" cy="120" rx="5" ry="2.5" transform="rotate(-28 89 120)"/>
+ <ellipse cx="151" cy="133" rx="5" ry="2.5" transform="rotate(24 151 133)"/>
+ <ellipse cx="114" cy="146" rx="5" ry="2.5" transform="rotate(-35 114 146)"/>
+ <ellipse cx="168" cy="157" rx="5" ry="2.5" transform="rotate(-18 168 157)"/>
+ <ellipse cx="92" cy="164" rx="5" ry="2.5" transform="rotate(33 92 164)"/>
+ <ellipse cx="130" cy="178" rx="5" ry="2.5" transform="rotate(-12 130 178)"/>
+ <ellipse cx="126" cy="101" rx="4.5" ry="2.3" transform="rotate(12 126 101)"/>
+ <ellipse cx="143" cy="164" rx="4.5" ry="2.3" transform="rotate(43 143 164)"/>
+ <ellipse cx="105" cy="107" rx="4.5" ry="2.3" transform="rotate(-36 105 107)"/>
+</g>
+<path d="M61 96 C75 62 111 47 146 55" fill="none" stroke="#fff1c9" stroke-width="5" stroke-linecap="round" opacity=".75"/>
+<circle cx="128" cy="128" r="112" fill="none" stroke="#fff3d5" stroke-width="2" opacity=".6"/>
+</svg>
