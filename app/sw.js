@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v23-20261011-fast-auth-navigation';
+const CACHE = 'doughflow-v24-20261011-kyrgyz-mountains-lepeshka-ios-icons';
 
 const CORE_ASSETS = [
   './',
