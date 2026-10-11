@@ -941,67 +941,8 @@ body{min-height:100dvh}
 @media(prefers-reduced-motion:reduce){
   .recipe-photo-card,.recipe-visual span,.stock-item-icon .material-svg,.leposhka-svg{animation:none!important;transition:none!important}
 }
-
-
-/* ===== Bakery Quest simulation HUD & PIN control system ===== */
-.quest-panel{
-  position:relative;overflow:hidden;margin:0 0 16px;padding:20px;
-  border-radius:28px;color:#f7fbff;
-  background:
-    radial-gradient(circle at 92% 4%,rgba(77,214,255,.24),transparent 24%),
-    radial-gradient(circle at 10% 100%,rgba(173,82,255,.24),transparent 30%),
-    linear-gradient(135deg,#101b36 0%,#173a60 54%,#185276 100%);
-  border:1px solid rgba(255,255,255,.15);
-  box-shadow:0 22px 52px rgba(16,32,60,.22),inset 0 1px 0 rgba(255,255,255,.15);
-  isolation:isolate;
-}
-.quest-panel:before,.quest-panel:after{content:'';position:absolute;pointer-events:none;z-index:-1;border-radius:50%}
-.quest-panel:before{width:210px;height:210px;right:-60px;top:-92px;border:1px solid rgba(145,222,255,.23);box-shadow:0 0 0 16px rgba(145,222,255,.025),0 0 0 34px rgba(145,222,255,.02);animation:questOrbit 16s linear infinite}
-.quest-panel:after{width:120px;height:120px;right:9%;bottom:-88px;background:rgba(41,225,192,.12);filter:blur(18px)}
-@keyframes questOrbit{to{transform:rotate(360deg)}}
-.quest-glow{position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.035) 46%,transparent 67%);transform:translateX(-100%);animation:questSweep 9s ease-in-out infinite;pointer-events:none}
-@keyframes questSweep{0%,68%,100%{transform:translateX(-100%)}82%{transform:translateX(100%)}}
-.quest-main{display:flex;align-items:center;gap:17px}
-.quest-emblem{
-  width:92px;height:92px;border-radius:27px;flex:none;display:grid;place-items:center;position:relative;
-  background:linear-gradient(145deg,rgba(255,255,255,.20),rgba(255,255,255,.045));
-  border:1px solid rgba(255,255,255,.23);box-shadow:inset 0 1px rgba(255,255,255,.26),0 12px 30px rgba(0,0,0,.18);
-  transform-style:preserve-3d;animation:emblemFloat 4.8s ease-in-out infinite;
-}
-.quest-emblem .leposhka-svg{width:60px;height:60px;filter:drop-shadow(0 8px 8px rgba(0,0,0,.27))}
-.quest-emblem>span{position:absolute;right:8px;top:7px;color:#ffdc82;text-shadow:0 0 13px rgba(255,220,130,.7);font-size:18px}
 @keyframes emblemFloat{0%,100%{transform:translateY(0) rotateX(0deg) rotateY(-3deg)}50%{transform:translateY(-4px) rotateX(5deg) rotateY(4deg)}}
-.quest-copy{flex:1;min-width:0}
-.quest-eyebrow{font-size:10px;letter-spacing:.12em;font-weight:900;color:#9fd9ff}
-.quest-copy h2{font-size:25px;letter-spacing:-.8px;margin:5px 0 5px;color:#fff}
-.quest-copy p{font-size:12px;color:#d3e5f3;margin:0 0 13px;line-height:1.4}
-.quest-progress-track{height:9px;background:rgba(255,255,255,.13);border-radius:99px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
-.quest-progress-track span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#35e0c0,#94f7c8,#ffdb79);box-shadow:0 0 17px rgba(71,245,194,.45);transition:width .8s cubic-bezier(.22,1,.36,1)}
-.quest-progress-meta{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:7px;font-size:10px;color:#c5dced}
-.quest-progress-meta b{color:#9dffe0;font-size:12px}
-.quest-footer{display:grid;grid-template-columns:140px 1fr;align-items:center;gap:16px;border-top:1px solid rgba(255,255,255,.14);padding-top:15px;margin-top:17px}
-.quest-level{display:flex;flex-direction:column;gap:5px}
-.quest-level small{font-size:9px;letter-spacing:.12em;color:#a9c5db;font-weight:900}
-.quest-level strong{font-size:17px;color:#ffe39b;line-height:1.2}
-.quest-badges{display:flex;align-items:center;justify-content:flex-end;gap:7px}
-.quest-badge{min-width:68px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 5px;border-radius:14px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.10);transition:transform .22s ease,background .22s ease}
-.quest-badge>span{font-size:20px;filter:grayscale(1);opacity:.46}
-.quest-badge small{font-size:9px;color:#9eb3c6;text-align:center;font-weight:800}
-.quest-badge.unlocked{background:linear-gradient(145deg,rgba(255,222,125,.20),rgba(255,255,255,.06));border-color:rgba(255,219,121,.34);box-shadow:inset 0 1px rgba(255,255,255,.1)}
-.quest-badge.unlocked>span{filter:none;opacity:1;animation:badgeShimmer 3s ease-in-out infinite}
-.quest-badge.unlocked small{color:#ffe6a5}
 @keyframes badgeShimmer{50%{transform:translateY(-2px) scale(1.1);filter:drop-shadow(0 0 7px rgba(255,221,130,.4))}}
-.quest-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:13px}
-.quest-play,.quest-reward{
-  min-height:42px;border-radius:14px;padding:0 14px;border:1px solid rgba(255,255,255,.18);
-  font-size:12px;font-weight:900;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease;
-}
-.quest-play{background:linear-gradient(135deg,#24d5a1,#0cb783);color:#062e2b;box-shadow:0 8px 19px rgba(0,213,157,.2)}
-.quest-reward{background:rgba(255,255,255,.09);color:#fff}
-.quest-reward:disabled{opacity:.42;cursor:not-allowed}
-.quest-play:hover:not(:disabled),.quest-reward:hover:not(:disabled){transform:translateY(-2px)}
-.quest-confetti{position:fixed;inset:12% 0 auto;pointer-events:none;z-index:90;display:flex;justify-content:center;gap:12px}
-.quest-confetti span{font-size:19px;color:#ffdc7a;animation:confettiBurst 1.35s cubic-bezier(.15,.7,.25,1) forwards;animation-delay:calc(var(--i)*12ms);filter:drop-shadow(0 3px 5px rgba(0,0,0,.18))}
 @keyframes confettiBurst{0%{opacity:0;transform:translate3d(0,25px,0) scale(.3) rotate(0deg)}25%{opacity:1}100%{opacity:0;transform:translate3d(calc((var(--i) - 9)*8px),-140px,0) scale(1.1) rotate(150deg)}}
 
 /* PIN keypad: tactile, high-contrast, mobile-first */
@@ -1076,22 +1017,6 @@ body{min-height:100dvh}
 .inventory-history-card table{min-width:690px}
 .inventory-history-card td small{white-space:normal}
 @media(max-width:640px){
-  .quest-panel{padding:15px;border-radius:23px}
-  .quest-main{align-items:flex-start;gap:11px}
-  .quest-emblem{width:66px;height:66px;border-radius:20px}
-  .quest-emblem .leposhka-svg{width:48px;height:48px}
-  .quest-emblem>span{right:5px;top:4px;font-size:14px}
-  .quest-eyebrow{font-size:8px;letter-spacing:.08em}
-  .quest-copy h2{font-size:21px;margin-top:5px}
-  .quest-copy p{font-size:11px;margin-bottom:10px}
-  .quest-footer{grid-template-columns:1fr;gap:10px;margin-top:13px;padding-top:13px}
-  .quest-level{flex-direction:row;align-items:center;justify-content:space-between}
-  .quest-level strong{font-size:15px}
-  .quest-badges{justify-content:stretch;gap:6px}
-  .quest-badge{flex:1;min-width:0;padding:7px 3px}
-  .quest-badge>span{font-size:18px}.quest-badge small{font-size:8px}
-  .quest-actions{display:grid;grid-template-columns:1fr 1fr}
-  .quest-play,.quest-reward{padding:0 8px;font-size:11px}
   .history-filter-row,.history-target-grid{grid-template-columns:1fr;gap:5px}
   .historical-preview{align-items:flex-start;flex-wrap:wrap;padding:11px}
   .historical-preview>div{min-width:calc(50% - 40px)}
@@ -1107,8 +1032,6 @@ body{min-height:100dvh}
   .pin-manage-modal{width:calc(100% - 20px)}
 }
 @media(prefers-reduced-motion:reduce){
-  .quest-panel:before,.quest-glow,.quest-emblem,.quest-badge.unlocked>span,.quest-confetti span{animation:none!important}
-  .quest-progress-track span,.quest-badge,.quest-play,.quest-reward,.pin-key{transition:none!important}
 }
 
 .legacy-login-link{
@@ -1125,7 +1048,6 @@ body{min-height:100dvh}
 
 /* v16 screenshot-match mode: keep the supplied mobile dashboard composition */
 @media all{
-  .dashboard-mode .simulator-panel{display:none}
 }
 
 

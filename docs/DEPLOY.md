@@ -56,6 +56,7 @@ After the existing schema and hardening migration, run these files in Supabase S
 1. `db/admin_inventory_history_2026_10_10.sql` — effective-date inventory ledger, production-date trigger, and Admin-only history/correction RPCs.
 2. `db/pin_login_2026_10_10.sql` — per-user PIN credentials, username aliases, Admin PIN management, lockout rules, and the initial Admin PIN.
 3. `db/security_fixes_2026_10_11.sql` — server-side production-date/batch/consumption validation, recipe unit validation, and historical balance safety checks.
+4. `db/fix_admin_inventory_snapshot_2026_10_11.sql` — restores the Admin-only inventory history/snapshot RPCs and reloads the Supabase API schema cache. Run this if Stock shows a missing `admin_inventory_snapshot(p_effective_date)` function error; it is safe to rerun and does not rewrite stock transactions.
 
 Back up the database first. These files are additive and must be applied to the same Supabase project used by the live site.
 

@@ -6,6 +6,7 @@ const app = read("./app/app.js");
 const config = read("./app/config.js");
 const edge = read("./supabase/functions/pin-login/index.ts");
 const migration = read("./db/security_fixes_2026_10_11.sql");
+const inventoryFix = read("./db/fix_admin_inventory_snapshot_2026_10_11.sql");
 const schema = read("./db/schema.sql");
 const worker = read("./app/sw.js");
 const html = read("./app/index.html");
@@ -40,7 +41,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v18-20261011-final-dashboard-polish/);
+assert.match(worker, /doughflow-v19-20261011-inventory-rpc-fix-no-simulator/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -48,28 +49,27 @@ assert.match(read("./app/styles.css"), /more-icon svg/, "More menu SVG icons mus
 assert.match(read("./app/styles.css"), /avatar::before,.avatar::after/, "Profile avatar must not inherit decorative overlay icons");
 
 assert.match(app, /function uiIcon\(/);
-assert.match(app, /function wireSimulatorInteractions\(/);
-assert.match(app, /Visual simulation only/);
+assert.match(app, /function wireInteractiveCards\(/);
+assert.doesNotMatch(app, /Bakery Simulator|simulatorHTML|renderSimulator|wireSimulatorInteractions|quest-panel|renderQuest|questPlay|questReward/i, "remove the simulator and fake quest game from the app");
 assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
-assert.match(interactive, /\.simulator-stage/);
-assert.match(interactive, /\.sim-immersive/);
-assert.match(interactive, /\.simulator-stage\.sim-immersive \.sim-world/);
-assert.match(interactive, /prefers-reduced-motion:reduce/);
-assert.match(worker, /doughflow-v18-20261011-final-dashboard-polish/);
+assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
+assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
+assert.match(worker, /doughflow-v19-20261011-inventory-rpc-fix-no-simulator/);
+assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
+assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
+assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
+assert.match(inventoryFix, /revoke all on function public\.admin_inventory_snapshot\(date\) from public/i);
+assert.match(inventoryFix, /grant execute on function public\.admin_inventory_snapshot\(date\) to authenticated/i);
+assert.match(inventoryFix, /notify pgrst, 'reload schema'/i);
 
 
 
 
 assert.match(read("./app/styles.css"), /v16 screenshot-match mode/, "legacy screenshot compatibility comment should remain findable during migration");
-assert.match(read("./app/styles.css"), /dashboard-mode \.simulator-panel\{display:none\}/, "simulator visibility should be scoped to the dashboard route");
 assert.match(html, /href="dashboard\.css"/, "dashboard design layer must load in the app shell");
 assert.match(worker, /'\.\/dashboard\.css'/, "dashboard stylesheet should be cached for offline startup");
 assert.match(worker, /'\/dashboard\.css'/, "dashboard stylesheet should be refreshed network-first");
-assert.match(app, /function renderQuest\(p\)/, "Bakery Quest should remain available outside the dashboard");
-assert.match(app, /function renderSimulator\(p\)/, "visual simulator should remain available outside the dashboard");
-assert.match(app, /\['quest',uiIcon\('spark',24\)/, "More menu should expose Bakery Quest with an SVG icon");
-assert.match(app, /\['simulator',uiIcon\('cube',24\)/, "More menu should expose the simulator with an SVG icon");
 assert.match(app, /inventoryTracked===false\?\{primary:t\('Recipe only',lang\),secondary:t\('Not tracked as inventory',lang\)\}/, "water must not be displayed as tracked zero inventory");
 const dashboard = app.slice(app.indexOf("function renderDashboard(p){"), app.indexOf("function roleDashboard(p)"));
 const sequence = ["portal-hero", "metric-grid", "portal-panel production-panel", "portal-panel stock-panel"];
@@ -89,10 +89,8 @@ for (const char of dashboardCss) {
 }
 assert.equal(braceDepth, 0, "dashboard CSS rules must have balanced braces");
 
-assert.ok(app.includes("const canStartProduction=currentUser.role==='admin'||currentUser.role==='hamurchi'"), "Quest must respect production role permissions");
-assert.ok(app.includes("if(!canStartProduction)return;"), "Quest production handler must enforce role checks");
 assert.ok(app.includes("const recipeVersion=isDemo?db?.recipe?.version:liveState.recipe?.version;"), "Dashboard recipe version must come from the active runtime");
 assert.ok(app.includes("recipeVersion??'—'"), "Dashboard must not invent a recipe version when live data is missing");
 assert.ok(app.includes("Array.from(String(currentUser.name||'A').trim())[0]?.toUpperCase()||'A'"), "Avatar initials should support Unicode names");
 
-console.log("DoughFlow static security and immersive UI smoke checks passed.");
+console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");

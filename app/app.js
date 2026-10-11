@@ -138,6 +138,7 @@ function formatSackUnit(value,language=lang){
 function friendlyError(error){
   const raw=String(error?.message||error||'').trim();
   const lower=raw.toLowerCase();
+  if((lower.includes('admin_inventory_snapshot')||lower.includes('admin_inventory_history'))&&(lower.includes('schema cache')||lower.includes('could not find the function')||error?.code==='PGRST202')) return 'Inventory database update required. Run db/fix_admin_inventory_snapshot_2026_10_11.sql in Supabase SQL Editor, then refresh.';
   if(lower.includes('invalid login credentials')) return t('Invalid login credentials',lang);
   if(lower.includes('email not confirmed')) return t('Email is not confirmed',lang);
   if(lower.includes('not authorized')) return t('Not authorized',lang);
@@ -298,44 +299,16 @@ function uiIcon(name,size=20){
   };
   return '<svg class="df-icon" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.spark)+'</svg>';
 }
-function wireSimulatorInteractions(){
-  const stage=document.getElementById('simulatorStage');
-  const mode=document.getElementById('simModeToggle');
-  const world=document.getElementById('simWorld');
-  const run=document.getElementById('simRun');
-  const status=document.getElementById('simStatus');
+function wireInteractiveCards(){
   const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-  mode?.addEventListener('click',()=>{
-    const enabled=!stage.classList.contains('sim-immersive');
-    stage.classList.toggle('sim-immersive',enabled);
-    mode.setAttribute('aria-pressed',String(enabled));
-    mode.classList.toggle('enabled',enabled);
-    showToast(enabled?t('Immersive 3D mode enabled.',lang):t('Standard view restored.',lang),'info',1800);
-  });
-  let running=false;
-  run?.addEventListener('click',()=>{
-    running=!running;
-    stage.classList.toggle('sim-running',running);
-    run.classList.toggle('running',running);
-    run.innerHTML=uiIcon(running?'activity':'play',16)+' '+(running?t('Pause visual simulation',lang):t('Run visual simulation',lang));
-    if(status)status.textContent=running?t('Simulation running',lang):t('Standby',lang);
-    showToast(running?t('Visual simulation started. No records changed.',lang):t('Simulation paused.',lang),'info',1800);
-  });
-  if(stage && !reduced && window.matchMedia?.('(pointer:fine)')?.matches){
-    stage.addEventListener('pointermove',e=>{
-      if(stage.classList.contains('sim-immersive'))return;
-      const r=stage.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
-      world.style.setProperty('--tilt-x',(-y*5).toFixed(2)+'deg');
-      world.style.setProperty('--tilt-y',(x*7).toFixed(2)+'deg');
-    });
-    stage.addEventListener('pointerleave',()=>{world.style.setProperty('--tilt-x','0deg');world.style.setProperty('--tilt-y','0deg');});
-  }
   if(!reduced && window.matchMedia?.('(pointer:fine)')?.matches){
     document.querySelectorAll('[data-tilt]').forEach(card=>{
+      if(card.dataset.tiltWired==='1')return;
+      card.dataset.tiltWired='1';
       card.addEventListener('pointermove',e=>{
         const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
-        card.style.setProperty('--card-rx',(-y*5).toFixed(2)+'deg');
-        card.style.setProperty('--card-ry',(x*6).toFixed(2)+'deg');
+        card.style.setProperty('--card-rx',(-y*3).toFixed(2)+'deg');
+        card.style.setProperty('--card-ry',(x*4).toFixed(2)+'deg');
       });
       card.addEventListener('pointerleave',()=>{card.style.setProperty('--card-rx','0deg');card.style.setProperty('--card-ry','0deg');});
       card.addEventListener('focus',()=>card.classList.add('tilt-focused'));
@@ -411,7 +384,7 @@ function languageName(){ return LANGUAGES[lang]||'English'; }
 function languageSwitcher(){ return `<select id="languageSelect" class="language-select" aria-label="${t('Language',lang)}">${languageOptions(lang)}</select>`; }
 function applyCurrentLanguage(){ applyTranslations(document,lang); const sel=document.getElementById('languageSelect'); if(sel) sel.value=lang; document.documentElement.lang = lang==='ru'?'ru':lang==='ky'?'ky':'en'; }
 function can(role, section){
-  if(section==='more'||section==='quest'||section==='simulator') return true;
+  if(section==='more') return true;
   if(role==='admin') return true;
   if(role==='hamurchi') return ['dashboard','production','recipe'].includes(section);
   if(role==='naan') return ['dashboard','naan'].includes(section);
@@ -703,8 +676,6 @@ async function renderPage(){
   const p=document.getElementById('page');
   const pages={
     dashboard:renderDashboard,
-    quest:renderQuest,
-    simulator:renderSimulator,
     production:renderProduction,
     recipe:renderRecipe,
     inventory:renderInventory,
@@ -718,10 +689,7 @@ async function renderPage(){
 }
 
 function renderMore(p){
-  const extra=[
-    ['quest',uiIcon('spark',24),'Bakery Quest','Track your daily baking milestone'],
-    ['simulator',uiIcon('cube',24),'Bakery Simulator','Explore the visual production floor']
-  ];
+  const extra=[];
   if(currentUser.role==='admin') extra.push(
     ['inventory',NAV_ICONS.stock,'Stock & inventory','See balances and stock movements'],
     ['reports',NAV_ICONS.sales,'Reports','Review production and usage'],
@@ -742,70 +710,6 @@ function renderMore(p){
   p.querySelectorAll('[data-more-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.moreRoute;render();}));
   p.querySelector('#moreLogout')?.addEventListener('click',logout);
 }
-function simulatorHTML(totalSacks,questProgress){
-  return "<section class='simulator-panel' id='bakerySimulator' aria-label='Interactive bakery simulation'>"+
-      "<div class='simulator-topline'><div><span class='simulator-kicker'>"+uiIcon('spark',14)+" "+t('IMMERSIVE WORKSPACE',lang)+"</span><h2>"+t('Bakery Simulator',lang)+"</h2><p>"+t('Explore the production floor in 3D.',lang)+"</p></div><button type='button' class='sim-mode-toggle' id='simModeToggle' aria-pressed='false'>"+uiIcon('cube',17)+" <span>"+t('3D mode',lang)+"</span><span class='toggle-track'><i></i></span></button></div>"+
-      "<div class='simulator-stage' id='simulatorStage'>"+
-        "<div class='sim-stars' aria-hidden='true'></div><div class='sim-orbit orbit-one'></div><div class='sim-orbit orbit-two'></div>"+
-        "<div class='sim-hud sim-hud-left'><small>"+uiIcon('activity',13)+" "+t('FLOOR STATUS',lang)+"</small><b id='simStatus' aria-live='polite'>"+t('Standby',lang)+"</b><span><i class='sim-status-dot'></i> "+t('Ready for next batch',lang)+"</span></div>"+
-        "<div class='sim-hud sim-hud-right'><small>"+uiIcon('gauge',13)+" "+t('TODAY TARGET',lang)+"</small><b>"+fmt(totalSacks)+" <em>/ 6</em></b><div class='sim-target-track'><i style='width:"+questProgress+"%'></i></div><span>"+questProgress+"% "+t('complete',lang)+"</span></div>"+
-        "<div class='sim-world' id='simWorld'><div class='sim-floor-grid'></div><div class='sim-machine-shadow'></div>"+
-          "<div class='sim-bakery-machine'><div class='machine-top'><span class='machine-bolt'></span><span class='machine-bolt'></span><span class='machine-bolt'></span></div><div class='machine-sign'>DOUGH<span>FLOW</span></div><div class='machine-window'><div class='machine-loaf loaf-a'></div><div class='machine-loaf loaf-b'></div><div class='machine-loaf loaf-c'></div><div class='machine-shine'></div></div><div class='machine-controls'><i></i><i></i><i></i><span class='machine-dial'></span></div><div class='machine-base'></div></div>"+
-          "<div class='sim-sack sack-a'><span>DF</span><i></i></div><div class='sim-sack sack-b'><span>FLOUR</span><i></i></div><div class='sim-crate'><i></i><i></i><i></i></div>"+
-          "<div class='sim-conveyor'><div class='conveyor-belt'><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class='conveyor-loaf'></div><div class='conveyor-leg leg-a'></div><div class='conveyor-leg leg-b'></div></div>"+
-        "</div>"+
-        "<div class='sim-label label-machine'>"+uiIcon('factory',14)+" "+t('Mixing station',lang)+"</div><div class='sim-label label-stock'>"+uiIcon('package',14)+" "+t('Flour reserve',lang)+"</div>"+
-        "<div class='simulator-bottomline'><span class='sim-hint'>"+uiIcon('mouse',14)+" "+t('Move your pointer to explore',lang)+"</span><button type='button' class='sim-run-button' id='simRun'>"+uiIcon('play',16)+" "+t('Run visual simulation',lang)+"</button></div>"+
-      "</div>"+
-      "<div class='simulator-footnote'>"+uiIcon('info',14)+" "+t('Visual simulation only — it never changes production or inventory records.',lang)+"</div>"+
-    "</section>";
-}
-
-
-function currentDayProductionStats(){
-  const records=isDemo?db.productions:liveState.productions;
-  const todayRecords=records.filter(x=>(isDemo?x.date:x.production_date)===today());
-  const summary=!isDemo?liveState.summaryToday:null;
-  const totalSacks=summary?Number(summary.total_sacks):todayRecords.reduce((sum,row)=>sum+Number(isDemo?row.mishokCount:row.mishok_count),0);
-  const totalPieces=summary?Number(summary.total_pieces):todayRecords.reduce((sum,row)=>sum+(isDemo?row.batches:(row.production_batches||[])).reduce((n,batch)=>n+Number(batch.pieces||0),0),0);
-  const totalRuns=summary?Number(summary.run_count):todayRecords.length;
-  return {totalSacks,totalPieces,totalRuns};
-}
-
-function renderQuest(p){
-  const {totalSacks}=currentDayProductionStats();
-  const canStartProduction=currentUser.role==='admin'||currentUser.role==='hamurchi';
-  const progress=Math.min(100,Math.round((totalSacks/6)*100));
-  const key='doughflow_quest_reward_'+currentUser.id+'_'+today();
-  const claimed=localStorage.getItem(key)==='1';
-  const level=totalSacks>=6?t('Master Baker',lang):totalSacks>=3?t('Dough Ranger',lang):totalSacks>=1?t('Oven Rookie',lang):t('Rising Dough',lang);
-  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">🎮 ${t('Daily mission',lang)}</div><h1>${t('Bakery Quest',lang)}</h1><p>${t('A little progress every batch. Your progress follows saved production.',lang)}</p></div></div>
-    <section class="quest-panel quest-page-panel"><div class="quest-glow"></div><div class="quest-main"><div class="quest-emblem">${leposhkaIcon(54)}<span>✦</span></div><div class="quest-copy"><div class="quest-eyebrow">${t('DAILY MISSION',lang)}</div><h2>${t('The Daily Bake',lang)}</h2><p>${t('Bake 6 sacks to unlock your Master Baker badge.',lang)}</p><div class="quest-progress-track"><span style="width:${progress}%"></span></div><div class="quest-progress-meta"><span>${fmt(totalSacks)} / 6 ${t('sacks completed',lang)}</span><b>${Math.round(totalSacks*100)} XP</b></div></div></div>
-    <div class="quest-footer"><div class="quest-level"><small>${t('CURRENT LEVEL',lang)}</small><strong>${level}</strong></div><div class="quest-badges"><div class="quest-badge ${totalSacks>=1?'unlocked':'locked'}"><span>🔥</span><small>${t('Oven Rookie',lang)}</small></div><div class="quest-badge ${totalSacks>=3?'unlocked':'locked'}"><span>⚡</span><small>${t('Steady Hands',lang)}</small></div><div class="quest-badge ${totalSacks>=6?'unlocked':'locked'}"><span>🏆</span><small>${t('Master Baker',lang)}</small></div></div><div class="quest-actions"><button class="quest-play" id="questPlay" ${canStartProduction?'':'disabled title="Production access is required for this action."'}>▶ ${t('Start a batch',lang)}</button><button class="quest-reward" id="claimQuest" ${totalSacks>=6&&!claimed?'':'disabled'}>${claimed?'🏆 '+t('Badge claimed',lang):'🎁 '+t('Claim reward',lang)}</button></div></div></section>
-    <section class="card quest-info-card"><h2>${t('How progress works',lang)}</h2><p>${t('Progress is based on production saved for today, not on a visual simulation.',lang)}</p><div class="quest-progress-track"><span style="width:${progress}%"></span></div><strong>${progress}% ${t('daily target complete',lang)}</strong></section>`;
-  document.getElementById('questPlay')?.addEventListener('click',()=>{
-    if(!canStartProduction)return;
-    route='production';render();
-    setTimeout(()=>{const input=document.getElementById('sackCount');if(input&&Number(input.value)===0){input.value=1;input.dispatchEvent(new Event('input',{bubbles:true}));}},0);
-  });
-  document.getElementById('claimQuest')?.addEventListener('click',()=>{
-    if(totalSacks<6||localStorage.getItem(key)==='1')return;
-    localStorage.setItem(key,'1');
-    showToast(t('Master Baker badge unlocked! +600 XP',lang),'success',3200);
-    const burst=document.createElement('div');burst.className='quest-confetti';
-    for(let i=0;i<18;i++){const part=document.createElement('span');part.textContent=['✦','★','●','🫓'][i%4];part.style.setProperty('--i',i);burst.appendChild(part);}
-    document.body.appendChild(burst);setTimeout(()=>burst.remove(),1800);
-    renderQuest(document.getElementById('page'));
-  });
-}
-
-function renderSimulator(p){
-  const {totalSacks}=currentDayProductionStats();
-  const progress=Math.min(100,Math.round((totalSacks/6)*100));
-  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">${t('Visual workspace',lang)}</div><h1>${t('Bakery Simulator',lang)}</h1><p>${t('Explore the production floor. This visual simulation never changes stock or production records.',lang)}</p></div></div>${simulatorHTML(totalSacks,progress)}`;
-  wireSimulatorInteractions();
-}
-
 function renderDashboard(p){
   const prod=isDemo?db.productions:liveState.productions;
   const todayRuns=prod.filter(x=>(isDemo?x.date:x.production_date)===today());
@@ -891,7 +795,7 @@ function renderDashboard(p){
   document.getElementById('dashboardStart')?.addEventListener('click',openProduction);
   document.querySelectorAll('[data-stock-open]').forEach(b=>b.addEventListener('click',()=>{route='inventory';render();}));
   document.getElementById('openInventory')?.addEventListener('click',()=>{route='inventory';render();});
-  wireSimulatorInteractions();
+  wireInteractiveCards();
 }
 function roleDashboard(p){
   if(currentUser.role==='hamurchi') p.innerHTML=`<div class="grid grid-2"><div class="card"><h2>Today</h2><div class="kpi">${isDemo?fmt(db.productions.filter(x=>x.date===today()&&x.createdBy===currentUser.name).reduce((a,b)=>a+b.mishokCount,0)):'—'} sack</div><div class="small">Enter your sacks and actual pieces from the Production panel.</div></div><div class="card"><h2>Recipe</h2><div class="kpi">v${db?.recipe?.version||1}</div><div class="small">You may update the working recipe. Future production uses the new version.</div></div></div>`;
