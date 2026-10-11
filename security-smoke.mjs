@@ -147,5 +147,5 @@ assert.ok(app.includes("Bakery photo: Your bakery"));
 assert.ok(mobileCss.includes("@keyframes dfIosIconPop"));
 assert.ok(mobileCss.includes("prefers-reduced-motion:reduce"));
 
-assert.ok(worker.includes("./assets/bakery.webp") && styles.includes("images.unsplash.com"), "real photo assets should be available without generated illustrations");
+assert.ok(worker.includes("./assets/bakery.webp") && dashboardCss.includes("images.unsplash.com"), "real photo assets should be available without generated illustrations");
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
