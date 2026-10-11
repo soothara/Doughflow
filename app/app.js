@@ -763,8 +763,11 @@ function renderDashboard(p){
     return `<${tag} class="stock-item${canOpen?' stock-open':''}" data-tilt${attrs}><div class="stock-item-icon ${esc(m.code)}">${materialIcon(m.code)}</div><div class="stock-item-copy"><b>${esc(t(m.name,lang))}</b><strong class="${empty?'empty-stock':''}">${esc(view.primary)}${empty?' <em>!</em>':''}</strong><small>${esc(view.secondary)}</small></div><span class="stock-chevron">${uiIcon('chevron',16)}</span></${tag}>`;
   }).join('');
   p.innerHTML =
-    "<section class='portal-hero'>"+
-      "<div class='portal-hero-photo'></div><div class='portal-hero-shade'></div>"+
+    "<section class='portal-hero' data-hero-carousel aria-label='DoughFlow photo highlights'>"+
+      "<div class='portal-hero-photo hero-slide is-active' data-hero-photo='0' role='img' aria-label='Fresh leposhka from our bakery' style=\"background-image:url('./assets/leposhka-detail.svg')\"></div>"+
+      "<div class='portal-hero-photo hero-slide' data-hero-photo='1' role='img' aria-label='Fresh leposhka prepared for delivery' style=\"background-image:url('./assets/leposhka-delivery.svg')\" aria-hidden='true'></div>"+
+      "<div class='portal-hero-photo hero-slide' data-hero-photo='2' role='img' aria-label='Bakery production photo' style=\"background-image:url('./assets/bakery.webp')\" aria-hidden='true'></div>"+
+      "<div class='portal-hero-shade'></div>"+
       "<div class='portal-hero-content'>"+
         "<div class='hero-topline'>"+
           "<div class='df-badge'>DF</div><div class='hero-brand'><b>DoughFlow</b><small>"+t('Bakery control',lang)+"</small></div><div class='hero-spacer'></div>"+
@@ -773,7 +776,12 @@ function renderDashboard(p){
         "</div>"+
         "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+t('Let’s make great leposhka today!',lang)+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div></div>"+
       "</div>"+
-    "</section>"+
+      "<div class='hero-slide-controls' aria-label='Photo carousel controls'>"+
+        "<button type='button' class='hero-slide-arrow' data-hero-prev aria-label='Previous photo'>‹</button>"+
+        "<div class='hero-slide-dots'><button type='button' class='hero-slide-dot is-active' data-hero-slide='0' aria-label='Show photo 1' aria-current='true'></button><button type='button' class='hero-slide-dot' data-hero-slide='1' aria-label='Show photo 2' aria-current='false'></button><button type='button' class='hero-slide-dot' data-hero-slide='2' aria-label='Show photo 3' aria-current='false'></button></div>"+
+        "<button type='button' class='hero-slide-arrow' data-hero-next aria-label='Next photo'>›</button>"+
+      "</div>"+
+    </section>"+
     syncBanner+
     "<section class='metric-grid'>"+
       "<div class='metric-card metric-green' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('sack',21)+"</span><b>"+t('Today’s Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>"+uiIcon('trend',44)+"</i></div>"+
@@ -782,7 +790,7 @@ function renderDashboard(p){
       "<div class='metric-card metric-blue' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('pieces',21)+"</span><b>"+t('Pieces / mishok',lang)+"</b></div><strong>"+(totalSacks>0?fmt(Math.round(totalPieces/totalSacks)):'—')+"</strong><i>"+uiIcon('trend',44)+"</i></div>"+
     "</section>"+
     "<section class='portal-panel production-panel'>"+
-      "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker coral'>"+leposhkaIcon(34)+"</div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
+      "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker production-photo-sticker' aria-hidden='true'><img src='./assets/leposhka-detail.svg' alt='' loading='eager'></div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
       "<div class='portal-panel-inner'>"+
         "<div class='portal-section-title'><div class='section-icon green'>"+leposhkaIcon(30)+"</div><div><h3>"+t('Sack Count',lang)+"</h3><span>ⓘ 1–9 "+t('Sacks',lang)+" + 0.5</span></div></div>"+
         "<div class='dashboard-sack-grid'>"+Array.from({length:9},(_,i)=>"<button class='dashboard-sack-btn' data-dashboard-sack='"+(i+1)+"'>"+(i+1)+"</button>").join('')+"</div>"+
@@ -798,8 +806,11 @@ function renderDashboard(p){
       "</div><div class='stock-grid'>"+stockCards+"</div>"+
     "</section>"+
     "<div class='made-by-wrap'>"+
-      "<a class='made-by-card made-by-link' href='https://wa.me/996509512786' target='_blank' rel='noopener' aria-label='WhatsApp Ali'>"+
-        "<div class='made-by-symbol'>"+uiIcon('chefHat',26)+"</div><div><small>"+t('Designed & built with care',lang)+"</small><strong>Сделано Али</strong></div><div class='made-by-kyrgyz'>🇰🇬</div>"+
+      "<a class='made-by-card made-by-link ali-showcase-banner' href='https://wa.me/996509512786' target='_blank' rel='noopener' aria-label='DoughFlow by Ali, contact on WhatsApp'>"+
+        "<div class='made-by-symbol ali-monogram' aria-hidden='true'><span>A</span></div>"+
+        "<div class='made-by-copy'><strong>Сделано Али</strong><span class='made-by-subtitle'>DOUGHFLOW · BAKERY CONTROL</span></div>"+
+        "<div class='openai-platform-badge' aria-label='OpenAI Platform animation'><span class='openai-platform-mark' aria-hidden='true'><i></i><i></i><i></i><i></i><i></i><i></i></span><span>OpenAI Platform</span><b class='openai-live-dot' aria-hidden='true'></b></div>"+
+        "<div class='made-by-kyrgyz' aria-hidden='true'>🇰🇬</div>"+
       "</a>"+
       "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:Landscape_view,_Ala_Archa_National_Park,_Chuy_region,_Kyrgyzstan_01.jpg' target='_blank' rel='noopener'>Mountains: Vilya Shoni / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a> · <span>Bakery photo: Your bakery</span></div>"+
     "</div>";
@@ -826,6 +837,37 @@ function renderDashboard(p){
   document.getElementById('dashboardStart')?.addEventListener('click',openProduction);
   document.querySelectorAll('[data-stock-open]').forEach(b=>b.addEventListener('click',()=>{route='inventory';render();}));
   document.getElementById('openInventory')?.addEventListener('click',()=>{route='inventory';render();});
+
+  // One photo at a time—no overlapping or blended hero images.
+  const heroCarousel=document.querySelector('[data-hero-carousel]');
+  const heroSlides=[...(heroCarousel?.querySelectorAll('[data-hero-photo]')||[])];
+  const heroDots=[...(heroCarousel?.querySelectorAll('[data-hero-slide]')||[])];
+  if(window.doughFlowHeroTimer) window.clearInterval(window.doughFlowHeroTimer);
+  let activeHero=0;
+  const showHeroPhoto=(next)=>{
+    if(!heroSlides.length) return;
+    activeHero=(next+heroSlides.length)%heroSlides.length;
+    heroSlides.forEach((slide,index)=>{
+      const active=index===activeHero;
+      slide.classList.toggle('is-active',active);
+      slide.setAttribute('aria-hidden',String(!active));
+    });
+    heroDots.forEach((dot,index)=>{
+      const active=index===activeHero;
+      dot.classList.toggle('is-active',active);
+      dot.setAttribute('aria-current',String(active));
+    });
+  };
+  const startHeroRotation=()=>{
+    if(window.doughFlowHeroTimer) window.clearInterval(window.doughFlowHeroTimer);
+    if(heroSlides.length>1&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      window.doughFlowHeroTimer=window.setInterval(()=>showHeroPhoto(activeHero+1),5200);
+    }
+  };
+  heroCarousel?.querySelector('[data-hero-prev]')?.addEventListener('click',()=>{showHeroPhoto(activeHero-1);startHeroRotation();});
+  heroCarousel?.querySelector('[data-hero-next]')?.addEventListener('click',()=>{showHeroPhoto(activeHero+1);startHeroRotation();});
+  heroDots.forEach((dot,index)=>dot.addEventListener('click',()=>{showHeroPhoto(index);startHeroRotation();}));
+  startHeroRotation();
   wireInteractiveCards();
 }
 function roleDashboard(p){
