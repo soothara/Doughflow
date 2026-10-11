@@ -801,7 +801,7 @@ function renderDashboard(p){
       "<a class='made-by-card made-by-link' href='https://wa.me/996509512786' target='_blank' rel='noopener' aria-label='WhatsApp Ali'>"+
         "<div class='made-by-symbol'>"+uiIcon('chefHat',26)+"</div><div><small>"+t('Designed & built with care',lang)+"</small><strong>Сделано Али</strong></div><div class='made-by-kyrgyz'>🇰🇬</div>"+
       "</a>"+
-      "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:Landscape_view,_Ala_Archa_National_Park,_Chuy_region,_Kyrgyzstan_01.jpg' target='_blank' rel='noopener'>Mountains: Vilya Shoni / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a> · <a href='https://commons.wikimedia.org/wiki/File:Uzbek_bread,_obi_non,_lepyoshka.jpg' target='_blank' rel='noopener'>Lepeshka: Benjamin Goetzinger / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a></div>"+
+      "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:Landscape_view,_Ala_Archa_National_Park,_Chuy_region,_Kyrgyzstan_01.jpg' target='_blank' rel='noopener'>Mountains: Vilya Shoni / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a> · <a href='https://commons.wikimedia.org/wiki/File:Tandir_nonlarini_ko%CA%BBrsatayotgan_novvoy.jpg' target='_blank' rel='noopener'>Tandyr baker: AIDEPCUL / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by/4.0/' target='_blank' rel='noopener'>CC BY 4.0</a></div>"+
     "</div>";
 
   let selected=0;
