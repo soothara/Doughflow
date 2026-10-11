@@ -108,4 +108,13 @@ assert.ok(mobileCss.includes('body[data-route="production"] .sack-picker'), "pro
 assert.ok(mobileCss.includes('body[data-route="recipe"] .recipe-item-row'), "recipe layout must be tuned for phones");
 assert.ok(mobileCss.includes("env(safe-area-inset-bottom)"), "mobile navigation should respect device safe areas");
 
+let mobileBraceDepth = 0;
+for (const char of mobileCss) {
+  if (char === "{") mobileBraceDepth++;
+  if (char === "}") mobileBraceDepth--;
+  assert.ok(mobileBraceDepth >= 0, "mobile CSS has an unexpected closing brace");
+}
+assert.equal(mobileBraceDepth, 0, "mobile CSS rules must have balanced braces");
+assert.doesNotMatch(app, /Bakery Simulator|simulatorHTML|renderSimulator|wireSimulatorInteractions|quest-panel|renderQuest|questPlay|questReward/i, "no simulator/quest code should remain");
+
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
