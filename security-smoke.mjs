@@ -7,6 +7,7 @@ const config = read("./app/config.js");
 const edge = read("./supabase/functions/pin-login/index.ts");
 const migration = read("./db/security_fixes_2026_10_11.sql");
 const inventoryFix = read("./db/fix_admin_inventory_snapshot_2026_10_11.sql");
+const pinOnlyMigration = read("./db/pin_only_login_2026_10_11.sql");
 const schema = read("./db/schema.sql");
 const worker = read("./app/sw.js");
 const html = read("./app/index.html");
@@ -24,8 +25,18 @@ assert.doesNotMatch(app, /legacyLoginForm|legacyLoginToggle|signInWithPassword/)
 assert.doesNotMatch(app + config, /SUPABASE_SERVICE_ROLE_KEY|service_role\s*[:=]/i);
 
 // PIN login failures must not reveal whether a username exists or is locked.
-assert.match(edge, /Keep unknown usernames, wrong PINs, unconfigured PINs, and locked accounts/);
-assert.match(edge, /return responseJson\(401, \{ error: "Username or PIN is incorrect" \}, origin\)/);
+assert.match(edge, /verify_pin_only/);
+assert.match(edge, /p_client_key: clientKey/);
+assert.match(edge, /return responseJson\(401, \{ error: "PIN is incorrect" \}, origin\)/);
+assert.doesNotMatch(edge, /verify_pin_login|p_alias|body\.username/);
+assert.match(pinOnlyMigration, /create or replace function public\.verify_pin_only\(p_pin text, p_client_key text\)/i);
+assert.match(pinOnlyMigration, /pin_login_throttle/);
+assert.match(pinOnlyMigration, /grant execute on function public\.verify_pin_only\(text, text\) to service_role/i);
+const loginMarkup = app.slice(app.indexOf("function loginHTML()"), app.indexOf("function ensureDemoPins()"));
+assert.doesNotMatch(loginMarkup, /loginAlias|Username|askat/);
+assert.match(loginMarkup, /id="togglePin"/);
+assert.match(app, /body:JSON\.stringify\(\{pin\}\)/);
+assert.match(app, /matches\.length!==1/);
 assert.doesNotMatch(edge, /retryAfterSeconds/);
 
 // Validate the rules in the server-side migration, not only in the UI.
@@ -42,7 +53,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v20-20261011-mobile-workflow-polish/);
+assert.match(worker, /doughflow-v21-20261011-pin-only-login/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -56,7 +67,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v20-20261011-mobile-workflow-polish/);
+assert.match(worker, /doughflow-v21-20261011-pin-only-login/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
