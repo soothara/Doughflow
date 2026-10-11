@@ -405,25 +405,37 @@ async function init(){
   if(configError){
     authError='DoughFlow configuration is missing. Contact the administrator.';
   } else if(!isDemo){
-    const {data:{session}}=await supabase.auth.getSession();
-    if(session) await loadUser(session.user);
+    // Render as soon as the profile is known; dashboard data must never gate sign-in.
+    const sessionPromise=supabase.auth.getSession();
     supabase.auth.onAuthStateChange((event,s)=>{
       if(!['SIGNED_IN','SIGNED_OUT','USER_UPDATED'].includes(event)) return;
       setTimeout(async()=>{
         if(s){
           await loadUser(s.user);
-          if(currentUser){ await refreshLiveState(); render(); }
-          else render();
+          render();
+          if(currentUser) void refreshLiveState().then(()=>{if(currentUser)refreshVisiblePageData();});
         } else { currentUser=null; authError=''; render(); }
       },0);
     });
+    const {data:{session}}=await sessionPromise;
+    if(session) await loadUser(session.user);
   } else {
     currentUser=db.session.user ? {...db.session.user,role:db.session.role,lang:db.session.lang||getSavedLang(db.session.user.id)} : null;
     lang=currentUser?.lang||lang;
   }
-  if(!isDemo && currentUser) await refreshLiveState();
   render();
+  if(!isDemo && currentUser) void refreshLiveState().then(()=>refreshVisiblePageData());
   if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+function refreshVisiblePageData(){
+  if(!currentUser)return;
+  if(route==='dashboard'){
+    const p=document.getElementById('page');
+    if(p)renderDashboard(p);
+  }else if(route==='production'){
+    const p=document.getElementById('page');
+    if(p)renderProduction(p);
+  }
 }
 
 async function loadUser(user){
@@ -512,9 +524,30 @@ async function render(){
   }
   if(!can(currentUser.role,route)) route='dashboard';
   app.innerHTML=appShellHTML();
-  document.querySelectorAll('[data-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.route;render();}));
+  document.querySelectorAll('[data-route]').forEach(b=>b.addEventListener('click',()=>navigateTo(b.dataset.route)));
   document.getElementById('logout')?.addEventListener('click',logout);
   await renderPage();
+  applyCurrentLanguage();
+  document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
+  document.getElementById('heroLanguageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
+}
+let routeRenderId=0;
+async function navigateTo(nextRoute){
+  if(!currentUser||!can(currentUser.role,nextRoute)||nextRoute===route)return;
+  route=nextRoute;
+  const renderId=++routeRenderId;
+  document.body.classList.toggle('dashboard-mode',route==='dashboard');
+  document.body.dataset.route=route;
+  document.querySelectorAll('[data-route]').forEach(button=>{
+    const active=button.dataset.route===route;
+    button.classList.toggle('active',active);
+    if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+  });
+  const page=document.getElementById('page');
+  if(!page)return;
+  page.innerHTML='<div class="page-loading" role="status"><span class="inline-spinner" aria-hidden="true"></span><span>'+esc(t('Loading…',lang))+'</span></div>';
+  await renderPage();
+  if(renderId!==routeRenderId||document.body.dataset.route!==route)return;
   applyCurrentLanguage();
   document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
   document.getElementById('heroLanguageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
@@ -704,7 +737,7 @@ function renderMore(p){
       ${extra.map(([r,icon,title,desc])=>`<button class="more-card" data-more-route="${r}"><span class="more-icon">${icon}</span><span><b>${t(title,lang)}</b><small>${t(desc,lang)}</small></span><span class="chevron">›</span></button>`).join('')}
       <button class="more-card danger-card" id="moreLogout"><span class="more-icon">${uiIcon('shield',24)}</span><span><b>${t('Log out',lang)}</b><small>${t('Sign out from this device',lang)}</small></span><span class="chevron">›</span></button>
     </div>`;
-  p.querySelectorAll('[data-more-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.moreRoute;render();}));
+  p.querySelectorAll('[data-more-route]').forEach(b=>b.addEventListener('click',()=>navigateTo(b.dataset.moreRoute)));
   p.querySelector('#moreLogout')?.addEventListener('click',logout);
 }
 function renderDashboard(p){
@@ -1021,6 +1054,7 @@ async function renderInventory(p){
         supabase.rpc('admin_inventory_snapshot',{p_effective_date:date}),
         supabase.rpc('admin_inventory_history',{p_effective_date:date})
       ]);
+      if(document.body.dataset.route!=='inventory')return false;
       if(!snap.error&&!hist.error){
         snapshotMap=Object.fromEntries((snap.data||[]).map(x=>[x.material_code,Number(x.stock||0)]));
         drawHistory(hist.data||[],date);
@@ -1049,6 +1083,7 @@ async function renderInventory(p){
             throw new Error('Inventory history is too large for safe client-side recovery. Restore the inventory RPC migration for fast loading.');
           };
           const [datedRows,laterRows]=await Promise.all([fetchLedger('on'),fetchLedger('after')]);
+          if(document.body.dataset.route!=='inventory')return false;
           const current=new Map((liveState.balances||[]).map(row=>[row.code,Number(row.stock)||0]));
           const laterDelta=new Map();
           for(const row of laterRows){
