@@ -136,14 +136,15 @@ assert.match(app, /dashboard data must never gate sign-in/, "session restore sho
 assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching should reuse the app shell");
 assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should use fast route switching");
 
-assert.match(dashboardCss, /Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01/);
-assert.match(dashboardCss, /Uzbek_bread%2C_obi_non%2C_lepyoshka/);
-assert.doesNotMatch(dashboardCss, /images\\.unsplash\\.com\\/photo-1464822759023-fed622ff2c3b|images\\.unsplash\\.com\\/photo-1509440159596/);
-assert.match(app, /chefHat:'<path/);
-assert.match(app, /uiIcon\('chefHat',26\)/);
-assert.match(app, /Mountains: Vilya Shoni \/ Wikimedia Commons/);
-assert.match(app, /Lepeshka: Benjamin Goetzinger \/ Wikimedia Commons/);
-assert.match(mobileCss, /@keyframes dfIosIconPop/);
-assert.match(mobileCss, /prefers-reduced-motion:reduce/);
+assert.ok(dashboardCss.includes("Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01"));
+assert.ok(dashboardCss.includes("Uzbek_bread%2C_obi_non%2C_lepyoshka"));
+assert.ok(!dashboardCss.includes("images.unsplash.com/photo-1464822759023-fed622ff2c3b"));
+assert.ok(!dashboardCss.includes("images.unsplash.com/photo-1509440159596"));
+assert.ok(app.includes("chefHat:'<path"));
+assert.ok(app.includes("uiIcon('chefHat',26)"));
+assert.ok(app.includes("Mountains: Vilya Shoni / Wikimedia Commons"));
+assert.ok(app.includes("Lepeshka: Benjamin Goetzinger / Wikimedia Commons"));
+assert.ok(mobileCss.includes("@keyframes dfIosIconPop"));
+assert.ok(mobileCss.includes("prefers-reduced-motion:reduce"));
 
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
