@@ -779,7 +779,7 @@ function renderDashboard(p){
       "<div class='metric-card metric-green' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('sack',21)+"</span><b>"+t('Today’s Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>"+uiIcon('trend',44)+"</i></div>"+
       "<div class='metric-card metric-orange' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('bread',21)+"</span><b>"+t('Today’s Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>"+uiIcon('pieces',44)+"</i></div>"+
       "<div class='metric-card metric-purple' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('play',21)+"</span><b>"+t('Production Runs',lang)+"</b></div><strong>"+totalRuns+"</strong><i>"+uiIcon('layers',44)+"</i></div>"+
-      "<div class='metric-card metric-blue' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('recipe',21)+"</span><b>"+t('Recipe Version',lang)+"</b></div><strong>v"+(recipeVersion??'—')+"</strong><i>"+uiIcon('spark',44)+"</i></div>"+
+      "<div class='metric-card metric-blue' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('pieces',21)+"</span><b>"+t('Pieces / mishok',lang)+"</b></div><strong>"+(totalSacks>0?fmt(Math.round(totalPieces/totalSacks)):'—')+"</strong><i>"+uiIcon('trend',44)+"</i></div>"+
     "</section>"+
     "<section class='portal-panel production-panel'>"+
       "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker coral'>"+leposhkaIcon(34)+"</div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
@@ -801,7 +801,7 @@ function renderDashboard(p){
       "<a class='made-by-card made-by-link' href='https://wa.me/996509512786' target='_blank' rel='noopener' aria-label='WhatsApp Ali'>"+
         "<div class='made-by-symbol'>"+uiIcon('chefHat',26)+"</div><div><small>"+t('Designed & built with care',lang)+"</small><strong>Сделано Али</strong></div><div class='made-by-kyrgyz'>🇰🇬</div>"+
       "</a>"+
-      "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:Landscape_view,_Ala_Archa_National_Park,_Chuy_region,_Kyrgyzstan_01.jpg' target='_blank' rel='noopener'>Mountains: Vilya Shoni / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a> · <span>Bakery photo: DoughFlow reference photo</span></div>"+
+      "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:Landscape_view,_Ala_Archa_National_Park,_Chuy_region,_Kyrgyzstan_01.jpg' target='_blank' rel='noopener'>Mountains: Vilya Shoni / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a> · <span>Bakery photo: Your bakery</span></div>"+
     "</div>";
 
   let selected=0;

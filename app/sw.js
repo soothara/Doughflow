@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v26-20261011-local-bakery-photos';
+const CACHE = 'doughflow-v27-20261011-real-bakery-photo';
 
 const CORE_ASSETS = [
   './',
@@ -11,8 +11,7 @@ const CORE_ASSETS = [
   './i18n.js',
   './manifest.webmanifest',
   './icon.svg',
-  './assets/bakery.webp',
-  './assets/ala-archa-fallback.svg'
+  './assets/bakery.webp'
 ];
 
 const NETWORK_FIRST = new Set([
