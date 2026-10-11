@@ -53,7 +53,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v28-20261011-photo-carousel-ali-banner/);
+assert.match(worker, /doughflow-v29-20261011-photo-fit-ali-banner/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -67,7 +67,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v28-20261011-photo-carousel-ali-banner/);
+assert.match(worker, /doughflow-v29-20261011-photo-fit-ali-banner/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -143,7 +143,10 @@ assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero::after{content:non
 assert.ok(dashboardCss.includes("bakery.webp"), "production panel should use bakery photography");
 assert.ok(app.includes("production-photo-sticker") && dashboardCss.includes("dfBreadStickerFloat"), "New Production should use an animated leposhka photo icon");
 assert.ok(app.includes("Сделано Али") && !app.includes("Designed & built with care"), "creator banner should remove the generic sentence");
-assert.ok(app.includes("OpenAI Platform") && dashboardCss.includes("dfOpenAIShimmer"), "OpenAI Platform label should use the requested animation");
+assert.doesNotMatch(app, /OpenAI Platform|openai-platform-badge/i, "OpenAI Platform badge should be removed");
+assert.doesNotMatch(dashboardCss, /openai-platform|dfOpenAI/i, "unused OpenAI badge styles should be removed");
+assert.ok(app.includes("leposhka-emblem.svg"), "New Production should use the new leposhka emblem");
+assert.ok(worker.includes("./assets/leposhka-emblem.svg"), "the new emblem should be precached");
 assert.ok(app.includes("Bakery photo: Your bakery"));
 assert.ok(mobileCss.includes("@keyframes dfIosIconPop"));
 assert.ok(mobileCss.includes("prefers-reduced-motion:reduce"));
