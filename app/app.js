@@ -825,10 +825,34 @@ function renderProduction(p){
   p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">DAILY WORKFLOW</div><h1>Production</h1><p>Choose a batch, record actual pieces, and finish with confidence.</p></div></div><section class="workflow-progress-card" aria-live="polite"><div class="workflow-progress-top"><span class="workflow-step-icon">01</span><div class="workflow-progress-copy"><strong id="productionJourneyTitle">Choose your batch</strong><small id="productionJourneyText">Select total sacks to begin. Half-sacks are supported.</small></div><span class="workflow-step-count" id="productionJourneyCount">0 / 3</span></div><div class="workflow-progress-track"><span id="productionJourneyFill" style="width:0%"></span></div><div class="workflow-phase-list"><span>1 · Sacks</span><span>2 · Pieces</span><span>3 · Review</span></div></section><div class="grid grid-2"><div class="card production-work-card"><div class="workflow-heading"><span class="workflow-step-number">01</span><div><h2>New production</h2><p>Batch size and actual output</p></div></div><div class="field"><label>Sack count</label><div class="sack-picker"><button type="button" class="sack-choice" data-sack="1">1</button><button type="button" class="sack-choice " data-sack="2">2</button><button type="button" class="sack-choice " data-sack="3">3</button><button type="button" class="sack-choice " data-sack="4">4</button><button type="button" class="sack-choice " data-sack="5">5</button><button type="button" class="sack-choice " data-sack="6">6</button><button type="button" class="sack-choice " data-sack="7">7</button><button type="button" class="sack-choice " data-sack="8">8</button><button type="button" class="sack-choice " data-sack="9">9</button><button type="button" class="sack-choice half-choice" data-half="0.5">＋ 0.5</button></div><div class="sack-total"><span>Total sacks</span><strong id="sackTotal">0</strong><button type="button" class="reset-sack" id="resetSack">Reset</button></div><input id="sackCount" class="sr-only" type="number" min="0" max="9.5" step="0.5" value="0"></div><div id="batchEditor"></div><div style="height:10px"></div><h3>Material consumption</h3><div id="consumptionEditor"></div><div class="notice" style="margin:12px 0">A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveProduction">Complete production</button><button class="btn secondary" id="clearProduction">Clear</button></div></div><div class="card"><h2>Today’s production</h2>${existing.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Sacks</th><th>Pieces</th><th>Recipe</th></tr></thead><tbody>${existing.map(r=>{const bs=isDemo?r.batches:r.production_batches||[]; return `<tr><td>${esc(isDemo?r.timeLabel:new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt(bs.reduce((s,z)=>s+Number(z.pieces||0),0))}</td><td>v${isDemo?r.recipeVersion:(liveState.recipe?.version||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No production saved today.</div>'}</div></div>`;
   const editor=document.getElementById('batchEditor');
   const consumption=document.getElementById('consumptionEditor');
+  const updateJourney=()=>{
+    const count=normalizeSackCount(document.getElementById('sackCount').value);
+    const countReady=count>=0.5&&count<=9.5;
+    const pieces=[...editor.querySelectorAll('[data-pieces]')];
+    const piecesReady=countReady&&pieces.length>0&&pieces.every(x=>x.value.trim()!==''&&Number.isInteger(Number(x.value))&&Number(x.value)>0);
+    const quantities=[...consumption.querySelectorAll('.actual-consumption')];
+    const quantitiesValid=quantities.length>0&&quantities.every(x=>x.value.trim()!==''&&Number.isFinite(Number(x.value))&&Number(x.value)>=0);
+    const step=!countReady?0:!piecesReady?1:!quantitiesValid?2:3;
+    const titles=['Choose your batch','Enter actual pieces','Review material use','Ready to complete'];
+    const details=['Select total sacks to begin. Half-sacks are supported.','Enter actual whole-piece count for every batch.','Check actual ingredient use before saving.','Everything is valid. Review once, then complete production.'];
+    const title=document.getElementById('productionJourneyTitle');
+    const detail=document.getElementById('productionJourneyText');
+    const countLabel=document.getElementById('productionJourneyCount');
+    const fill=document.getElementById('productionJourneyFill');
+    if(title)title.textContent=titles[step];
+    if(detail)detail.textContent=details[step];
+    if(countLabel)countLabel.textContent=step+' / 3';
+    if(fill)fill.style.width=(step/3*100)+'%';
+    const stepIcon=document.querySelector('.workflow-progress-card .workflow-step-icon');
+    if(stepIcon)stepIcon.textContent=String(Math.min(step+1,3)).padStart(2,'0');
+  };
+  editor.addEventListener('input',updateJourney);
+  consumption.addEventListener('input',updateJourney);
   const rebuild=()=>{
     const m=normalizeSackCount(document.getElementById('sackCount').value); document.getElementById('sackCount').value=m; const bs=batchesFor(m); document.getElementById('sackTotal').textContent=m;
     editor.innerHTML=`<h3>Batches</h3>${bs.map((b,i)=>`<div class="batch-row"><div class="batch-index">#${i+1}</div><div class="batch-kind">${b.sack===1?'1.0':'0.5'} sack</div><input type="number" min="0" step="1" data-pieces="${i}" placeholder="Actual pieces"></div>`).join('')}`;
     consumption.innerHTML=(recipe?.items||[]).map(it=>{const expected=Number(it.qty||0)*m;return `<div class="field-row"><div class="field"><label>${esc(it.name)} expected (${esc(it.unit)})</label><input class="expected-consumption" data-code="${esc(it.code)}" value="${expected}" disabled></div><div class="field"><label>Actual (${esc(it.unit)})</label><input class="actual-consumption" data-code="${esc(it.code)}" type="number" min="0" step="0.001" value="${expected}"></div></div>`}).join('');
+    updateJourney();
   };
   const syncSackChoices=()=>{
     const total=Number(document.getElementById('sackCount').value||0);
