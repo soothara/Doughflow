@@ -137,15 +137,15 @@ assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching shou
 assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should use fast route switching");
 
 assert.ok(dashboardCss.includes("Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01"));
-assert.ok(dashboardCss.includes("/commons/thumb/4/47/Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg/1280px-Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg"));
+assert.ok(dashboardCss.includes("bakery.webp"), "bread photo should be served from the app origin");
 assert.ok(!dashboardCss.includes("images.unsplash.com/photo-1464822759023-fed622ff2c3b"));
 assert.ok(!dashboardCss.includes("images.unsplash.com/photo-1509440159596"));
 assert.ok(app.includes("chefHat:'<path"));
 assert.ok(app.includes("uiIcon('chefHat',26)"));
 assert.ok(app.includes("Mountains: Vilya Shoni / Wikimedia Commons"));
-assert.ok(app.includes("Tandyr baker: AIDEPCUL / Wikimedia Commons"));
+assert.ok(app.includes("Bakery photo: DoughFlow reference photo"));
 assert.ok(mobileCss.includes("@keyframes dfIosIconPop"));
 assert.ok(mobileCss.includes("prefers-reduced-motion:reduce"));
 
-assert.ok(app.includes("https://creativecommons.org/licenses/by/4.0/"));
+assert.ok(worker.includes("./assets/bakery.webp") && worker.includes("./assets/ala-archa-fallback.svg"), "photo assets should be precached locally");
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");

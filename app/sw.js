@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v25-20261011-authentic-tandyr-bakery';
+const CACHE = 'doughflow-v26-20261011-local-bakery-photos';
 
 const CORE_ASSETS = [
   './',
@@ -10,7 +10,9 @@ const CORE_ASSETS = [
   './interactive.css',
   './i18n.js',
   './manifest.webmanifest',
-  './icon.svg'
+  './icon.svg',
+  './assets/bakery.webp',
+  './assets/ala-archa-fallback.svg'
 ];
 
 const NETWORK_FIRST = new Set([
