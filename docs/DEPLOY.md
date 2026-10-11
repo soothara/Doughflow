@@ -58,6 +58,8 @@ After the existing schema and hardening migration, run these files in Supabase S
 3. `db/security_fixes_2026_10_11.sql` — server-side production-date/batch/consumption validation, recipe unit validation, and historical balance safety checks.
 4. `db/fix_admin_inventory_snapshot_2026_10_11.sql` — restores the Admin-only inventory history/snapshot RPCs and reloads the Supabase API schema cache. Run this if Stock shows a missing `admin_inventory_snapshot(p_effective_date)` function error; it is safe to rerun and does not rewrite stock transactions.
 
+Until that RPC migration has been applied, the new frontend can reconstruct the selected-date balance/activity in **read-only mode** when Admin ledger reads are available. Saving date corrections stays disabled until the server-side correction RPC is confirmed, so it never treats a missing snapshot as zero stock.
+
 Back up the database first. These files are additive and must be applied to the same Supabase project used by the live site.
 
 The PIN migration sets the existing Admin account whose Auth email is `askat@gmail.com` to username **`askat`** and initial PIN **`1214`**, but only when that account has not already configured a PIN. Change this PIN after initial access. Other accounts receive generated aliases; Admin can assign a memorable alias and set/reset each person's PIN in **More → People & PIN access**.
