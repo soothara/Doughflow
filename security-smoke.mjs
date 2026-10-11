@@ -53,7 +53,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v26-20261011-local-bakery-photos/);
+assert.match(worker, /doughflow-v27-20261011-real-bakery-photo/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -67,7 +67,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v26-20261011-local-bakery-photos/);
+assert.match(worker, /doughflow-v27-20261011-real-bakery-photo/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -143,9 +143,9 @@ assert.ok(!dashboardCss.includes("images.unsplash.com/photo-1509440159596"));
 assert.ok(app.includes("chefHat:'<path"));
 assert.ok(app.includes("uiIcon('chefHat',26)"));
 assert.ok(app.includes("Mountains: Vilya Shoni / Wikimedia Commons"));
-assert.ok(app.includes("Bakery photo: DoughFlow reference photo"));
+assert.ok(app.includes("Bakery photo: Your bakery"));
 assert.ok(mobileCss.includes("@keyframes dfIosIconPop"));
 assert.ok(mobileCss.includes("prefers-reduced-motion:reduce"));
 
-assert.ok(worker.includes("./assets/bakery.webp") && worker.includes("./assets/ala-archa-fallback.svg"), "photo assets should be precached locally");
+assert.ok(worker.includes("./assets/bakery.webp") && styles.includes("images.unsplash.com"), "real photo assets should be available without generated illustrations");
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");

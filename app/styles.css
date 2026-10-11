@@ -474,7 +474,7 @@ button:active{transform:scale(.965)}
 }
 .portal-hero-photo{
   position:absolute;inset:-8%;
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg'), url('./assets/ala-archa-fallback.svg');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg'), url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85');
   background-size:cover,cover;background-position:center 45%,center;background-repeat:no-repeat;
   transform:scale(1.03);
   animation:heroDrift 18s ease-in-out infinite alternate;
@@ -646,7 +646,7 @@ button:active{transform:scale(.965)}
 
 /* ===== Final visual polish: Kyrgyz leposhka photography + premium login ===== */
 .portal-hero-photo{
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg'), url('./assets/ala-archa-fallback.svg');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg'), url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85');
 }
 .panel-photo{
   background-image:url('./assets/bakery.webp');
