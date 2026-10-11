@@ -45,7 +45,7 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 
-  let body: { username?: unknown; pin?: unknown };
+  let body: { pin?: unknown };
   try { body = await req.json(); } catch { return responseJson(400, { error: "Invalid request" }, origin); }
 
   const pin = typeof body.pin === "string" ? body.pin : "";
@@ -70,9 +70,8 @@ Deno.serve(async (req: Request) => {
 
   const result = Array.isArray(rows) ? rows[0] : rows;
   if (!result?.success) {
-    // Keep unknown usernames, wrong PINs, unconfigured PINs, and locked accounts
-    // indistinguishable to reduce account enumeration through response status/body.
-    return responseJson(401, { error: "Username or PIN is incorrect" }, origin);
+    // Keep incorrect, ambiguous, and locked PIN attempts indistinguishable.
+    return responseJson(401, { error: "PIN is incorrect" }, origin);
   }
 
   // The PIN is validated server-side; the one-time magic-link token exchanges
