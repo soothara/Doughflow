@@ -794,7 +794,7 @@ function renderDashboard(p){
       "<div class='metric-card metric-blue' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('pieces',21)+"</span><b>"+t('Pieces / mishok',lang)+"</b></div><strong>"+(totalSacks>0?fmt(Math.round(totalPieces/totalSacks)):'—')+"</strong><i>"+uiIcon('trend',44)+"</i></div>"+
     "</section>"+
     "<section class='portal-panel production-panel'>"+
-      "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker production-photo-sticker' aria-hidden='true'><img src='./assets/leposhka-detail.svg' alt='' loading='eager'></div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
+      "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker production-photo-sticker' aria-hidden='true'><img src='./assets/leposhka-emblem.svg' alt='' loading='eager'></div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
       "<div class='portal-panel-inner'>"+
         "<div class='portal-section-title'><div class='section-icon green'>"+leposhkaIcon(30)+"</div><div><h3>"+t('Sack Count',lang)+"</h3><span>ⓘ 1–9 "+t('Sacks',lang)+" + 0.5</span></div></div>"+
         "<div class='dashboard-sack-grid'>"+Array.from({length:9},(_,i)=>"<button class='dashboard-sack-btn' data-dashboard-sack='"+(i+1)+"'>"+(i+1)+"</button>").join('')+"</div>"+
@@ -813,7 +813,6 @@ function renderDashboard(p){
       "<a class='made-by-card made-by-link ali-showcase-banner' href='https://wa.me/996509512786' target='_blank' rel='noopener' aria-label='DoughFlow by Ali, contact on WhatsApp'>"+
         "<div class='made-by-symbol ali-monogram' aria-hidden='true'><span>A</span></div>"+
         "<div class='made-by-copy'><strong>Сделано Али</strong><span class='made-by-subtitle'>DOUGHFLOW · BAKERY CONTROL</span></div>"+
-        "<div class='openai-platform-badge' aria-label='OpenAI Platform animation'><span class='openai-platform-mark' aria-hidden='true'><i></i><i></i><i></i><i></i><i></i><i></i></span><span>OpenAI Platform</span><b class='openai-live-dot' aria-hidden='true'></b></div>"+
         "<div class='made-by-kyrgyz' aria-hidden='true'>🇰🇬</div>"+
       "</a>"+
       "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:Landscape_view,_Ala_Archa_National_Park,_Chuy_region,_Kyrgyzstan_01.jpg' target='_blank' rel='noopener'>Mountains: Vilya Shoni / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a> · <span>Bakery photo: Your bakery</span></div>"+
