@@ -704,6 +704,10 @@ function appShellHTML(){
     </div>`;
 }
 async function renderPage(){
+  if(route!=='dashboard'&&window.doughFlowHeroTimer){
+    window.clearInterval(window.doughFlowHeroTimer);
+    window.doughFlowHeroTimer=null;
+  }
   const p=document.getElementById('page');
   const pages={
     dashboard:renderDashboard,
