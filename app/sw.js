@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v21-20261011-pin-only-login';
+const CACHE = 'doughflow-v22-20261011-inventory-fast-nav';
 
 const CORE_ASSETS = [
   './',
