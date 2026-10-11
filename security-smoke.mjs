@@ -136,7 +136,7 @@ assert.match(app, /dashboard data must never gate sign-in/, "session restore sho
 assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching should reuse the app shell");
 assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should use fast route switching");
 
-assert.ok(app.includes("./assets/leposhka-detail.svg") && app.includes("./assets/leposhka-delivery.svg"), "hero carousel should use separate real leposhka photos");
+assert.ok(app.includes("Special:FilePath/Uzbek_bread") && app.includes("Special:FilePath/Making_Uzbek_bread") && app.includes("Special:FilePath/Uzbek_bread%2C_obi_non%2C_lepyoshka_in_tandyr_oven"), "hero carousel should use separate high-resolution real leposhka photos");
 assert.ok(app.includes("data-hero-carousel") && app.includes("data-hero-next") && app.includes("data-hero-prev"), "hero photo carousel controls should be interactive");
 assert.ok(app.includes("showHeroPhoto(activeHero+1),2000"), "hero photos should rotate every two seconds");
 assert.ok(app.includes("width=1600") && app.includes("Special:FilePath"), "hero should use high-resolution real bread photography");
