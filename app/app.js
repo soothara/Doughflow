@@ -781,7 +781,7 @@ function renderDashboard(p){
         "<div class='hero-slide-dots'><button type='button' class='hero-slide-dot is-active' data-hero-slide='0' aria-label='Show photo 1' aria-current='true'></button><button type='button' class='hero-slide-dot' data-hero-slide='1' aria-label='Show photo 2' aria-current='false'></button><button type='button' class='hero-slide-dot' data-hero-slide='2' aria-label='Show photo 3' aria-current='false'></button></div>"+
         "<button type='button' class='hero-slide-arrow' data-hero-next aria-label='Next photo'>›</button>"+
       "</div>"+
-    </section>"+
+    "</section>"+
     syncBanner+
     "<section class='metric-grid'>"+
       "<div class='metric-card metric-green' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('sack',21)+"</span><b>"+t('Today’s Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>"+uiIcon('trend',44)+"</i></div>"+
