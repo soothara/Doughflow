@@ -38,7 +38,12 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v13-20261011-aurora/);
+assert.match(worker, /doughflow-v14-20261011-refined/);
+assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
+assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
+assert.match(interactive + read("./app/styles.css"), /more-icon svg/, "More menu SVG icons must have explicit dimensions");
+assert.match(interactive + read("./app/styles.css"), /avatar::before,.avatar::after/, "Profile avatar must not inherit decorative overlay icons");
+
 
 const interactive = read("./app/interactive.css");
 assert.match(app, /function uiIcon\(/);
@@ -50,6 +55,6 @@ assert.match(interactive, /\.simulator-stage/);
 assert.match(interactive, /\.sim-immersive/);
 assert.match(interactive, /\.simulator-stage\.sim-immersive \.sim-world/);
 assert.match(interactive, /prefers-reduced-motion:reduce/);
-assert.match(worker, /doughflow-v13-20261011-aurora/);
+assert.match(worker, /doughflow-v14-20261011-refined/);
 
 console.log("DoughFlow static security and immersive UI smoke checks passed.");
