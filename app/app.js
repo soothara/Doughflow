@@ -250,6 +250,7 @@ function uiIcon(name,size=20){
   const paths={
     sack:'<path d="M9 3h6l-1 3 4 3-1 11H7L6 9l4-3-1-3Z"/><path d="M9 11c2 1 4 1 6 0M10 15h4"/>',
     bread:'<path d="M4 12c-1-3 1-6 4-6 1-3 7-3 8 0 3 0 5 3 4 6l-1 6H5l-1-6Z"/><path d="m9 9 1 2m4-3 1 2"/>',
+    chefHat:'<path d="M6 13a4 4 0 0 1-1-7.87A5 5 0 0 1 14 4a4 4 0 0 1 5 5.7A4 4 0 0 1 18 13v4a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-4Z"/><path d="M6 13h12M9 16h6"/>',
     play:'<path d="m8 5 11 7-11 7V5Z" fill="currentColor" stroke="none"/>',
     recipe:'<path d="M6 4h13v16H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"/><path d="M8 8h7M8 12h7M8 16h4"/>',
     trend:'<path d="m3 17 5-5 4 3 8-9"/><path d="M15 6h5v5"/>',
@@ -798,9 +799,9 @@ function renderDashboard(p){
     "</section>"+
     "<div class='made-by-wrap'>"+
       "<a class='made-by-card made-by-link' href='https://wa.me/996509512786' target='_blank' rel='noopener' aria-label='WhatsApp Ali'>"+
-        "<div class='made-by-symbol'>✦</div><div><small>"+t('Designed & built with care',lang)+"</small><strong>Сделано Али</strong></div><div class='made-by-kyrgyz'>🇰🇬</div>"+
+        "<div class='made-by-symbol'>"+uiIcon('chefHat',26)+"</div><div><small>"+t('Designed & built with care',lang)+"</small><strong>Сделано Али</strong></div><div class='made-by-kyrgyz'>🇰🇬</div>"+
       "</a>"+
-      "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:%D0%9A%D1%8B%D1%80%D0%B3%D0%B7%D1%81%D1%82%D0%B0%D0%BD%2C_%D0%91%D0%B8%D1%88%D0%BA%D0%B5%D0%BA%2C_%D0%9E%D1%88%D1%81%D0%BA%D0%B8%D0%B9_%D0%B1%D0%B0%D0%B7%D0%B0%D1%80%2C_%D1%82%D0%B0%D0%BD%D0%B4%D1%8B%D1%80%D0%BD%D1%8B%D0%B5_%D0%BB%D0%B5%D0%BF%D0%B5%D1%88%D0%BA%D0%B8_%281%29.jpg' target='_blank' rel='noopener'>Photo: ElenaLitera / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a></div>"+
+      "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:Landscape_view,_Ala_Archa_National_Park,_Chuy_region,_Kyrgyzstan_01.jpg' target='_blank' rel='noopener'>Mountains: Vilya Shoni / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a> · <a href='https://commons.wikimedia.org/wiki/File:Uzbek_bread,_obi_non,_lepyoshka.jpg' target='_blank' rel='noopener'>Lepeshka: Benjamin Goetzinger / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a></div>"+
     "</div>";
 
   let selected=0;
