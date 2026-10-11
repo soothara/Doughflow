@@ -137,7 +137,7 @@ assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching shou
 assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should use fast route switching");
 
 assert.ok(dashboardCss.includes("Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01"));
-assert.ok(dashboardCss.includes("Special:FilePath/Tandir_nonlarini_ko%CA%BBrsatayotgan_novvoy.jpg?width=1280"));
+assert.ok(dashboardCss.includes("/commons/thumb/4/47/Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg/1280px-Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg"));
 assert.ok(!dashboardCss.includes("images.unsplash.com/photo-1464822759023-fed622ff2c3b"));
 assert.ok(!dashboardCss.includes("images.unsplash.com/photo-1509440159596"));
 assert.ok(app.includes("chefHat:'<path"));
