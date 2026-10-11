@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v18-20261011-final-dashboard-polish';
+const CACHE = 'doughflow-v19-20261011-inventory-rpc-fix-no-simulator';
 
 const CORE_ASSETS = [
   './',
