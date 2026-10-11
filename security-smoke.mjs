@@ -89,10 +89,10 @@ for (const char of dashboardCss) {
 }
 assert.equal(braceDepth, 0, "dashboard CSS rules must have balanced braces");
 
-assert.match(app, /const canStartProduction=currentUser\\.role==='admin'\\|\\|currentUser\\.role==='hamurchi'/, "Quest must respect production role permissions");
-assert.match(app, /if\\(!canStartProduction\\)return;/, "Quest production handler must enforce role checks");
-assert.match(app, /const recipeVersion=isDemo\\?db\\?\\.recipe\\?\\.version:liveState\\.recipe\\?\\.version;/, "Dashboard recipe version must come from the active runtime");
-assert.match(app, /recipeVersion\\?\\?['"]—['"]/, "Dashboard must not invent a recipe version when live data is missing");
-assert.match(app, /Array\\.from\\(String\\(currentUser\\.name\\|\\|'A'\\)\\.trim\\(\\)\\)\\[0\\]/, "Avatar initials should support Unicode names");
+assert.ok(app.includes("const canStartProduction=currentUser.role==='admin'||currentUser.role==='hamurchi'"), "Quest must respect production role permissions");
+assert.ok(app.includes("if(!canStartProduction)return;"), "Quest production handler must enforce role checks");
+assert.ok(app.includes("const recipeVersion=isDemo?db?.recipe?.version:liveState.recipe?.version;"), "Dashboard recipe version must come from the active runtime");
+assert.ok(app.includes("recipeVersion??'—'"), "Dashboard must not invent a recipe version when live data is missing");
+assert.ok(app.includes("Array.from(String(currentUser.name||'A').trim())[0]?.toUpperCase()||'A'"), "Avatar initials should support Unicode names");
 
 console.log("DoughFlow static security and immersive UI smoke checks passed.");
