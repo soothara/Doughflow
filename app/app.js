@@ -628,7 +628,7 @@ function wireLogin(){
           pinError.textContent=t('PIN login is temporarily unavailable. Please contact the administrator.',lang);
           return;
         }
-        const key=response.status===429?'Too many attempts. Try again later.':(payload.error==='Username or PIN is incorrect'?'Username or PIN is incorrect':payload.error||'Username or PIN is incorrect');
+        const key=response.status===429?'Too many attempts. Try again later.':(payload.error||'PIN is incorrect');
         pinError.textContent=t(key,lang);
         return;
       }
