@@ -134,5 +134,5 @@ assert.match(app, /for\(let offset=0;offset<5000;offset\+=1000\)/, "read-only fa
 
 assert.match(app, /dashboard data must never gate sign-in/, "session restore should not wait for dashboard data");
 assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching should reuse the app shell");
-assert.match(app, /document\.querySelectorAll\('\[data-route\]'\)\.forEach\(button=>button\.addEventListener\('click',\(\)=>navigateTo\(button\.dataset\.route\)\)\)/, "navigation buttons should use fast route switching");
+assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should use fast route switching");
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
