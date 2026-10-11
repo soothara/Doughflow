@@ -138,7 +138,7 @@ assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should 
 
 assert.ok(app.includes("leposhka-detail.svg") && app.includes("leposhka-delivery.svg") && app.includes("bakery.webp"), "hero carousel should use local bakery photos instead of external stock photos");
 assert.ok(app.includes("data-hero-carousel") && app.includes("data-hero-next") && app.includes("data-hero-prev"), "hero photo carousel controls should be interactive");
-assert.ok(app.includes("showHeroPhoto(activeHero+1),2000"), "hero photos should rotate every two seconds");
+assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should rotate every three seconds");
 assert.ok(app.includes("./assets/leposhka-detail.svg") && app.includes("./assets/leposhka-delivery.svg") && app.includes("./assets/bakery.webp"), "hero should use local bakery photos available offline");
 assert.ok(dashboardCss.includes("High-visibility mobile hero") && dashboardCss.includes("rgba(6,18,29,.78)"), "hero photo and text should remain clearly visible");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero-photo.hero-slide.is-active{display:block}"), "only the active hero photo should be visible; do not blend photos");
