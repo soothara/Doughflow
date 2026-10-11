@@ -11,6 +11,7 @@ const schema = read("./db/schema.sql");
 const worker = read("./app/sw.js");
 const html = read("./app/index.html");
 const dashboardCss = read("./app/dashboard.css");
+const mobileCss = read("./app/mobile.css");
 
 // Production must not silently degrade to a local app with hard-coded PINs.
 assert.match(app, /const isDemo = CFG\.demoMode === true;/);
@@ -41,7 +42,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v19-20261011-inventory-rpc-fix-no-simulator/);
+assert.match(worker, /doughflow-v20-20261011-mobile-workflow-polish/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -55,7 +56,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v19-20261011-inventory-rpc-fix-no-simulator/);
+assert.match(worker, /doughflow-v20-20261011-mobile-workflow-polish/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -92,5 +93,19 @@ assert.equal(braceDepth, 0, "dashboard CSS rules must have balanced braces");
 assert.ok(app.includes("const recipeVersion=isDemo?db?.recipe?.version:liveState.recipe?.version;"), "Dashboard recipe version must come from the active runtime");
 assert.ok(app.includes("recipeVersion??'—'"), "Dashboard must not invent a recipe version when live data is missing");
 assert.ok(app.includes("Array.from(String(currentUser.name||'A').trim())[0]?.toUpperCase()||'A'"), "Avatar initials should support Unicode names");
+
+
+assert.match(html, /href="mobile\\.css"/, "phone-first styles must load in the app shell");
+assert.match(worker, /'\\.\\/mobile\\.css'/, "phone-first styles must be cached for offline startup");
+assert.match(worker, /'\\/mobile\\.css'/, "phone-first styles must be refreshed network-first");
+assert.match(app, /document\\.body\\.dataset\\.route=currentUser\\?route:'login'/, "active route should scope responsive behavior");
+assert.match(app, /const updateJourney=\\(\\)=>/, "production should provide actual workflow progress feedback");
+assert.match(app, /recipeStatusPill/, "recipe should indicate unsaved changes");
+assert.match(app, /const fetchLedger=async\\(mode\\)/, "inventory should try a safe read-only ledger recovery when RPCs are missing");
+assert.match(app, /if\\(!snapshotLoaded\\|\\|!historicalCorrectionRpcReady\\)/, "date corrections must remain disabled without a trusted snapshot and RPC");
+assert.doesNotMatch(app, /inventory-game-banner|inventory-game-icon/, "inventory control should not be labelled as a game");
+assert.match(mobileCss, /body\\[data-route="production"\\].*sack-picker/s, "production layout must be tuned for phones");
+assert.match(mobileCss, /body\\[data-route="recipe"\\].*recipe-item-row/s, "recipe layout must be tuned for phones");
+assert.match(mobileCss, /env\\(safe-area-inset-bottom\\)/, "mobile navigation should respect device safe areas");
 
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
