@@ -1,10 +1,11 @@
-const CACHE = 'doughflow-v16-20261011-screenshot-match';
+const CACHE = 'doughflow-v17-20261011-dashboard-polish';
 
 const CORE_ASSETS = [
   './',
   './index.html',
   './app.js',
   './styles.css',
+  './dashboard.css',
   './interactive.css',
   './i18n.js',
   './manifest.webmanifest',
@@ -14,6 +15,7 @@ const CORE_ASSETS = [
 const NETWORK_FIRST = new Set([
   '/app.js',
   '/styles.css',
+  '/dashboard.css',
   '/interactive.css',
   '/i18n.js',
   '/config.js'
