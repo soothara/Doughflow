@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v20-20261011-mobile-workflow-polish';
+const CACHE = 'doughflow-v21-20261011-pin-only-login';
 
 const CORE_ASSETS = [
   './',
