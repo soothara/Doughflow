@@ -625,3 +625,45 @@ body.dashboard-mode{
   .dashboard-mode .ali-showcase-banner{grid-template-columns:40px minmax(0,1fr);grid-template-areas:"symbol copy"}
   .dashboard-mode .ali-showcase-banner .made-by-kyrgyz{display:none}
 }
+
+
+/* High-visibility mobile hero: show bread clearly, preserve photo sharpness, and protect text contrast. */
+.dashboard-mode .portal-hero{
+  min-height:300px;
+  background:#182a38;
+}
+.dashboard-mode .portal-hero-photo.hero-slide{
+  inset:0!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+  background-color:#4b3827;
+  filter:none!important;
+  opacity:1!important;
+  transform:scale(1.005)!important;
+  transition:opacity .24s ease-in-out;
+}
+.dashboard-mode .portal-hero-photo[data-hero-photo="0"]{background-position:center 56%!important}
+.dashboard-mode .portal-hero-photo[data-hero-photo="1"]{background-position:center 55%!important}
+.dashboard-mode .portal-hero-photo[data-hero-photo="2"]{background-position:center 58%!important}
+.dashboard-mode .portal-hero-shade{
+  background:linear-gradient(180deg,rgba(6,18,29,.22) 0%,rgba(6,18,29,.02) 32%,rgba(6,18,29,.24) 53%,rgba(6,18,29,.78) 100%)!important;
+}
+.dashboard-mode .hero-copy h1,
+.dashboard-mode .hero-copy p,
+.dashboard-mode .hero-date{
+  text-shadow:0 2px 12px rgba(0,0,0,.4);
+}
+.dashboard-mode .hero-copy h1{font-weight:850}
+.dashboard-mode .hero-copy p{color:#fff!important}
+.dashboard-mode .hero-date{
+  background:rgba(255,255,255,.96);
+  box-shadow:0 6px 20px rgba(0,0,0,.16);
+}
+.dashboard-mode .hero-slide-controls{
+  background:rgba(12,23,34,.68)!important;
+  border-color:rgba(255,255,255,.32)!important;
+}
+@media(max-width:640px){
+  .dashboard-mode .portal-hero{min-height:300px}
+  .dashboard-mode .portal-hero-content{min-height:300px;padding-bottom:46px}
+}
