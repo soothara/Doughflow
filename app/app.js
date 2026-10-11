@@ -680,7 +680,7 @@ async function logout(){ if(isDemo){db.session=null;currentUser=null;authError='
 
 function appShellHTML(){
   const items=navItems(currentUser.role);
-  const initials=String(currentUser.name||'U').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  const initials=String(currentUser.name||'U').trim().split(/\s+/).filter(Boolean).slice(0,2).map(x=>Array.from(x)[0]).join('').toUpperCase()||'U';
   return `
     <div class="topbar">
       <div class="brand">
@@ -721,7 +721,7 @@ function renderMore(p){
   if(currentUser.role==='admin') extra.push(
     ['inventory',NAV_ICONS.stock,'Stock & inventory','See balances and stock movements'],
     ['reports',NAV_ICONS.sales,'Reports','Review production and usage'],
-    ['users','<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2"/></svg>','People','Manage staff and roles'],
+    ['users',uiIcon('users',24),'People','Manage staff and roles'],
     ['naan',NAV_ICONS.naan,'Naan / Leposhka','Open the naan workflow'],
     ['sales',NAV_ICONS.sales,'Sales','Open the sales workspace'],
     ['recipe',NAV_ICONS.recipe,'Recipe','Edit the working recipe']
