@@ -300,7 +300,6 @@ function uiIcon(name,size=20){
 }
 function wireSimulatorInteractions(){
   const stage=document.getElementById('simulatorStage');
-  if(!stage)return;
   const mode=document.getElementById('simModeToggle');
   const world=document.getElementById('simWorld');
   const run=document.getElementById('simRun');
@@ -322,7 +321,7 @@ function wireSimulatorInteractions(){
     if(status)status.textContent=running?t('Simulation running',lang):t('Standby',lang);
     showToast(running?t('Visual simulation started. No records changed.',lang):t('Simulation paused.',lang),'info',1800);
   });
-  if(!reduced && window.matchMedia?.('(pointer:fine)')?.matches){
+  if(stage && !reduced && window.matchMedia?.('(pointer:fine)')?.matches){
     stage.addEventListener('pointermove',e=>{
       if(stage.classList.contains('sim-immersive'))return;
       const r=stage.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
@@ -412,7 +411,7 @@ function languageName(){ return LANGUAGES[lang]||'English'; }
 function languageSwitcher(){ return `<select id="languageSelect" class="language-select" aria-label="${t('Language',lang)}">${languageOptions(lang)}</select>`; }
 function applyCurrentLanguage(){ applyTranslations(document,lang); const sel=document.getElementById('languageSelect'); if(sel) sel.value=lang; document.documentElement.lang = lang==='ru'?'ru':lang==='ky'?'ky':'en'; }
 function can(role, section){
-  if(section==='more') return true;
+  if(section==='more'||section==='quest'||section==='simulator') return true;
   if(role==='admin') return true;
   if(role==='hamurchi') return ['dashboard','production','recipe'].includes(section);
   if(role==='naan') return ['dashboard','naan'].includes(section);
@@ -704,6 +703,8 @@ async function renderPage(){
   const p=document.getElementById('page');
   const pages={
     dashboard:renderDashboard,
+    quest:renderQuest,
+    simulator:renderSimulator,
     production:renderProduction,
     recipe:renderRecipe,
     inventory:renderInventory,
@@ -717,7 +718,10 @@ async function renderPage(){
 }
 
 function renderMore(p){
-  const extra=[];
+  const extra=[
+    ['quest',uiIcon('spark',24),'Bakery Quest','Track your daily baking milestone'],
+    ['simulator',uiIcon('cube',24),'Bakery Simulator','Explore the visual production floor']
+  ];
   if(currentUser.role==='admin') extra.push(
     ['inventory',NAV_ICONS.stock,'Stock & inventory','See balances and stock movements'],
     ['reports',NAV_ICONS.sales,'Reports','Review production and usage'],
@@ -733,69 +737,13 @@ function renderMore(p){
     <div class="page-head compact-head"><div><div class="eyebrow">${t('More',lang)}</div><h1>${t('Everything else',lang)}</h1><p>${t('Keep the daily workflow focused. Less-used tools live here.',lang)}</p></div></div>
     <div class="more-grid">
       ${extra.map(([r,icon,title,desc])=>`<button class="more-card" data-more-route="${r}"><span class="more-icon">${icon}</span><span><b>${t(title,lang)}</b><small>${t(desc,lang)}</small></span><span class="chevron">›</span></button>`).join('')}
-      <button class="more-card danger-card" id="moreLogout"><span class="more-icon">🔒</span><span><b>${t('Log out',lang)}</b><small>${t('Sign out from this device',lang)}</small></span><span class="chevron">›</span></button>
+      <button class="more-card danger-card" id="moreLogout"><span class="more-icon">${uiIcon('shield',24)}</span><span><b>${t('Log out',lang)}</b><small>${t('Sign out from this device',lang)}</small></span><span class="chevron">›</span></button>
     </div>`;
   p.querySelectorAll('[data-more-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.moreRoute;render();}));
   p.querySelector('#moreLogout')?.addEventListener('click',logout);
 }
-function renderDashboard(p){
-  const prod=isDemo?db.productions:liveState.productions;
-  const todayRuns=prod.filter(x=>(isDemo?x.date:x.production_date)===today());
-  const todaySummary=!isDemo?liveState.summaryToday:null;
-  const totalSacks=todaySummary?Number(todaySummary.total_sacks):todayRuns.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
-  const totalPieces=todaySummary?Number(todaySummary.total_pieces):todayRuns.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
-  const totalRuns=todaySummary?Number(todaySummary.run_count):todayRuns.length;
-  const stockRows=STOCK_MATERIALS.map(m=>({...m,stock:getStock(m.code)}));
-  const recipe=isDemo?db.recipe:liveState.recipe;
-  const firstName=esc(currentUser.name.split(' ')[0]);
-  const syncBanner=!isDemo&&liveState.syncError?"<div class='sync-banner' role='alert'>⚠️ <div><b>"+t('Data sync issue',lang)+"</b><small>"+t('Some data may be temporarily out of date.',lang)+"</small></div></div>":"";
-  const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card' data-tilt tabindex='0'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
-  const stockCards=stockRows.map(m=>{
-    const tag=currentUser.role==='admin'?'button':'div';
-    const attrs=currentUser.role==='admin'?" type='button' data-stock-open='inventory'":'';
-    const view=stockBreakdown(m,m.stock,lang);
-    return "<"+tag+" class='stock-item"+(currentUser.role==='admin'?' stock-open':'')+"' data-tilt"+attrs+"><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div class='stock-item-copy'><b>"+esc(t(m.name,lang))+"</b><strong class='"+(m.stock<=0?'empty-stock':'')+"'>"+esc(view.primary)+(m.stock<=0?" <em>!</em>":"")+"</strong><small>"+esc(view.secondary)+"</small></div><span class='stock-chevron'>"+uiIcon('chevron',16)+"</span></"+tag+">";
-  }).join('');
-  const questKey='doughflow_quest_reward_'+currentUser.id+'_'+today();
-  const rewardClaimed=localStorage.getItem(questKey)==='1';
-  const questProgress=Math.min(100,Math.round((totalSacks/6)*100));
-  const questLevel=totalSacks>=6?t('Master Baker',lang):totalSacks>=3?t('Dough Ranger',lang):totalSacks>=1?t('Oven Rookie',lang):t('Rising Dough',lang);
-  const questHtml="<section class='quest-panel'>"+
-    "<div class='quest-glow'></div><div class='quest-main'>"+
-    "<div class='quest-emblem'>"+leposhkaIcon(54)+"<span>✦</span></div>"+
-    "<div class='quest-copy'><div class='quest-eyebrow'>🎮 "+t('BAKERY QUEST',lang)+" · "+t('DAILY MISSION',lang)+"</div>"+
-    "<h2>"+t('The Daily Bake',lang)+"</h2><p>"+t('Bake 6 sacks to unlock your Master Baker badge.',lang)+"</p>"+
-    "<div class='quest-progress-track'><span style='width:"+questProgress+"%'></span></div>"+
-    "<div class='quest-progress-meta'><span>"+fmt(totalSacks)+" / 6 "+t('sacks completed',lang)+"</span><b>"+Math.round(totalSacks*100)+" XP</b></div></div></div>"+
-    "<div class='quest-footer'><div class='quest-level'><small>"+t('CURRENT LEVEL',lang)+"</small><strong>"+questLevel+"</strong></div>"+
-    "<div class='quest-badges'>"+
-      "<div class='quest-badge "+(totalSacks>=1?'unlocked':'locked')+"'><span>🔥</span><small>"+t('Oven Rookie',lang)+"</small></div>"+
-      "<div class='quest-badge "+(totalSacks>=3?'unlocked':'locked')+"'><span>⚡</span><small>"+t('Steady Hands',lang)+"</small></div>"+
-      "<div class='quest-badge "+(totalSacks>=6?'unlocked':'locked')+"'><span>🏆</span><small>"+t('Master Baker',lang)+"</small></div>"+
-    "</div><div class='quest-actions'><button class='quest-play' id='questPlay'>▶ "+t('Start a batch',lang)+"</button>"+
-    "<button class='quest-reward' id='claimQuest' "+(totalSacks>=6&&!rewardClaimed?'':'disabled')+">"+(rewardClaimed?'🏆 '+t('Badge claimed',lang):'🎁 '+t('Claim reward',lang))+"</button></div></div>"+
-    "</section>";
-  p.innerHTML =
-    "<section class='portal-hero'>"+
-      "<div class='portal-hero-photo'></div><div class='portal-hero-shade'></div>"+
-      "<div class='portal-hero-content'>"+
-        "<div class='hero-topline'>"+
-          "<div class='df-badge'>DF</div><div class='hero-brand'><b>DoughFlow</b><small>"+t('Bakery control',lang)+"</small></div><div class='hero-spacer'></div>"+
-          "<label class='hero-language'><span>"+languageFlag()+"</span><select id='heroLanguageSelect' aria-label=\""+t('Language',lang)+"\">"+languageOptions(lang)+"</select><b>⌄</b></label>"+
-          "<div class='hero-user'><span class='hero-avatar'>"+esc(String(currentUser.name||'A')[0].toUpperCase())+"</span><span><b class='no-translate'>"+esc(currentUser.name)+"</b><small>"+roleName(currentUser.role)+"</small></span></div>"+
-        "</div>"+
-        "<div class='hero-copy'><div class='hero-date'>🇰🇬 "+formatToday()+"</div><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+t('Let’s make great leposhka today!',lang)+"</p></div>"+
-      "</div>"+
-    "</section>"+
-    syncBanner+
-    "<section class='metric-grid'>"+
-      "<div class='metric-card metric-green' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('sack',21)+"</span><b>"+t('Today’s Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>"+uiIcon('trend',44)+"</i></div>"+
-      "<div class='metric-card metric-orange' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('bread',21)+"</span><b>"+t('Today’s Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>"+uiIcon('pieces',44)+"</i></div>"+
-      "<div class='metric-card metric-purple' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('play',21)+"</span><b>"+t('Production Runs',lang)+"</b></div><strong>"+totalRuns+"</strong><i>"+uiIcon('layers',44)+"</i></div>"+
-      "<div class='metric-card metric-blue' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('recipe',21)+"</span><b>"+t('Recipe Version',lang)+"</b></div><strong>v"+(liveState.recipe?.version||db?.recipe?.version||1)+"</strong><i>"+uiIcon('spark',44)+"</i></div>"+
-    "</section>"+
-    questHtml+
-    "<section class='simulator-panel' id='bakerySimulator' aria-label='Interactive bakery simulation'>"+
+function simulatorHTML(totalSacks,questProgress){
+  return "<section class='simulator-panel' id='bakerySimulator' aria-label='Interactive bakery simulation'>"+
       "<div class='simulator-topline'><div><span class='simulator-kicker'>"+uiIcon('spark',14)+" "+t('IMMERSIVE WORKSPACE',lang)+"</span><h2>"+t('Bakery Simulator',lang)+"</h2><p>"+t('Explore the production floor in 3D.',lang)+"</p></div><button type='button' class='sim-mode-toggle' id='simModeToggle' aria-pressed='false'>"+uiIcon('cube',17)+" <span>"+t('3D mode',lang)+"</span><span class='toggle-track'><i></i></span></button></div>"+
       "<div class='simulator-stage' id='simulatorStage'>"+
         "<div class='sim-stars' aria-hidden='true'></div><div class='sim-orbit orbit-one'></div><div class='sim-orbit orbit-two'></div>"+
@@ -810,6 +758,90 @@ function renderDashboard(p){
         "<div class='simulator-bottomline'><span class='sim-hint'>"+uiIcon('mouse',14)+" "+t('Move your pointer to explore',lang)+"</span><button type='button' class='sim-run-button' id='simRun'>"+uiIcon('play',16)+" "+t('Run visual simulation',lang)+"</button></div>"+
       "</div>"+
       "<div class='simulator-footnote'>"+uiIcon('info',14)+" "+t('Visual simulation only — it never changes production or inventory records.',lang)+"</div>"+
+    "</section>";
+}
+
+
+function currentDayProductionStats(){
+  const records=isDemo?db.productions:liveState.productions;
+  const todayRecords=records.filter(x=>(isDemo?x.date:x.production_date)===today());
+  const summary=!isDemo?liveState.summaryToday:null;
+  const totalSacks=summary?Number(summary.total_sacks):todayRecords.reduce((sum,row)=>sum+Number(isDemo?row.mishokCount:row.mishok_count),0);
+  const totalPieces=summary?Number(summary.total_pieces):todayRecords.reduce((sum,row)=>sum+(isDemo?row.batches:(row.production_batches||[])).reduce((n,batch)=>n+Number(batch.pieces||0),0),0);
+  const totalRuns=summary?Number(summary.run_count):todayRecords.length;
+  return {totalSacks,totalPieces,totalRuns};
+}
+
+function renderQuest(p){
+  const {totalSacks}=currentDayProductionStats();
+  const progress=Math.min(100,Math.round((totalSacks/6)*100));
+  const key='doughflow_quest_reward_'+currentUser.id+'_'+today();
+  const claimed=localStorage.getItem(key)==='1';
+  const level=totalSacks>=6?t('Master Baker',lang):totalSacks>=3?t('Dough Ranger',lang):totalSacks>=1?t('Oven Rookie',lang):t('Rising Dough',lang);
+  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">🎮 ${t('Daily mission',lang)}</div><h1>${t('Bakery Quest',lang)}</h1><p>${t('A little progress every batch. Your progress follows saved production.',lang)}</p></div></div>
+    <section class="quest-panel quest-page-panel"><div class="quest-glow"></div><div class="quest-main"><div class="quest-emblem">${leposhkaIcon(54)}<span>✦</span></div><div class="quest-copy"><div class="quest-eyebrow">${t('DAILY MISSION',lang)}</div><h2>${t('The Daily Bake',lang)}</h2><p>${t('Bake 6 sacks to unlock your Master Baker badge.',lang)}</p><div class="quest-progress-track"><span style="width:${progress}%"></span></div><div class="quest-progress-meta"><span>${fmt(totalSacks)} / 6 ${t('sacks completed',lang)}</span><b>${Math.round(totalSacks*100)} XP</b></div></div></div>
+    <div class="quest-footer"><div class="quest-level"><small>${t('CURRENT LEVEL',lang)}</small><strong>${level}</strong></div><div class="quest-badges"><div class="quest-badge ${totalSacks>=1?'unlocked':'locked'}"><span>🔥</span><small>${t('Oven Rookie',lang)}</small></div><div class="quest-badge ${totalSacks>=3?'unlocked':'locked'}"><span>⚡</span><small>${t('Steady Hands',lang)}</small></div><div class="quest-badge ${totalSacks>=6?'unlocked':'locked'}"><span>🏆</span><small>${t('Master Baker',lang)}</small></div></div><div class="quest-actions"><button class="quest-play" id="questPlay">▶ ${t('Start a batch',lang)}</button><button class="quest-reward" id="claimQuest" ${totalSacks>=6&&!claimed?'':'disabled'}>${claimed?'🏆 '+t('Badge claimed',lang):'🎁 '+t('Claim reward',lang)}</button></div></div></section>
+    <section class="card quest-info-card"><h2>${t('How progress works',lang)}</h2><p>${t('Progress is based on production saved for today, not on a visual simulation.',lang)}</p><div class="quest-progress-track"><span style="width:${progress}%"></span></div><strong>${progress}% ${t('daily target complete',lang)}</strong></section>`;
+  document.getElementById('questPlay')?.addEventListener('click',()=>{
+    route='production';render();
+    setTimeout(()=>{const input=document.getElementById('sackCount');if(input&&Number(input.value)===0){input.value=1;input.dispatchEvent(new Event('input',{bubbles:true}));}},0);
+  });
+  document.getElementById('claimQuest')?.addEventListener('click',()=>{
+    if(totalSacks<6||localStorage.getItem(key)==='1')return;
+    localStorage.setItem(key,'1');
+    showToast(t('Master Baker badge unlocked! +600 XP',lang),'success',3200);
+    const burst=document.createElement('div');burst.className='quest-confetti';
+    for(let i=0;i<18;i++){const part=document.createElement('span');part.textContent=['✦','★','●','🫓'][i%4];part.style.setProperty('--i',i);burst.appendChild(part);}
+    document.body.appendChild(burst);setTimeout(()=>burst.remove(),1800);
+    renderQuest(document.getElementById('page'));
+  });
+}
+
+function renderSimulator(p){
+  const {totalSacks}=currentDayProductionStats();
+  const progress=Math.min(100,Math.round((totalSacks/6)*100));
+  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">${t('Visual workspace',lang)}</div><h1>${t('Bakery Simulator',lang)}</h1><p>${t('Explore the production floor. This visual simulation never changes stock or production records.',lang)}</p></div></div>${simulatorHTML(totalSacks,progress)}`;
+  wireSimulatorInteractions();
+}
+
+function renderDashboard(p){
+  const prod=isDemo?db.productions:liveState.productions;
+  const todayRuns=prod.filter(x=>(isDemo?x.date:x.production_date)===today());
+  const todaySummary=!isDemo?liveState.summaryToday:null;
+  const totalSacks=todaySummary?Number(todaySummary.total_sacks):todayRuns.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
+  const totalPieces=todaySummary?Number(todaySummary.total_pieces):todayRuns.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
+  const totalRuns=todaySummary?Number(todaySummary.run_count):todayRuns.length;
+  const stockRows=MATERIALS.map(m=>({...m,stock:m.inventoryTracked===false?null:getStock(m.code)}));
+  const recipe=isDemo?db.recipe:liveState.recipe;
+  const firstName=esc(currentUser.name.split(' ')[0]);
+  const syncBanner=!isDemo&&liveState.syncError?"<div class='sync-banner' role='alert'>⚠️ <div><b>"+t('Data sync issue',lang)+"</b><small>"+t('Some data may be temporarily out of date.',lang)+"</small></div></div>":"";
+  const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card' data-tilt tabindex='0'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
+  const stockCards=stockRows.map(m=>{
+    const canOpen=currentUser.role==='admin'&&m.inventoryTracked!==false;
+    const tag=canOpen?'button':'div';
+    const attrs=canOpen?" type='button' data-stock-open='inventory'":'';
+    const view=m.inventoryTracked===false?{primary:t('Recipe only',lang),secondary:t('Not tracked as inventory',lang)}:stockBreakdown(m,m.stock,lang);
+    const empty=m.inventoryTracked!==false&&m.stock<=0;
+    return "<"+tag+" class='stock-item"+(canOpen?' stock-open':'')+"' data-tilt"+attrs+"><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div class='stock-item-copy"><b>"+esc(t(m.name,lang))+"</b><strong class='"+(empty?'empty-stock':'')+"'>"+esc(view.primary)+(empty?" <em>!</em>":"")+"</strong><small>"+esc(view.secondary)+"</small></div><span class='stock-chevron'>"+uiIcon('chevron',16)+"</span></"+tag+">;
+  }).join('');
+  p.innerHTML =
+    "<section class='portal-hero'>"+
+      "<div class='portal-hero-photo'></div><div class='portal-hero-shade'></div>"+
+      "<div class='portal-hero-content'>"+
+        "<div class='hero-topline'>"+
+          "<div class='df-badge'>DF</div><div class='hero-brand'><b>DoughFlow</b><small>"+t('Bakery control',lang)+"</small></div><div class='hero-spacer'></div>"+
+          "<label class='hero-language'><span>"+languageFlag()+"</span><select id='heroLanguageSelect' aria-label=\""+t('Language',lang)+"\">"+languageOptions(lang)+"</select><b>⌄</b></label>"+
+          "<div class='hero-user'><span class='hero-avatar'>"+esc(String(currentUser.name||'A')[0].toUpperCase())+"</span><span><b class='no-translate'>"+esc(currentUser.name)+"</b><small>"+roleName(currentUser.role)+"</small></span></div>"+
+        "</div>"+
+        "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+t('Let’s make great leposhka today!',lang)+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div></div>"+
+      "</div>"+
+    "</section>"+
+    syncBanner+
+    "<section class='metric-grid'>"+
+      "<div class='metric-card metric-green' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('sack',21)+"</span><b>"+t('Today’s Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>"+uiIcon('trend',44)+"</i></div>"+
+      "<div class='metric-card metric-orange' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('bread',21)+"</span><b>"+t('Today’s Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>"+uiIcon('pieces',44)+"</i></div>"+
+      "<div class='metric-card metric-purple' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('play',21)+"</span><b>"+t('Production Runs',lang)+"</b></div><strong>"+totalRuns+"</strong><i>"+uiIcon('layers',44)+"</i></div>"+
+      "<div class='metric-card metric-blue' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('recipe',21)+"</span><b>"+t('Recipe Version',lang)+"</b></div><strong>v"+(liveState.recipe?.version||db?.recipe?.version||1)+"</strong><i>"+uiIcon('spark',44)+"</i></div>"+
     "</section>"+
     "<section class='portal-panel production-panel'>"+
       "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker coral'>"+leposhkaIcon(34)+"</div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
@@ -854,20 +886,6 @@ function renderDashboard(p){
     },0);
   };
   document.getElementById('dashboardStart')?.addEventListener('click',openProduction);
-  document.getElementById('questPlay')?.addEventListener('click',()=>{
-    if(selected===0){selected=1;sync();}
-    document.querySelector('.production-panel')?.scrollIntoView({behavior:'smooth',block:'start'});
-    showToast(t('Mission started — make your first batch!',lang),'info',2200);
-  });
-  document.getElementById('claimQuest')?.addEventListener('click',()=>{
-    if(totalSacks<6||localStorage.getItem(questKey)==='1')return;
-    localStorage.setItem(questKey,'1');
-    showToast(t('Master Baker badge unlocked! +600 XP',lang),'success',3600);
-    const burst=document.createElement('div');burst.className='quest-confetti';
-    for(let i=0;i<18;i++){const part=document.createElement('span');part.textContent=['✦','★','●','🫓'][i%4];part.style.setProperty('--i',i);burst.appendChild(part);}
-    document.body.appendChild(burst);setTimeout(()=>burst.remove(),1800);
-    const b=document.getElementById('claimQuest');if(b){b.disabled=true;b.textContent='🏆 '+t('Badge claimed',lang);}
-  });
   document.querySelectorAll('[data-stock-open]').forEach(b=>b.addEventListener('click',()=>{route='inventory';render();}));
   document.getElementById('openInventory')?.addEventListener('click',()=>{route='inventory';render();});
   wireSimulatorInteractions();
