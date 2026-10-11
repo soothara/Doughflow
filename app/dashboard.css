@@ -34,9 +34,10 @@ body.dashboard-mode{
   position:absolute;
   inset:-4%;
   z-index:-3;
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg');
-  background-position:center 47%;
-  background-size:cover;
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg'), url('./assets/ala-archa-fallback.svg');
+  background-position:center 47%,center;
+  background-size:cover,cover;
+  background-repeat:no-repeat;
   transform:none;
   animation:none;
 }
@@ -53,7 +54,7 @@ body.dashboard-mode{
   z-index:-1;
   pointer-events:none;
   opacity:.94;
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg/1280px-Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg');
+  background-image:url('./assets/bakery.webp');
   background-position:58% center;
   background-size:cover;
   filter:saturate(1.08) contrast(1.03);
@@ -231,7 +232,7 @@ body.dashboard-mode{
 .dashboard-mode .panel-photo-strip{height:96px;background:#f4e9da}
 .dashboard-mode .panel-photo{
   left:39%;
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg/1280px-Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg');
+  background-image:url('./assets/bakery.webp');
   background-position:center 53%;
 }
 .dashboard-mode .panel-photo-shade{background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.98) 36%,rgba(255,255,255,.16) 80%)}
