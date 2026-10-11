@@ -533,12 +533,8 @@ function loginHTML(){
         <div class="login-badge">${leposhkaIcon(42)}</div>
         <div class="eyebrow login-eyebrow">${t('Kyrgyz bakery portal',lang)}</div>
         <h1>${t('Welcome back',lang)} 👋</h1>
-        <p>${t('Enter your username and four-digit PIN.',lang)}</p>
+        <p>${t('Enter your four-digit PIN.',lang)}</p>
         <form id="loginForm" class="modern-login-form pin-login-form">
-          <div class="field">
-            <label for="loginAlias">${t('Username',lang)}</label>
-            <input required id="loginAlias" type="text" name="login" value="askat" placeholder="askat" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32">
-          </div>
           <div class="field">
             <label for="loginPin">${t('4-digit PIN',lang)}</label>
             <div class="pin-display-wrap">
@@ -601,20 +597,20 @@ function wireLogin(){
   document.getElementById('loginForm')?.addEventListener('submit',async e=>{
     e.preventDefault();
     if(!pinInput||!pinError) return;
-    const username=String(document.getElementById('loginAlias')?.value||'').trim().toLowerCase();
     const pin=pinInput.value;
-    if(!/^[a-z0-9][a-z0-9._-]{1,31}$/.test(username)||! /^\d{4}$/.test(pin)){
-      pinError.textContent=t('Enter a valid username and four-digit PIN.',lang);return;
+    if(!/^\d{4}$/.test(pin)){
+      pinError.textContent=t('Enter your four-digit PIN.',lang);return;
     }
     const submit=e.currentTarget.querySelector('button[type="submit"]');
     if(submit) submit.disabled=true;
     pinError.textContent='';
     try{
       if(isDemo){
-        const user=(db.users||[]).find(u=>String(u.loginAlias||'').toLowerCase()===username);
-        if(!user||!user.pin||user.pin!==pin){
-          pinError.textContent=t('Username or PIN is incorrect',lang);return;
+        const matches=(db.users||[]).filter(u=>String(u.pin||'')===pin);
+        if(matches.length!==1){
+          pinError.textContent=t('PIN is incorrect or not unique. Contact the administrator.',lang);return;
         }
+        const user=matches[0];
         db.session={user:{id:user.id,name:user.name},role:user.role,lang:getSavedLang(user.id)};
         currentUser={id:user.id,name:user.name,role:user.role,lang:db.session.lang};
         lang=currentUser.lang;authError='';route='dashboard';saveDemo();render();return;
@@ -623,7 +619,7 @@ function wireLogin(){
       const response=await fetch(endpoint,{
         method:'POST',
         headers:{'Content-Type':'application/json','apikey':CFG.supabaseAnonKey,'Authorization':'Bearer '+CFG.supabaseAnonKey},
-        body:JSON.stringify({username,pin}),
+        body:JSON.stringify({pin}),
         cache:'no-store'
       });
       const payload=await response.json().catch(()=>({}));
