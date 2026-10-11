@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v24-20261011-kyrgyz-mountains-lepeshka-ios-icons';
+const CACHE = 'doughflow-v25-20261011-authentic-tandyr-bakery';
 
 const CORE_ASSETS = [
   './',
