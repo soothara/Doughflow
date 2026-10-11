@@ -95,17 +95,17 @@ assert.ok(app.includes("recipeVersion??'—'"), "Dashboard must not invent a rec
 assert.ok(app.includes("Array.from(String(currentUser.name||'A').trim())[0]?.toUpperCase()||'A'"), "Avatar initials should support Unicode names");
 
 
-assert.match(html, /href="mobile\\.css"/, "phone-first styles must load in the app shell");
-assert.match(worker, /'\\.\\/mobile\\.css'/, "phone-first styles must be cached for offline startup");
-assert.match(worker, /'\\/mobile\\.css'/, "phone-first styles must be refreshed network-first");
-assert.match(app, /document\\.body\\.dataset\\.route=currentUser\\?route:'login'/, "active route should scope responsive behavior");
-assert.match(app, /const updateJourney=\\(\\)=>/, "production should provide actual workflow progress feedback");
-assert.match(app, /recipeStatusPill/, "recipe should indicate unsaved changes");
-assert.match(app, /const fetchLedger=async\\(mode\\)/, "inventory should try a safe read-only ledger recovery when RPCs are missing");
-assert.match(app, /if\\(!snapshotLoaded\\|\\|!historicalCorrectionRpcReady\\)/, "date corrections must remain disabled without a trusted snapshot and RPC");
+assert.ok(html.includes('href="mobile.css"'), "phone-first styles must load in the app shell");
+assert.ok(worker.includes("'./mobile.css'"), "phone-first styles must be cached for offline startup");
+assert.ok(worker.includes("'/mobile.css'"), "phone-first styles must be refreshed network-first");
+assert.ok(app.includes("document.body.dataset.route=currentUser?route:'login'"), "active route should scope responsive behavior");
+assert.ok(app.includes("const updateJourney=()=>"), "production should provide actual workflow progress feedback");
+assert.ok(app.includes("recipeStatusPill"), "recipe should indicate unsaved changes");
+assert.ok(app.includes("const fetchLedger=async(mode)"), "inventory should try a safe read-only ledger recovery when RPCs are missing");
+assert.ok(app.includes("if(!snapshotLoaded||!historicalCorrectionRpcReady)"), "date corrections must remain disabled without a trusted snapshot and RPC");
 assert.doesNotMatch(app, /inventory-game-banner|inventory-game-icon/, "inventory control should not be labelled as a game");
-assert.match(mobileCss, /body\\[data-route="production"\\].*sack-picker/s, "production layout must be tuned for phones");
-assert.match(mobileCss, /body\\[data-route="recipe"\\].*recipe-item-row/s, "recipe layout must be tuned for phones");
-assert.match(mobileCss, /env\\(safe-area-inset-bottom\\)/, "mobile navigation should respect device safe areas");
+assert.ok(mobileCss.includes('body[data-route="production"] .sack-picker'), "production layout must be tuned for phones");
+assert.ok(mobileCss.includes('body[data-route="recipe"] .recipe-item-row'), "recipe layout must be tuned for phones");
+assert.ok(mobileCss.includes("env(safe-area-inset-bottom)"), "mobile navigation should respect device safe areas");
 
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
