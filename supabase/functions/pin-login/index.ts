@@ -48,14 +48,19 @@ Deno.serve(async (req: Request) => {
   let body: { username?: unknown; pin?: unknown };
   try { body = await req.json(); } catch { return responseJson(400, { error: "Invalid request" }, origin); }
 
-  const username = typeof body.username === "string" ? body.username.trim().toLowerCase() : "";
   const pin = typeof body.pin === "string" ? body.pin : "";
-  if (!/^[a-z0-9][a-z0-9._-]{1,31}$/.test(username) || !/^\d{4}$/.test(pin)) {
-    return responseJson(400, { error: "Enter a username and a four-digit PIN" }, origin);
+  if (!/^\d{4}$/.test(pin)) {
+    return responseJson(400, { error: "Enter your four-digit PIN" }, origin);
   }
 
-  const { data: rows, error: verifyError } = await admin.rpc("verify_pin_login", {
-    p_alias: username,
+  const forwarded = req.headers.get("cf-connecting-ip")
+    ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    ?? "unknown";
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(forwarded));
+  const clientKey = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+
+  const { data: rows, error: verifyError } = await admin.rpc("verify_pin_only", {
+    p_client_key: clientKey,
     p_pin: pin,
   });
   if (verifyError) {
