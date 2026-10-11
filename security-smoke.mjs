@@ -39,13 +39,12 @@ assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
 assert.match(worker, /doughflow-v14-20261011-refined/);
-assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
-assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
-assert.match(interactive + read("./app/styles.css"), /more-icon svg/, "More menu SVG icons must have explicit dimensions");
-assert.match(interactive + read("./app/styles.css"), /avatar::before,.avatar::after/, "Profile avatar must not inherit decorative overlay icons");
-
-
 const interactive = read("./app/interactive.css");
+assert.match(app, /uiIcon\\('users',24\\)/, "More menu people icon must use the shared SVG icon helper");
+assert.match(app, /Array\\.from\\(x\\)\\[0\\]/, "Profile initials must handle Unicode names safely");
+assert.match(read("./app/styles.css"), /more-icon svg/, "More menu SVG icons must have explicit dimensions");
+assert.match(read("./app/styles.css"), /avatar::before,.avatar::after/, "Profile avatar must not inherit decorative overlay icons");
+
 assert.match(app, /function uiIcon\(/);
 assert.match(app, /function wireSimulatorInteractions\(/);
 assert.match(app, /Visual simulation only/);
