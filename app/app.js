@@ -923,10 +923,23 @@ async function renderInventory(p){
     '<div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>'+t('Target balance on selected date',lang)+'</small><strong id="stockTargetPreview">0 kg</strong></div><div class="historical-before"><small>'+t('Current as of date',lang)+'</small><b id="stockAsOfPreview">—</b></div></div>'+
     '<div class="field"><label for="stockCorrectionReason">'+t('Reason for correction',lang)+'</label><input id="stockCorrectionReason" maxlength="180" placeholder="'+t('Example: physical count found a different balance',lang)+'"></div>'+
     '<div class="history-form-footer"><small>🔒 '+t('Admin-only action. Every correction is dated and auditable.',lang)+'</small><button class="btn primary" id="saveStockByDate">✓ '+t('Save dated correction',lang)+'</button></div></section>'+
-    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 '+t('Inventory activity',lang)+'</h2><p id="historyDateCaption"></p></div><button type="button" class="btn secondary" id="refreshHistory">↻ '+t('Refresh',lang)+'</button></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"></div></section>';
+    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 '+t('Inventory activity',lang)+'</h2><p id="historyDateCaption"></p></div><button type="button" class="btn secondary" id="refreshHistory">↻ '+t('Refresh',lang)+'</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"></div></section>';
 
   let snapshotMap={};
+  let snapshotLoaded=false;
+  let historicalCorrectionRpcReady=true;
   const $=id=>document.getElementById(id);
+  const showInventoryNotice=(message,kind='warning')=>{
+    const notice=$('inventoryDatabaseNotice');
+    if(!notice)return;
+    notice.hidden=!message;
+    notice.className='inventory-database-notice '+kind;
+    notice.textContent=message||'';
+  };
+  const updateCorrectionButton=()=>{
+    const button=$('saveStockByDate');
+    if(button)button.disabled=!(snapshotLoaded&&historicalCorrectionRpcReady);
+  };
   const getMaterial=()=>STOCK_MATERIALS.find(m=>m.code===$('stockEditMaterial').value)||STOCK_MATERIALS[0];
   const getPackage=()=>getMaterial().packages[Number($('stockEditPackage').value)]||getMaterial().packages[0];
   const kgLabel=n=>formatInventoryNumber(n,lang)+' kg';
@@ -964,22 +977,88 @@ async function renderInventory(p){
     $('inventoryHistoryRows').innerHTML='<table><thead><tr><th>'+t('Material',lang)+'</th><th>'+t('Movement',lang)+'</th><th>'+t('Quantity',lang)+'</th><th>'+t('Reason / audit note',lang)+'</th><th>'+t('Entered by',lang)+'</th></tr></thead><tbody>'+body+'</tbody></table>';
   };
   const loadDate=async date=>{
-    if(!date)return;
+    if(!date)return false;
+    snapshotLoaded=false;
+    historicalCorrectionRpcReady=true;
+    updateCorrectionButton();
     if(isDemo){
       snapshotMap=Object.fromEntries(STOCK_MATERIALS.map(m=>[m.code,stockAtDemo(m.code,date)]));
       const rows=STOCK_MATERIALS.flatMap(m=>(db.inventory?.[m.code]?.tx||[]).filter(x=>(x.effectiveDate||String(x.at||'').slice(0,10))===date).map(x=>({effective_date:date,material_code:m.code,material_name:m.name,direction:x.dir,qty_base:x.qty,reason:x.reason||'Inventory movement',package_label:x.packageLabel||'',created_by_name:x.by||'Admin',created_at:x.at}))).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
       drawHistory(rows,date);
+      snapshotLoaded=true;
+      showInventoryNotice('');
+      updateCorrectionButton();
     }else{
-      const [snap,hist]=await Promise.all([supabase.rpc('admin_inventory_snapshot',{p_effective_date:date}),supabase.rpc('admin_inventory_history',{p_effective_date:date})]);
-      if(snap.error||hist.error){$('inventoryHistoryRows').innerHTML='<div class="empty">'+esc(friendlyError(snap.error||hist.error))+'</div>';showToast(friendlyError(snap.error||hist.error),'error');return;}
-      snapshotMap=Object.fromEntries((snap.data||[]).map(x=>[x.material_code,Number(x.stock||0)]));drawHistory(hist.data||[],date);
+      const [snap,hist]=await Promise.all([
+        supabase.rpc('admin_inventory_snapshot',{p_effective_date:date}),
+        supabase.rpc('admin_inventory_history',{p_effective_date:date})
+      ]);
+      if(!snap.error&&!hist.error){
+        snapshotMap=Object.fromEntries((snap.data||[]).map(x=>[x.material_code,Number(x.stock||0)]));
+        drawHistory(hist.data||[],date);
+        snapshotLoaded=true;
+        historicalCorrectionRpcReady=true;
+        showInventoryNotice('');
+        updateCorrectionButton();
+      }else{
+        // Read-only fallback: Admin RLS permits reading the dated ledger. Reconstruct
+        // the historical balance from today's authoritative view minus later movements.
+        try{
+          const selectFields='id,effective_date,material_code,direction,qty_base,reason,package_count,package_label,created_by,created_at';
+          const fetchLedger=async(mode)=>{
+            const all=[];
+            for(let offset=0;offset<50000;offset+=1000){
+              let query=supabase.from('inventory_transactions').select(selectFields)
+                .order('effective_date',{ascending:true}).order('created_at',{ascending:true})
+                .range(offset,offset+999);
+              query=mode==='after'?query.gt('effective_date',date):query.eq('effective_date',date);
+              const {data,error}=await query;
+              if(error)throw error;
+              const rows=data||[];
+              all.push(...rows);
+              if(rows.length<1000)return all;
+            }
+            throw new Error('Too many inventory rows for the read-only recovery. Run the inventory RPC migration.');
+          };
+          const [datedRows,laterRows]=await Promise.all([fetchLedger('on'),fetchLedger('after')]);
+          const current=new Map((liveState.balances||[]).map(row=>[row.code,Number(row.stock)||0]));
+          const laterDelta=new Map();
+          for(const row of laterRows){
+            const qty=Number(row.qty_base)||0;
+            const delta=row.direction==='in'?qty:row.direction==='out'?-qty:qty;
+            laterDelta.set(row.material_code,(laterDelta.get(row.material_code)||0)+delta);
+          }
+          snapshotMap=Object.fromEntries(STOCK_MATERIALS.map(m=>[m.code,(current.get(m.code)||0)-(laterDelta.get(m.code)||0)]));
+          const userName=new Map((liveState.users||[]).map(u=>[u.id,u.full_name||u.name||'Admin']));
+          drawHistory(datedRows.map(row=>({
+            ...row,
+            material_name:STOCK_MATERIALS.find(m=>m.code===row.material_code)?.name||row.material_code,
+            created_by_name:userName.get(row.created_by)||'Admin'
+          })),date);
+          snapshotLoaded=true;
+          historicalCorrectionRpcReady=false;
+          showInventoryNotice('Read-only recovery is active: balances and activity were reconstructed from the inventory ledger. To enable safe date corrections, run db/fix_admin_inventory_snapshot_2026_10_11.sql in Supabase SQL Editor, then refresh. No stock was changed.','warning');
+          updateCorrectionButton();
+        }catch(fallbackError){
+          snapshotMap={};
+          snapshotLoaded=false;
+          historicalCorrectionRpcReady=false;
+          const message='Inventory history functions are missing and the ledger fallback could not run. Apply db/fix_admin_inventory_snapshot_2026_10_11.sql in the connected Supabase project, then refresh.';
+          $('inventoryHistoryRows').innerHTML='<div class="empty">'+esc(message)+'</div>';
+          showInventoryNotice(message,'error');
+          updateCorrectionButton();
+          return false;
+        }
+      }
     }
     updateAsOf();
+    updateCorrectionButton();
+    return snapshotLoaded;
   };
   const updatePackageOptions=()=>{
     const m=getMaterial();
     $('stockEditPackage').innerHTML=m.packages.filter(x=>x.kind!=='recipe').map(x=>'<option value="'+m.packages.indexOf(x)+'">'+esc(packageUnit(m,x,lang))+'</option>').join('');
-    setTargetFromSnapshot();
+    if(snapshotLoaded)setTargetFromSnapshot();
   };
   $('stockEditMaterial').addEventListener('change',updatePackageOptions);
   $('stockEditPackage').addEventListener('change',setTargetFromSnapshot);
@@ -991,9 +1070,10 @@ async function renderInventory(p){
     if(old!==next)input.value=Number((Number(input.value||0)*(old==='g'?0.001:1000)).toFixed(3));
     input.dataset.unit=next;updatePreview();
   });
-  $('stockHistoryDate').addEventListener('change',async()=>{await loadDate($('stockHistoryDate').value);setTargetFromSnapshot();});
+  $('stockHistoryDate').addEventListener('change',async()=>{if(await loadDate($('stockHistoryDate').value))setTargetFromSnapshot();});
   $('refreshHistory').addEventListener('click',()=>loadDate($('stockHistoryDate').value));
   $('saveStockByDate').addEventListener('click',async()=>{
+    if(!snapshotLoaded||!historicalCorrectionRpcReady){showInventoryNotice('Date corrections are disabled until the inventory database migration is applied successfully. No stock was changed.','warning');return;}
     const date=$('stockHistoryDate').value,m=getMaterial(),pkg=getPackage();
     if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}
     const count=Number($('stockEditPackages').value||0),raw=Number($('stockEditRemainder').value||0),rem=$('stockEditRemainderUnit').value==='g'?raw/1000:raw;
@@ -1020,7 +1100,7 @@ async function renderInventory(p){
     finally{button.disabled=false;}
   });
   $('stockIn').addEventListener('click',()=>openStockModal());
-  updatePackageOptions();await loadDate(today());setTargetFromSnapshot();
+  updatePackageOptions();if(await loadDate(today()))setTargetFromSnapshot();
 }
 function openStockModal(){
   const opts=STOCK_MATERIALS.map(m=>`<option value="${m.code}">${esc(t(m.name,lang))}</option>`).join('');
