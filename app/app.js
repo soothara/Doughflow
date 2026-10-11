@@ -498,6 +498,7 @@ async function refreshLiveState(){
 }
 async function render(){
   document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard');
+  document.body.dataset.route=currentUser?route:'login';
   if(!currentUser){
     app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage();
     document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
@@ -821,13 +822,37 @@ function normalizeSackCount(value){
 function renderProduction(p){
   const existing=isDemo?db.productions.filter(x=>x.date===today()):liveState.productions.filter(x=>x.production_date===today());
   const recipe=isDemo?db.recipe:liveState.recipe;
-  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">Daily workflow</div><h1>Production</h1><p>Select sacks, add a half-sack when needed, enter actual pieces, then complete.</p></div></div><div class="grid grid-2"><div class="card"><h2>New production</h2><div class="field"><label>Sack count</label><div class="sack-picker"><button type="button" class="sack-choice" data-sack="1">1</button><button type="button" class="sack-choice " data-sack="2">2</button><button type="button" class="sack-choice " data-sack="3">3</button><button type="button" class="sack-choice " data-sack="4">4</button><button type="button" class="sack-choice " data-sack="5">5</button><button type="button" class="sack-choice " data-sack="6">6</button><button type="button" class="sack-choice " data-sack="7">7</button><button type="button" class="sack-choice " data-sack="8">8</button><button type="button" class="sack-choice " data-sack="9">9</button><button type="button" class="sack-choice half-choice" data-half="0.5">＋ 0.5</button></div><div class="sack-total"><span>Total sacks</span><strong id="sackTotal">0</strong><button type="button" class="reset-sack" id="resetSack">Reset</button></div><input id="sackCount" class="sr-only" type="number" min="0" max="9.5" step="0.5" value="0"></div><div id="batchEditor"></div><div style="height:10px"></div><h3>Material consumption</h3><div id="consumptionEditor"></div><div class="notice" style="margin:12px 0">A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveProduction">Complete production</button><button class="btn secondary" id="clearProduction">Clear</button></div></div><div class="card"><h2>Today’s production</h2>${existing.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Sacks</th><th>Pieces</th><th>Recipe</th></tr></thead><tbody>${existing.map(r=>{const bs=isDemo?r.batches:r.production_batches||[]; return `<tr><td>${esc(isDemo?r.timeLabel:new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt(bs.reduce((s,z)=>s+Number(z.pieces||0),0))}</td><td>v${isDemo?r.recipeVersion:(liveState.recipe?.version||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No production saved today.</div>'}</div></div>`;
+  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">DAILY WORKFLOW</div><h1>Production</h1><p>Choose a batch, record actual pieces, and finish with confidence.</p></div></div><section class="workflow-progress-card" aria-live="polite"><div class="workflow-progress-top"><span class="workflow-step-icon">01</span><div class="workflow-progress-copy"><strong id="productionJourneyTitle">Choose your batch</strong><small id="productionJourneyText">Select total sacks to begin. Half-sacks are supported.</small></div><span class="workflow-step-count" id="productionJourneyCount">0 / 3</span></div><div class="workflow-progress-track"><span id="productionJourneyFill" style="width:0%"></span></div><div class="workflow-phase-list"><span>1 · Sacks</span><span>2 · Pieces</span><span>3 · Review</span></div></section><div class="grid grid-2"><div class="card production-work-card"><div class="workflow-heading"><span class="workflow-step-number">01</span><div><h2>New production</h2><p>Batch size and actual output</p></div></div><div class="field"><label>Sack count</label><div class="sack-picker"><button type="button" class="sack-choice" data-sack="1">1</button><button type="button" class="sack-choice " data-sack="2">2</button><button type="button" class="sack-choice " data-sack="3">3</button><button type="button" class="sack-choice " data-sack="4">4</button><button type="button" class="sack-choice " data-sack="5">5</button><button type="button" class="sack-choice " data-sack="6">6</button><button type="button" class="sack-choice " data-sack="7">7</button><button type="button" class="sack-choice " data-sack="8">8</button><button type="button" class="sack-choice " data-sack="9">9</button><button type="button" class="sack-choice half-choice" data-half="0.5">＋ 0.5</button></div><div class="sack-total"><span>Total sacks</span><strong id="sackTotal">0</strong><button type="button" class="reset-sack" id="resetSack">Reset</button></div><input id="sackCount" class="sr-only" type="number" min="0" max="9.5" step="0.5" value="0"></div><div id="batchEditor"></div><div style="height:10px"></div><h3>Material consumption</h3><div id="consumptionEditor"></div><div class="notice" style="margin:12px 0">A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveProduction">Complete production</button><button class="btn secondary" id="clearProduction">Clear</button></div></div><div class="card"><h2>Today’s production</h2>${existing.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Sacks</th><th>Pieces</th><th>Recipe</th></tr></thead><tbody>${existing.map(r=>{const bs=isDemo?r.batches:r.production_batches||[]; return `<tr><td>${esc(isDemo?r.timeLabel:new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt(bs.reduce((s,z)=>s+Number(z.pieces||0),0))}</td><td>v${isDemo?r.recipeVersion:(liveState.recipe?.version||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No production saved today.</div>'}</div></div>`;
   const editor=document.getElementById('batchEditor');
   const consumption=document.getElementById('consumptionEditor');
+  const updateJourney=()=>{
+    const count=normalizeSackCount(document.getElementById('sackCount').value);
+    const countReady=count>=0.5&&count<=9.5;
+    const pieces=[...editor.querySelectorAll('[data-pieces]')];
+    const piecesReady=countReady&&pieces.length>0&&pieces.every(x=>x.value.trim()!==''&&Number.isInteger(Number(x.value))&&Number(x.value)>0);
+    const quantities=[...consumption.querySelectorAll('.actual-consumption')];
+    const quantitiesValid=quantities.length>0&&quantities.every(x=>x.value.trim()!==''&&Number.isFinite(Number(x.value))&&Number(x.value)>=0);
+    const step=!countReady?0:!piecesReady?1:!quantitiesValid?2:3;
+    const titles=['Choose your batch','Enter actual pieces','Review material use','Ready to complete'];
+    const details=['Select total sacks to begin. Half-sacks are supported.','Enter actual whole-piece count for every batch.','Check actual ingredient use before saving.','Everything is valid. Review once, then complete production.'];
+    const title=document.getElementById('productionJourneyTitle');
+    const detail=document.getElementById('productionJourneyText');
+    const countLabel=document.getElementById('productionJourneyCount');
+    const fill=document.getElementById('productionJourneyFill');
+    if(title)title.textContent=titles[step];
+    if(detail)detail.textContent=details[step];
+    if(countLabel)countLabel.textContent=step+' / 3';
+    if(fill)fill.style.width=(step/3*100)+'%';
+    const stepIcon=document.querySelector('.workflow-progress-card .workflow-step-icon');
+    if(stepIcon)stepIcon.textContent=String(Math.min(step+1,3)).padStart(2,'0');
+  };
+  editor.addEventListener('input',updateJourney);
+  consumption.addEventListener('input',updateJourney);
   const rebuild=()=>{
     const m=normalizeSackCount(document.getElementById('sackCount').value); document.getElementById('sackCount').value=m; const bs=batchesFor(m); document.getElementById('sackTotal').textContent=m;
     editor.innerHTML=`<h3>Batches</h3>${bs.map((b,i)=>`<div class="batch-row"><div class="batch-index">#${i+1}</div><div class="batch-kind">${b.sack===1?'1.0':'0.5'} sack</div><input type="number" min="0" step="1" data-pieces="${i}" placeholder="Actual pieces"></div>`).join('')}`;
     consumption.innerHTML=(recipe?.items||[]).map(it=>{const expected=Number(it.qty||0)*m;return `<div class="field-row"><div class="field"><label>${esc(it.name)} expected (${esc(it.unit)})</label><input class="expected-consumption" data-code="${esc(it.code)}" value="${expected}" disabled></div><div class="field"><label>Actual (${esc(it.unit)})</label><input class="actual-consumption" data-code="${esc(it.code)}" type="number" min="0" step="0.001" value="${expected}"></div></div>`}).join('');
+    updateJourney();
   };
   const syncSackChoices=()=>{
     const total=Number(document.getElementById('sackCount').value||0);
@@ -898,12 +923,20 @@ function getStock(code){ if(isDemo) return Number(db?.inventory?.[code]?.stock||
 function renderRecipe(p){
   const recipe=isDemo?db.recipe:liveState.recipe;
   if(!recipe){p.innerHTML='<div class="card"><h2>Recipe</h2><div class="alert warn">No active recipe found. Run the database seed SQL first.</div></div>';return;}
-  p.innerHTML=`<div class="page-head"><div><h1>Recipe</h1><p>Working recipe per operational sack. Authorized production users can edit it.</p></div></div><div class="grid grid-2"><div class="card"><h2>v${recipe.version}</h2>${recipe.items.map((it)=>`<div class="field-row" style="align-items:end"><div class="field"><label>${esc(it.name)} (${esc(it.unit)})</label><input class="recipe-qty" data-code="${esc(it.code)}" type="number" step="0.001" value="${it.qty}"><div class="small">${esc(it.note||'')}</div></div><div class="field"><label>Current standard</label><div class="notice">${fmt(it.qty)} ${esc(it.unit)} / sack</div></div></div>`).join('')}<button class="btn primary" id="saveRecipe">Save as new recipe version</button></div><div class="card"><h2>Packaging rules</h2><div class="table-wrap"><table><thead><tr><th>Material</th><th>Purchase package</th></tr></thead><tbody>${STOCK_MATERIALS.map(m=>`<tr><td>${esc(m.name)}</td><td>${m.packages.map(x=>esc(x.label)).join('<br>')}</td></tr>`).join('')}</tbody></table></div><div class="notice" style="margin-top:14px">Water is a recipe input and is not tracked as stock. Salt supports 1 kg and 750 g packets. Yeast supports 500 g packets and 20-packet boxes. Oil uses 20 kg cartons.</div></div></div>`;
+  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">WORKING STANDARD</div><h1>Recipe</h1><p>Keep each ingredient consistent. Saving creates a new version; previous production stays unchanged.</p></div></div>
+    <section class="recipe-guide-strip"><span class="recipe-guide-icon">${uiIcon('recipe',23)}</span><div><strong>Per operational sack</strong><small>Review quantity · check units · save a version</small></div><span class="recipe-version-pill">v${recipe.version}</span></section>
+    <div class="grid grid-2 recipe-layout"><div class="card recipe-editor-card"><div class="workflow-heading"><span class="workflow-step-number">01</span><div><h2>Active recipe</h2><p>Quantities for one sack</p></div><span class="workflow-status" id="recipeStatusPill">Saved</span></div>${recipe.items.map((it)=>`<div class="field-row recipe-item-row" style="align-items:end"><div class="field"><label>${esc(it.name)} (${esc(it.unit)})</label><input class="recipe-qty" data-code="${esc(it.code)}" type="number" step="0.001" value="${it.qty}"><div class="small">${esc(it.note||'')}</div></div><div class="field"><label>Current standard</label><div class="notice recipe-standard-notice">${fmt(it.qty)} ${esc(it.unit)} / sack</div></div></div>`).join('')}<button class="btn primary recipe-save-button" id="saveRecipe">Save as new recipe version</button></div><div class="card recipe-packaging-card"><div class="workflow-heading compact"><span class="workflow-step-number neutral">02</span><div><h2>Packaging rules</h2><p>How stock is counted</p></div></div><div class="table-wrap"><table><thead><tr><th>Material</th><th>Purchase package</th></tr></thead><tbody>${STOCK_MATERIALS.map(m=>`<tr><td>${esc(m.name)}</td><td>${m.packages.map(x=>esc(x.label)).join('<br>')}</td></tr>`).join('')}</tbody></table></div><div class="notice" style="margin-top:14px">Water is a recipe input and is not tracked as stock. Salt supports 1 kg and 750 g packets. Yeast supports 500 g packets and 20-packet boxes. Oil uses 20 kg cartons.</div></div></div>`;
+  document.querySelectorAll('.recipe-qty').forEach(input=>input.addEventListener('input',()=>{
+    const pill=document.getElementById('recipeStatusPill');
+    if(pill){pill.textContent='Unsaved changes';pill.classList.add('workflow-status-dirty');}
+  }));
   document.getElementById('saveRecipe').addEventListener('click',async()=>{
+    const recipeButton=document.getElementById('saveRecipe');
+    recipeButton.disabled=true;recipeButton.textContent='Saving version…';
     const items=recipe.items.map((it,i)=>({...it,qty:Number(document.querySelector(`.recipe-qty[data-code="${it.code}"]`).value),sort_order:i}));
-    if(items.some(x=>!Number.isFinite(x.qty)||x.qty<0)){showToast(t('Recipe quantities must be valid non-negative numbers.',lang),'error');return;}
+    if(items.some(x=>!Number.isFinite(x.qty)||x.qty<0)){recipeButton.disabled=false;recipeButton.textContent='Save as new recipe version';showToast(t('Recipe quantities must be valid non-negative numbers.',lang),'error');return;}
     if(isDemo){db.recipe.version+=1;db.recipe.updatedAt=new Date().toISOString();db.recipe.updatedBy=currentUser.name;db.recipe.items=items;saveDemo();showToast(`${t('Recipe saved as',lang)} v${db.recipe.version}.`,'success');render();}
-    else {const {error}=await supabase.rpc('create_recipe_version',{p_items:items.map(x=>({code:x.code,qty:x.qty,unit:x.unit,note:x.note||'',sort_order:x.sort_order})),p_note:`Updated by ${currentUser.name}`});if(error){showToast(friendlyError(error),'error');return;}await refreshLiveState();showToast(`${t('Recipe saved as',lang)} v${liveState.recipe.version}.`,'success');render();}
+    else {const {error}=await supabase.rpc('create_recipe_version',{p_items:items.map(x=>({code:x.code,qty:x.qty,unit:x.unit,note:x.note||'',sort_order:x.sort_order})),p_note:`Updated by ${currentUser.name}`});if(error){recipeButton.disabled=false;recipeButton.textContent='Save as new recipe version';showToast(friendlyError(error),'error');return;}await refreshLiveState();showToast(`${t('Recipe saved as',lang)} v${liveState.recipe.version}.`,'success');render();}
   });
 }
 
@@ -915,17 +948,30 @@ async function renderInventory(p){
   p.innerHTML=
     '<div class="page-head"><div><div class="eyebrow">'+t('Admin tools',lang)+'</div><h1>'+t('Inventory',lang)+'</h1><p>'+t('Track stock in packages and correct old balances by date.',lang)+'</p></div><button class="btn primary" id="stockIn">＋ '+t('Stock in',lang)+'</button></div>'+
     '<div class="grid grid-3">'+cards+'</div>'+
-    '<section class="inventory-game-banner"><div class="inventory-game-icon">◈</div><div><b>'+t('Inventory control center',lang)+'</b><small>'+t('Choose a date, set the correct physical quantity, and preserve an audit trail.',lang)+'</small></div><span class="inventory-live-pill">'+t('Admin',lang)+' • 🔐</span></section>'+
+    '<section class="inventory-workflow-banner"><div class="inventory-workflow-icon">◈</div><div><b>'+t('Inventory control center',lang)+'</b><small>'+t('Choose a date, set the correct physical quantity, and preserve an audit trail.',lang)+'</small></div><span class="inventory-live-pill">'+t('Admin',lang)+' • 🔐</span></section>'+
     '<section class="card historical-editor-card"><div class="history-card-heading"><div><div class="eyebrow">'+t('Audit-safe correction',lang)+'</div><h2>🗓️ '+t('Date-wise inventory editor',lang)+'</h2><p>'+t('Set the correct stock balance as of a past date. The system records a correction instead of deleting history.',lang)+'</p></div></div>'+
     '<div class="history-filter-row"><div class="field"><label for="stockHistoryDate">'+t('Inventory date',lang)+'</label><input id="stockHistoryDate" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="stockEditMaterial">'+t('Material',lang)+'</label><select id="stockEditMaterial">'+options+'</select></div></div>'+
     '<div class="history-target-grid"><div class="field"><label for="stockEditPackage">'+t('Package / container',lang)+'</label><select id="stockEditPackage"></select></div><div class="field"><label for="stockEditPackages">'+t('Full packages',lang)+'</label><input id="stockEditPackages" type="number" min="0" step="1" value="0"></div><div class="field"><label for="stockEditRemainder">'+t('Open remainder',lang)+'</label><div class="unit-input-pair"><input id="stockEditRemainder" type="number" min="0" step="0.001" value="0"><select id="stockEditRemainderUnit" aria-label="'+t('Remainder unit',lang)+'"><option value="kg">kg</option><option value="g">g</option></select></div></div></div>'+
     '<div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>'+t('Target balance on selected date',lang)+'</small><strong id="stockTargetPreview">0 kg</strong></div><div class="historical-before"><small>'+t('Current as of date',lang)+'</small><b id="stockAsOfPreview">—</b></div></div>'+
     '<div class="field"><label for="stockCorrectionReason">'+t('Reason for correction',lang)+'</label><input id="stockCorrectionReason" maxlength="180" placeholder="'+t('Example: physical count found a different balance',lang)+'"></div>'+
     '<div class="history-form-footer"><small>🔒 '+t('Admin-only action. Every correction is dated and auditable.',lang)+'</small><button class="btn primary" id="saveStockByDate">✓ '+t('Save dated correction',lang)+'</button></div></section>'+
-    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 '+t('Inventory activity',lang)+'</h2><p id="historyDateCaption"></p></div><button type="button" class="btn secondary" id="refreshHistory">↻ '+t('Refresh',lang)+'</button></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"></div></section>';
+    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 '+t('Inventory activity',lang)+'</h2><p id="historyDateCaption"></p></div><button type="button" class="btn secondary" id="refreshHistory">↻ '+t('Refresh',lang)+'</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"></div></section>';
 
   let snapshotMap={};
+  let snapshotLoaded=false;
+  let historicalCorrectionRpcReady=true;
   const $=id=>document.getElementById(id);
+  const showInventoryNotice=(message,kind='warning')=>{
+    const notice=$('inventoryDatabaseNotice');
+    if(!notice)return;
+    notice.hidden=!message;
+    notice.className='inventory-database-notice '+kind;
+    notice.textContent=message||'';
+  };
+  const updateCorrectionButton=()=>{
+    const button=$('saveStockByDate');
+    if(button)button.disabled=!(snapshotLoaded&&historicalCorrectionRpcReady);
+  };
   const getMaterial=()=>STOCK_MATERIALS.find(m=>m.code===$('stockEditMaterial').value)||STOCK_MATERIALS[0];
   const getPackage=()=>getMaterial().packages[Number($('stockEditPackage').value)]||getMaterial().packages[0];
   const kgLabel=n=>formatInventoryNumber(n,lang)+' kg';
@@ -963,22 +1009,88 @@ async function renderInventory(p){
     $('inventoryHistoryRows').innerHTML='<table><thead><tr><th>'+t('Material',lang)+'</th><th>'+t('Movement',lang)+'</th><th>'+t('Quantity',lang)+'</th><th>'+t('Reason / audit note',lang)+'</th><th>'+t('Entered by',lang)+'</th></tr></thead><tbody>'+body+'</tbody></table>';
   };
   const loadDate=async date=>{
-    if(!date)return;
+    if(!date)return false;
+    snapshotLoaded=false;
+    historicalCorrectionRpcReady=true;
+    updateCorrectionButton();
     if(isDemo){
       snapshotMap=Object.fromEntries(STOCK_MATERIALS.map(m=>[m.code,stockAtDemo(m.code,date)]));
       const rows=STOCK_MATERIALS.flatMap(m=>(db.inventory?.[m.code]?.tx||[]).filter(x=>(x.effectiveDate||String(x.at||'').slice(0,10))===date).map(x=>({effective_date:date,material_code:m.code,material_name:m.name,direction:x.dir,qty_base:x.qty,reason:x.reason||'Inventory movement',package_label:x.packageLabel||'',created_by_name:x.by||'Admin',created_at:x.at}))).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
       drawHistory(rows,date);
+      snapshotLoaded=true;
+      showInventoryNotice('');
+      updateCorrectionButton();
     }else{
-      const [snap,hist]=await Promise.all([supabase.rpc('admin_inventory_snapshot',{p_effective_date:date}),supabase.rpc('admin_inventory_history',{p_effective_date:date})]);
-      if(snap.error||hist.error){$('inventoryHistoryRows').innerHTML='<div class="empty">'+esc(friendlyError(snap.error||hist.error))+'</div>';showToast(friendlyError(snap.error||hist.error),'error');return;}
-      snapshotMap=Object.fromEntries((snap.data||[]).map(x=>[x.material_code,Number(x.stock||0)]));drawHistory(hist.data||[],date);
+      const [snap,hist]=await Promise.all([
+        supabase.rpc('admin_inventory_snapshot',{p_effective_date:date}),
+        supabase.rpc('admin_inventory_history',{p_effective_date:date})
+      ]);
+      if(!snap.error&&!hist.error){
+        snapshotMap=Object.fromEntries((snap.data||[]).map(x=>[x.material_code,Number(x.stock||0)]));
+        drawHistory(hist.data||[],date);
+        snapshotLoaded=true;
+        historicalCorrectionRpcReady=true;
+        showInventoryNotice('');
+        updateCorrectionButton();
+      }else{
+        // Read-only fallback: Admin RLS permits reading the dated ledger. Reconstruct
+        // the historical balance from today's authoritative view minus later movements.
+        try{
+          const selectFields='id,effective_date,material_code,direction,qty_base,reason,package_count,package_label,created_by,created_at';
+          const fetchLedger=async(mode)=>{
+            const all=[];
+            for(let offset=0;offset<50000;offset+=1000){
+              let query=supabase.from('inventory_transactions').select(selectFields)
+                .order('effective_date',{ascending:true}).order('created_at',{ascending:true})
+                .range(offset,offset+999);
+              query=mode==='after'?query.gt('effective_date',date):query.eq('effective_date',date);
+              const {data,error}=await query;
+              if(error)throw error;
+              const rows=data||[];
+              all.push(...rows);
+              if(rows.length<1000)return all;
+            }
+            throw new Error('Too many inventory rows for the read-only recovery. Run the inventory RPC migration.');
+          };
+          const [datedRows,laterRows]=await Promise.all([fetchLedger('on'),fetchLedger('after')]);
+          const current=new Map((liveState.balances||[]).map(row=>[row.code,Number(row.stock)||0]));
+          const laterDelta=new Map();
+          for(const row of laterRows){
+            const qty=Number(row.qty_base)||0;
+            const delta=row.direction==='in'?qty:row.direction==='out'?-qty:qty;
+            laterDelta.set(row.material_code,(laterDelta.get(row.material_code)||0)+delta);
+          }
+          snapshotMap=Object.fromEntries(STOCK_MATERIALS.map(m=>[m.code,(current.get(m.code)||0)-(laterDelta.get(m.code)||0)]));
+          const userName=new Map((liveState.users||[]).map(u=>[u.id,u.full_name||u.name||'Admin']));
+          drawHistory(datedRows.map(row=>({
+            ...row,
+            material_name:STOCK_MATERIALS.find(m=>m.code===row.material_code)?.name||row.material_code,
+            created_by_name:userName.get(row.created_by)||'Admin'
+          })),date);
+          snapshotLoaded=true;
+          historicalCorrectionRpcReady=false;
+          showInventoryNotice('Read-only recovery is active: balances and activity were reconstructed from the inventory ledger. To enable safe date corrections, run db/fix_admin_inventory_snapshot_2026_10_11.sql in Supabase SQL Editor, then refresh. No stock was changed.','warning');
+          updateCorrectionButton();
+        }catch(fallbackError){
+          snapshotMap={};
+          snapshotLoaded=false;
+          historicalCorrectionRpcReady=false;
+          const message='Inventory history functions are missing and the ledger fallback could not run. Apply db/fix_admin_inventory_snapshot_2026_10_11.sql in the connected Supabase project, then refresh.';
+          $('inventoryHistoryRows').innerHTML='<div class="empty">'+esc(message)+'</div>';
+          showInventoryNotice(message,'error');
+          updateCorrectionButton();
+          return false;
+        }
+      }
     }
     updateAsOf();
+    updateCorrectionButton();
+    return snapshotLoaded;
   };
   const updatePackageOptions=()=>{
     const m=getMaterial();
     $('stockEditPackage').innerHTML=m.packages.filter(x=>x.kind!=='recipe').map(x=>'<option value="'+m.packages.indexOf(x)+'">'+esc(packageUnit(m,x,lang))+'</option>').join('');
-    setTargetFromSnapshot();
+    if(snapshotLoaded)setTargetFromSnapshot();
   };
   $('stockEditMaterial').addEventListener('change',updatePackageOptions);
   $('stockEditPackage').addEventListener('change',setTargetFromSnapshot);
@@ -990,9 +1102,10 @@ async function renderInventory(p){
     if(old!==next)input.value=Number((Number(input.value||0)*(old==='g'?0.001:1000)).toFixed(3));
     input.dataset.unit=next;updatePreview();
   });
-  $('stockHistoryDate').addEventListener('change',async()=>{await loadDate($('stockHistoryDate').value);setTargetFromSnapshot();});
+  $('stockHistoryDate').addEventListener('change',async()=>{if(await loadDate($('stockHistoryDate').value))setTargetFromSnapshot();});
   $('refreshHistory').addEventListener('click',()=>loadDate($('stockHistoryDate').value));
   $('saveStockByDate').addEventListener('click',async()=>{
+    if(!snapshotLoaded||!historicalCorrectionRpcReady){showInventoryNotice('Date corrections are disabled until the inventory database migration is applied successfully. No stock was changed.','warning');return;}
     const date=$('stockHistoryDate').value,m=getMaterial(),pkg=getPackage();
     if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}
     const count=Number($('stockEditPackages').value||0),raw=Number($('stockEditRemainder').value||0),rem=$('stockEditRemainderUnit').value==='g'?raw/1000:raw;
@@ -1019,7 +1132,7 @@ async function renderInventory(p){
     finally{button.disabled=false;}
   });
   $('stockIn').addEventListener('click',()=>openStockModal());
-  updatePackageOptions();await loadDate(today());setTargetFromSnapshot();
+  updatePackageOptions();if(await loadDate(today()))setTargetFromSnapshot();
 }
 function openStockModal(){
   const opts=STOCK_MATERIALS.map(m=>`<option value="${m.code}">${esc(t(m.name,lang))}</option>`).join('');

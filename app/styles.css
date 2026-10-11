@@ -966,15 +966,15 @@ body{min-height:100dvh}
 .pin-key:active{transform:scale(.965);background:#eaf3ff}
 .pin-key.utility{font-size:12px;color:#65748b;background:#f0f3f8}
 .pin-login-form .login-submit{min-height:57px}
-.pin-admin-banner,.inventory-game-banner{
+.pin-admin-banner,.inventory-workflow-banner{
   display:flex;align-items:center;gap:12px;padding:15px 17px;margin:0 0 15px;
   background:linear-gradient(135deg,#132b48,#1c5272);border-radius:21px;color:#fff;
   border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 26px rgba(20,53,82,.14);
 }
-.pin-admin-symbol,.inventory-game-icon{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:14px;background:rgba(255,255,255,.13);font-size:22px}
-.pin-admin-banner>div:nth-child(2),.inventory-game-banner>div:nth-child(2){display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
-.pin-admin-banner b,.inventory-game-banner b{font-size:14px}
-.pin-admin-banner small,.inventory-game-banner small{font-size:11px;color:#d2e3ef;line-height:1.35}
+.pin-admin-symbol,.inventory-workflow-icon{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:14px;background:rgba(255,255,255,.13);font-size:22px}
+.pin-admin-banner>div:nth-child(2),.inventory-workflow-banner>div:nth-child(2){display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.pin-admin-banner b,.inventory-workflow-banner b{font-size:14px}
+.pin-admin-banner small,.inventory-workflow-banner small{font-size:11px;color:#d2e3ef;line-height:1.35}
 .pin-admin-banner>span,.inventory-live-pill{font-size:10px;font-weight:900;color:#aff5d9;background:rgba(52,199,89,.13);border:1px solid rgba(140,255,191,.20);padding:7px 9px;border-radius:999px;white-space:nowrap}
 .pin-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:850;padding:6px 9px;border-radius:99px;white-space:nowrap}
 .pin-status.configured{color:#087e48;background:#e4f8ed}
@@ -1023,9 +1023,9 @@ body{min-height:100dvh}
   .historical-before{border-left:0;padding-left:0;flex-basis:100%;border-top:1px solid #d7e5f2;padding-top:9px}
   .history-form-footer{align-items:stretch;flex-direction:column}
   .history-form-footer .btn{width:100%}
-  .pin-admin-banner,.inventory-game-banner{padding:12px;gap:8px}
+  .pin-admin-banner,.inventory-workflow-banner{padding:12px;gap:8px}
   .pin-admin-banner>span,.inventory-live-pill{font-size:9px;padding:6px}
-  .pin-admin-symbol,.inventory-game-icon{width:38px;height:38px;font-size:19px}
+  .pin-admin-symbol,.inventory-workflow-icon{width:38px;height:38px;font-size:19px}
   .pin-keypad{gap:7px}.pin-key{min-height:49px;border-radius:14px}
   .pin-display-wrap .pin-input{height:54px;font-size:21px}
   .pin-manage-button{font-size:10px;padding:7px 8px}
