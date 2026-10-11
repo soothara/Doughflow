@@ -38,7 +38,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v14-20261011-refined/);
+assert.match(worker, /doughflow-v15-20261011-calm/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -54,6 +54,9 @@ assert.match(interactive, /\.simulator-stage/);
 assert.match(interactive, /\.sim-immersive/);
 assert.match(interactive, /\.simulator-stage\.sim-immersive \.sim-world/);
 assert.match(interactive, /prefers-reduced-motion:reduce/);
-assert.match(worker, /doughflow-v14-20261011-refined/);
+assert.match(worker, /doughflow-v15-20261011-calm/);
 
 console.log("DoughFlow static security and immersive UI smoke checks passed.");
+
+assert.match(read("./app/styles.css"), /v15: calmer mobile-first product UI/, "calm mobile dashboard styles should be present");
+assert.match(app, /made-by-monogram/, "footer brand should use DoughFlow monogram, not generic sparkle");
