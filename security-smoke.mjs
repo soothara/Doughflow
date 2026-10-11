@@ -101,8 +101,8 @@ for (const char of dashboardCss) {
 }
 assert.equal(braceDepth, 0, "dashboard CSS rules must have balanced braces");
 
-assert.ok(app.includes("const recipeVersion=isDemo?db?.recipe?.version:liveState.recipe?.version;"), "Dashboard recipe version must come from the active runtime");
-assert.ok(app.includes("recipeVersion??'—'"), "Dashboard must not invent a recipe version when live data is missing");
+assert.ok(app.includes("t('Pieces / mishok',lang)"), "Dashboard should show the pieces-per-mishok KPI instead of recipe version");
+assert.ok(app.includes("Math.round(totalPieces/totalSacks)"), "Pieces-per-mishok KPI must be calculated from today’s production totals");
 assert.ok(app.includes("Array.from(String(currentUser.name||'A').trim())[0]?.toUpperCase()||'A'"), "Avatar initials should support Unicode names");
 
 
