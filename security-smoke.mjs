@@ -138,7 +138,7 @@ assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should 
 
 assert.ok(dashboardCss.includes("Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01"));
 assert.ok(dashboardCss.includes("bakery.webp"), "bread photo should be served from the app origin");
-assert.ok(!dashboardCss.includes("images.unsplash.com/photo-1464822759023-fed622ff2c3b"));
+assert.ok(dashboardCss.includes("images.unsplash.com/photo-1464822759023-fed622ff2c3b"), "mountain fallback should be real photography, not an illustration");
 assert.ok(!dashboardCss.includes("images.unsplash.com/photo-1509440159596"));
 assert.ok(app.includes("chefHat:'<path"));
 assert.ok(app.includes("uiIcon('chefHat',26)"));
