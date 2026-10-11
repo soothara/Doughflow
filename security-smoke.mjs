@@ -53,7 +53,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v21-20261011-pin-only-login/);
+assert.match(worker, /doughflow-v22-20261011-inventory-fast-nav/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -67,7 +67,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v21-20261011-pin-only-login/);
+assert.match(worker, /doughflow-v22-20261011-inventory-fast-nav/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -127,5 +127,9 @@ for (const char of mobileCss) {
 }
 assert.equal(mobileBraceDepth, 0, "mobile CSS rules must have balanced braces");
 assert.doesNotMatch(app, /Bakery Simulator|simulatorHTML|renderSimulator|wireSimulatorInteractions|quest-panel|renderQuest|questPlay|questReward/i, "no simulator/quest code should remain");
+
+assert.doesNotMatch(app.slice(app.indexOf("async function renderInventory(p)"), app.indexOf("function openStockModal")), /await refreshLiveState\(\)/, "Stock route must not wait for the full dashboard refresh");
+assert.match(app, /void loadDate\(today\(\)\)/, "inventory history should load after first paint");
+assert.match(app, /for\(let offset=0;offset<5000;offset\+=1000\)/, "read-only fallback work must be bounded");
 
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
