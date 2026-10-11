@@ -474,7 +474,7 @@ button:active{transform:scale(.965)}
 }
 .portal-hero-photo{
   position:absolute;inset:-8%;
-  background-image:url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=90');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg');
   background-size:cover;background-position:center 45%;
   transform:scale(1.03);
   animation:heroDrift 18s ease-in-out infinite alternate;
@@ -532,7 +532,7 @@ button:active{transform:scale(.965)}
 }
 .panel-photo{
   position:absolute;inset:0 0 0 43%;
-  background-image:url('https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1200&q=90');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Uzbek_bread%2C_obi_non%2C_lepyoshka.jpg/1280px-Uzbek_bread%2C_obi_non%2C_lepyoshka.jpg');
   background-size:cover;background-position:center 55%;
 }
 .panel-photo-shade{position:absolute;inset:0;background:linear-gradient(90deg,#fffdf9 0%,rgba(255,253,249,.96) 38%,rgba(255,253,249,.12) 75%)}
@@ -646,10 +646,10 @@ button:active{transform:scale(.965)}
 
 /* ===== Final visual polish: Kyrgyz leposhka photography + premium login ===== */
 .portal-hero-photo{
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Bishkek.jpg/960px-Bishkek.jpg');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg');
 }
 .panel-photo{
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/%D0%9A%D1%8B%D1%80%D0%B3%D0%B7%D1%81%D1%82%D0%B0%D0%BD%2C%20%D0%91%D0%B8%D1%88%D0%BA%D0%B5%D0%BA%2C%20%D0%9E%D1%88%D1%81%D0%BA%D0%B8%D0%B9%20%D0%B1%D0%B0%D0%B7%D0%B0%D1%80%2C%20%D1%82%D0%B0%D0%BD%D0%B4%D1%8B%D1%80%D0%BD%D1%8B%D0%B5%20%D0%BB%D0%B5%D0%BF%D0%B5%D1%88%D0%BA%D0%B8%20%282%29.jpg/800px-%D0%9A%D1%8B%D1%80%D0%B3%D0%B7%D1%81%D1%82%D0%B0%D0%BD%2C%20%D0%91%D0%B8%D1%88%D0%BA%D0%B5%D0%BA%2C%20%D0%9E%D1%88%D1%81%D0%BA%D0%B8%D0%B9%20%D0%B1%D0%B0%D0%B7%D0%B0%D1%80%2C%20%D1%82%D0%B0%D0%BD%D0%B4%D1%8B%D1%80%D0%BD%D1%8B%D0%B5%20%D0%BB%D0%B5%D0%BF%D0%B5%D1%88%D0%BA%D0%B8%20%282%29.jpg');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Uzbek_bread%2C_obi_non%2C_lepyoshka.jpg/1280px-Uzbek_bread%2C_obi_non%2C_lepyoshka.jpg');
   background-size:cover;
   background-position:center 48%;
   animation:leposhkaDrift 16s ease-in-out infinite alternate;
