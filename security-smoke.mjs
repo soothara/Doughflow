@@ -53,7 +53,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v30-20261012-hires-2s-carousel/);
+assert.match(worker, /doughflow-v31-20261012-5s-carousel/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -67,7 +67,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v30-20261012-hires-2s-carousel/);
+assert.match(worker, /doughflow-v31-20261012-5s-carousel/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -138,7 +138,7 @@ assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should 
 
 assert.ok(app.includes("Special:FilePath/Uzbek_bread") && app.includes("Special:FilePath/Making_Uzbek_bread") && app.includes("Special:FilePath/Uzbek_bread%2C_obi_non%2C_lepyoshka_in_tandyr_oven"), "hero carousel should use separate high-resolution real leposhka photos");
 assert.ok(app.includes("data-hero-carousel") && app.includes("data-hero-next") && app.includes("data-hero-prev"), "hero photo carousel controls should be interactive");
-assert.ok(app.includes("showHeroPhoto(activeHero+1),2000"), "hero photos should rotate every two seconds");
+assert.ok(app.includes("showHeroPhoto(activeHero+1),5000"), "hero photos should rotate every five seconds");
 assert.ok(app.includes("width=1600") && app.includes("Special:FilePath"), "hero should use high-resolution real bread photography");
 assert.ok(dashboardCss.includes("High-visibility mobile hero") && dashboardCss.includes("rgba(6,18,29,.78)"), "hero photo and text should remain clearly visible");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero-photo.hero-slide.is-active{display:block}"), "only the active hero photo should be visible; do not blend photos");
