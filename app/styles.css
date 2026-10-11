@@ -532,7 +532,7 @@ button:active{transform:scale(.965)}
 }
 .panel-photo{
   position:absolute;inset:0 0 0 43%;
-  background-image:url('https://commons.wikimedia.org/wiki/Special:FilePath/Tandir_nonlarini_ko%CA%BBrsatayotgan_novvoy.jpg?width=1280');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg/1280px-Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg');
   background-size:cover;background-position:center 55%;
 }
 .panel-photo-shade{position:absolute;inset:0;background:linear-gradient(90deg,#fffdf9 0%,rgba(255,253,249,.96) 38%,rgba(255,253,249,.12) 75%)}
@@ -649,7 +649,7 @@ button:active{transform:scale(.965)}
   background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg');
 }
 .panel-photo{
-  background-image:url('https://commons.wikimedia.org/wiki/Special:FilePath/Tandir_nonlarini_ko%CA%BBrsatayotgan_novvoy.jpg?width=1280');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg/1280px-Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg');
   background-size:cover;
   background-position:center 48%;
   animation:leposhkaDrift 16s ease-in-out infinite alternate;
