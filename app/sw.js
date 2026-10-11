@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v19-20261011-inventory-rpc-fix-no-simulator';
+const CACHE = 'doughflow-v20-20261011-mobile-workflow-polish';
 
 const CORE_ASSETS = [
   './',
@@ -6,6 +6,7 @@ const CORE_ASSETS = [
   './app.js',
   './styles.css',
   './dashboard.css',
+  './mobile.css',
   './interactive.css',
   './i18n.js',
   './manifest.webmanifest',
@@ -16,6 +17,7 @@ const NETWORK_FIRST = new Set([
   '/app.js',
   '/styles.css',
   '/dashboard.css',
+  '/mobile.css',
   '/interactive.css',
   '/i18n.js',
   '/config.js'
