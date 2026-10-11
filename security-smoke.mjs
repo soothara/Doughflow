@@ -40,7 +40,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v17-20261011-dashboard-polish/);
+assert.match(worker, /doughflow-v18-20261011-final-dashboard-polish/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -56,7 +56,7 @@ assert.match(interactive, /\.simulator-stage/);
 assert.match(interactive, /\.sim-immersive/);
 assert.match(interactive, /\.simulator-stage\.sim-immersive \.sim-world/);
 assert.match(interactive, /prefers-reduced-motion:reduce/);
-assert.match(worker, /doughflow-v17-20261011-dashboard-polish/);
+assert.match(worker, /doughflow-v18-20261011-final-dashboard-polish/);
 
 
 

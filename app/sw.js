@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v17-20261011-dashboard-polish';
+const CACHE = 'doughflow-v18-20261011-final-dashboard-polish';
 
 const CORE_ASSETS = [
   './',
