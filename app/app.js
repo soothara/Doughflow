@@ -541,7 +541,7 @@ function loginHTML(){
               <input required id="loginPin" class="pin-input" type="password" name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="one-time-code" placeholder="••••" aria-describedby="pinHint">
               <button type="button" class="pin-visibility" id="togglePin" aria-label="${t('Show PIN',lang)}">◉</button>
             </div>
-            <small id="pinHint" class="pin-hint">${t('Your PIN is personal. Five failed attempts temporarily lock the account.',lang)}</small>
+            <small id="pinHint" class="pin-hint">${t('Your PIN is personal. Five failed attempts temporarily pause sign-in.',lang)}</small>
           </div>
           <div class="pin-keypad" aria-label="${t('PIN keypad',lang)}">
             ${[1,2,3,4,5,6,7,8,9,'clear',0,'back'].map(k=>k==='clear'
