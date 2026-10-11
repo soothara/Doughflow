@@ -427,3 +427,14 @@ body.dashboard-mode{
   .dashboard-mode .portal-hero-photo{animation:none}
   .dashboard-mode .dashboard-sack-btn,.dashboard-mode .start-production-button,.dashboard-mode .stock-item{transition:none}
 }
+
+/* Narrow Android screens: keep the bread overlay clear of the language control and text. */
+@media(max-width:400px){
+  .dashboard-mode .portal-hero::after{
+    inset:35% -10% 0 51%;
+    opacity:.38;
+    background-position:center right;
+  }
+  .dashboard-mode .hero-topline{gap:6px}
+  .dashboard-mode .hero-spacer{min-width:0}
+}
