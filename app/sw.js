@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v28-20261011-photo-carousel-ali-banner';
+const CACHE = 'doughflow-v29-20261011-photo-fit-ali-banner';
 
 const CORE_ASSETS = [
   './',
@@ -13,7 +13,8 @@ const CORE_ASSETS = [
   './icon.svg',
   './assets/bakery.webp',
   './assets/leposhka-detail.svg',
-  './assets/leposhka-delivery.svg'
+  './assets/leposhka-delivery.svg',
+  './assets/leposhka-emblem.svg'
 ];
 
 const NETWORK_FIRST = new Set([
