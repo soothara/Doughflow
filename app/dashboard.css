@@ -53,7 +53,7 @@ body.dashboard-mode{
   z-index:-1;
   pointer-events:none;
   opacity:.94;
-  background-image:url('https://commons.wikimedia.org/wiki/Special:FilePath/Tandir_nonlarini_ko%CA%BBrsatayotgan_novvoy.jpg?width=1280');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg/1280px-Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg');
   background-position:58% center;
   background-size:cover;
   filter:saturate(1.08) contrast(1.03);
@@ -231,7 +231,7 @@ body.dashboard-mode{
 .dashboard-mode .panel-photo-strip{height:96px;background:#f4e9da}
 .dashboard-mode .panel-photo{
   left:39%;
-  background-image:url('https://commons.wikimedia.org/wiki/Special:FilePath/Tandir_nonlarini_ko%CA%BBrsatayotgan_novvoy.jpg?width=1280');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg/1280px-Tandir_nonlarini_ko%E2%80%98rsatayotgan_novvoy.jpg');
   background-position:center 53%;
 }
 .dashboard-mode .panel-photo-shade{background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.98) 36%,rgba(255,255,255,.16) 80%)}
