@@ -768,9 +768,9 @@ function renderDashboard(p){
   }).join('');
   p.innerHTML =
     "<section class='portal-hero' data-hero-carousel aria-label='DoughFlow photo highlights'>"+
-      "<div class='portal-hero-photo hero-slide is-active' data-hero-photo='0' role='img' aria-label='Fresh leposhka from our bakery' style=\"background-image:url('https://commons.wikimedia.org/wiki/Special:FilePath/Uzbek_bread%2C_obi_non%2C_lepyoshka.jpg?width=1600')\"></div>"+
-      "<div class='portal-hero-photo hero-slide' data-hero-photo='1' role='img' aria-label='Fresh leposhka prepared for delivery' style=\"background-image:url('https://commons.wikimedia.org/wiki/Special:FilePath/Making_Uzbek_bread%2C_obi_non%2C_lepyoshka.jpg?width=1600')\" aria-hidden='true'></div>"+
-      "<div class='portal-hero-photo hero-slide' data-hero-photo='2' role='img' aria-label='Bakery production photo' style=\"background-image:url('https://commons.wikimedia.org/wiki/Special:FilePath/Uzbek_bread%2C_obi_non%2C_lepyoshka_in_tandyr_oven.jpg?width=1600')\" aria-hidden='true'></div>"+
+      "<div class='portal-hero-photo hero-slide is-active' data-hero-photo='0' role='img' aria-label='Fresh leposhka from our bakery' style=\"background-image:url('./assets/leposhka-detail.svg')\"></div>"+
+      "<div class='portal-hero-photo hero-slide' data-hero-photo='1' role='img' aria-label='Fresh leposhka prepared for delivery' style=\"background-image:url('./assets/leposhka-delivery.svg')\" aria-hidden='true'></div>"+
+      "<div class='portal-hero-photo hero-slide' data-hero-photo='2' role='img' aria-label='Bakery production photo' style=\"background-image:url('./assets/bakery.webp')\" aria-hidden='true'></div>"+
       "<div class='portal-hero-shade'></div>"+
       "<div class='portal-hero-content'>"+
         "<div class='hero-topline'>"+
