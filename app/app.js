@@ -774,15 +774,17 @@ function currentDayProductionStats(){
 
 function renderQuest(p){
   const {totalSacks}=currentDayProductionStats();
+  const canStartProduction=currentUser.role==='admin'||currentUser.role==='hamurchi';
   const progress=Math.min(100,Math.round((totalSacks/6)*100));
   const key='doughflow_quest_reward_'+currentUser.id+'_'+today();
   const claimed=localStorage.getItem(key)==='1';
   const level=totalSacks>=6?t('Master Baker',lang):totalSacks>=3?t('Dough Ranger',lang):totalSacks>=1?t('Oven Rookie',lang):t('Rising Dough',lang);
   p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">🎮 ${t('Daily mission',lang)}</div><h1>${t('Bakery Quest',lang)}</h1><p>${t('A little progress every batch. Your progress follows saved production.',lang)}</p></div></div>
     <section class="quest-panel quest-page-panel"><div class="quest-glow"></div><div class="quest-main"><div class="quest-emblem">${leposhkaIcon(54)}<span>✦</span></div><div class="quest-copy"><div class="quest-eyebrow">${t('DAILY MISSION',lang)}</div><h2>${t('The Daily Bake',lang)}</h2><p>${t('Bake 6 sacks to unlock your Master Baker badge.',lang)}</p><div class="quest-progress-track"><span style="width:${progress}%"></span></div><div class="quest-progress-meta"><span>${fmt(totalSacks)} / 6 ${t('sacks completed',lang)}</span><b>${Math.round(totalSacks*100)} XP</b></div></div></div>
-    <div class="quest-footer"><div class="quest-level"><small>${t('CURRENT LEVEL',lang)}</small><strong>${level}</strong></div><div class="quest-badges"><div class="quest-badge ${totalSacks>=1?'unlocked':'locked'}"><span>🔥</span><small>${t('Oven Rookie',lang)}</small></div><div class="quest-badge ${totalSacks>=3?'unlocked':'locked'}"><span>⚡</span><small>${t('Steady Hands',lang)}</small></div><div class="quest-badge ${totalSacks>=6?'unlocked':'locked'}"><span>🏆</span><small>${t('Master Baker',lang)}</small></div></div><div class="quest-actions"><button class="quest-play" id="questPlay">▶ ${t('Start a batch',lang)}</button><button class="quest-reward" id="claimQuest" ${totalSacks>=6&&!claimed?'':'disabled'}>${claimed?'🏆 '+t('Badge claimed',lang):'🎁 '+t('Claim reward',lang)}</button></div></div></section>
+    <div class="quest-footer"><div class="quest-level"><small>${t('CURRENT LEVEL',lang)}</small><strong>${level}</strong></div><div class="quest-badges"><div class="quest-badge ${totalSacks>=1?'unlocked':'locked'}"><span>🔥</span><small>${t('Oven Rookie',lang)}</small></div><div class="quest-badge ${totalSacks>=3?'unlocked':'locked'}"><span>⚡</span><small>${t('Steady Hands',lang)}</small></div><div class="quest-badge ${totalSacks>=6?'unlocked':'locked'}"><span>🏆</span><small>${t('Master Baker',lang)}</small></div></div><div class="quest-actions"><button class="quest-play" id="questPlay" ${canStartProduction?'':'disabled title="Production access is required for this action."'}>▶ ${t('Start a batch',lang)}</button><button class="quest-reward" id="claimQuest" ${totalSacks>=6&&!claimed?'':'disabled'}>${claimed?'🏆 '+t('Badge claimed',lang):'🎁 '+t('Claim reward',lang)}</button></div></div></section>
     <section class="card quest-info-card"><h2>${t('How progress works',lang)}</h2><p>${t('Progress is based on production saved for today, not on a visual simulation.',lang)}</p><div class="quest-progress-track"><span style="width:${progress}%"></span></div><strong>${progress}% ${t('daily target complete',lang)}</strong></section>`;
   document.getElementById('questPlay')?.addEventListener('click',()=>{
+    if(!canStartProduction)return;
     route='production';render();
     setTimeout(()=>{const input=document.getElementById('sackCount');if(input&&Number(input.value)===0){input.value=1;input.dispatchEvent(new Event('input',{bubbles:true}));}},0);
   });
@@ -813,6 +815,7 @@ function renderDashboard(p){
   const totalRuns=todaySummary?Number(todaySummary.run_count):todayRuns.length;
   const stockRows=MATERIALS.map(m=>({...m,stock:m.inventoryTracked===false?null:getStock(m.code)}));
   const recipe=isDemo?db.recipe:liveState.recipe;
+  const recipeVersion=isDemo?db?.recipe?.version:liveState.recipe?.version;
   const firstName=esc(currentUser.name.split(' ')[0]);
   const syncBanner=!isDemo&&liveState.syncError?"<div class='sync-banner' role='alert'>⚠️ <div><b>"+t('Data sync issue',lang)+"</b><small>"+t('Some data may be temporarily out of date.',lang)+"</small></div></div>":"";
   const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card' data-tilt tabindex='0'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
@@ -831,7 +834,7 @@ function renderDashboard(p){
         "<div class='hero-topline'>"+
           "<div class='df-badge'>DF</div><div class='hero-brand'><b>DoughFlow</b><small>"+t('Bakery control',lang)+"</small></div><div class='hero-spacer'></div>"+
           "<label class='hero-language'><span>"+languageFlag()+"</span><select id='heroLanguageSelect' aria-label=\""+t('Language',lang)+"\">"+languageOptions(lang)+"</select><b>⌄</b></label>"+
-          "<div class='hero-user'><span class='hero-avatar'>"+esc(String(currentUser.name||'A')[0].toUpperCase())+"</span><span><b class='no-translate'>"+esc(currentUser.name)+"</b><small>"+roleName(currentUser.role)+"</small></span></div>"+
+          "<div class='hero-user'><span class='hero-avatar'>"+esc(Array.from(String(currentUser.name||'A').trim())[0]?.toUpperCase()||'A')+"</span><span><b class='no-translate'>"+esc(currentUser.name)+"</b><small>"+roleName(currentUser.role)+"</small></span></div>"+
         "</div>"+
         "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+t('Let’s make great leposhka today!',lang)+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div></div>"+
       "</div>"+
@@ -841,7 +844,7 @@ function renderDashboard(p){
       "<div class='metric-card metric-green' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('sack',21)+"</span><b>"+t('Today’s Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>"+uiIcon('trend',44)+"</i></div>"+
       "<div class='metric-card metric-orange' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('bread',21)+"</span><b>"+t('Today’s Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>"+uiIcon('pieces',44)+"</i></div>"+
       "<div class='metric-card metric-purple' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('play',21)+"</span><b>"+t('Production Runs',lang)+"</b></div><strong>"+totalRuns+"</strong><i>"+uiIcon('layers',44)+"</i></div>"+
-      "<div class='metric-card metric-blue' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('recipe',21)+"</span><b>"+t('Recipe Version',lang)+"</b></div><strong>v"+(liveState.recipe?.version||db?.recipe?.version||1)+"</strong><i>"+uiIcon('spark',44)+"</i></div>"+
+      "<div class='metric-card metric-blue' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('recipe',21)+"</span><b>"+t('Recipe Version',lang)+"</b></div><strong>v"+(recipeVersion??'—')+"</strong><i>"+uiIcon('spark',44)+"</i></div>"+
     "</section>"+
     "<section class='portal-panel production-panel'>"+
       "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker coral'>"+leposhkaIcon(34)+"</div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
