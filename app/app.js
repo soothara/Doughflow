@@ -822,7 +822,7 @@ function renderDashboard(p){
     const attrs=canOpen?" type='button' data-stock-open='inventory'":'';
     const view=m.inventoryTracked===false?{primary:t('Recipe only',lang),secondary:t('Not tracked as inventory',lang)}:stockBreakdown(m,m.stock,lang);
     const empty=m.inventoryTracked!==false&&m.stock<=0;
-    return "<"+tag+" class='stock-item"+(canOpen?' stock-open':'')+"' data-tilt"+attrs+"><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div class='stock-item-copy"><b>"+esc(t(m.name,lang))+"</b><strong class='"+(empty?'empty-stock':'')+"'>"+esc(view.primary)+(empty?" <em>!</em>":"")+"</strong><small>"+esc(view.secondary)+"</small></div><span class='stock-chevron'>"+uiIcon('chevron',16)+"</span></"+tag+">;
+    return "<"+tag+" class='stock-item"+(canOpen?' stock-open':'')+"' data-tilt"+attrs+"><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div class='stock-item-copy"><b>"+esc(t(m.name,lang))+"</b><strong class='"+(empty?'empty-stock':'')+"'>"+esc(view.primary)+(empty?" <em>!</em>":"")+"</strong><small>"+esc(view.secondary)+"</small></div><span class='stock-chevron'>"+uiIcon('chevron',16)+"</span></"+tag+">";
   }).join('');
   p.innerHTML =
     "<section class='portal-hero'>"+
