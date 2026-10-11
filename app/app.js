@@ -938,9 +938,9 @@ function renderRecipe(p){
 
 async function renderInventory(p){
   if(currentUser.role!=='admin'){p.innerHTML='<div class="card"><h2>'+t('Inventory',lang)+'</h2><div class="alert error">'+t('Admin access only.',lang)+'</div></div>';return;}
-  if(!isDemo) await refreshLiveState();
+  // Keep route navigation independent of the full dashboard sync; refresh stock after first paint.
   const options=STOCK_MATERIALS.map(m=>'<option value="'+m.code+'">'+esc(t(m.name,lang))+'</option>').join('');
-  const cards=STOCK_MATERIALS.map(m=>{const v=stockBreakdown(m,getStock(m.code),lang);return '<div class="card stock-card-premium"><div class="kpi-label">'+esc(t(m.name,lang))+'</div><div class="kpi stock-primary">'+esc(v.primary)+'</div><div class="small stock-secondary">'+esc(v.secondary)+'</div></div>';}).join('');
+  const cards=STOCK_MATERIALS.map(m=>{const v=stockBreakdown(m,getStock(m.code),lang);return '<div class="card stock-card-premium" data-stock-card="'+m.code+'"><div class="kpi-label">'+esc(t(m.name,lang))+'</div><div class="kpi stock-primary">'+esc(v.primary)+'</div><div class="small stock-secondary">'+esc(v.secondary)+'</div></div>';}).join('');
   p.innerHTML=
     '<div class="page-head"><div><div class="eyebrow">'+t('Admin tools',lang)+'</div><h1>'+t('Inventory',lang)+'</h1><p>'+t('Track stock in packages and correct old balances by date.',lang)+'</p></div><button class="btn primary" id="stockIn">＋ '+t('Stock in',lang)+'</button></div>'+
     '<div class="grid grid-3">'+cards+'</div>'+
