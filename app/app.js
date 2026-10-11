@@ -864,7 +864,7 @@ function renderDashboard(p){
   const startHeroRotation=()=>{
     if(window.doughFlowHeroTimer) window.clearInterval(window.doughFlowHeroTimer);
     if(heroSlides.length>1&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-      window.doughFlowHeroTimer=window.setInterval(()=>showHeroPhoto(activeHero+1),5000);
+      window.doughFlowHeroTimer=window.setInterval(()=>showHeroPhoto(activeHero+1),2000);
     }
   };
   heroCarousel?.querySelector('[data-hero-prev]')?.addEventListener('click',()=>{showHeroPhoto(activeHero-1);startHeroRotation();});
