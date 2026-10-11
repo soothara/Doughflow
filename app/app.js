@@ -138,6 +138,7 @@ function formatSackUnit(value,language=lang){
 function friendlyError(error){
   const raw=String(error?.message||error||'').trim();
   const lower=raw.toLowerCase();
+  if((lower.includes('admin_inventory_snapshot')||lower.includes('admin_inventory_history'))&&(lower.includes('schema cache')||lower.includes('could not find the function')||error?.code==='PGRST202')) return 'Inventory database update required. Run db/fix_admin_inventory_snapshot_2026_10_11.sql in Supabase SQL Editor, then refresh.';
   if(lower.includes('invalid login credentials')) return t('Invalid login credentials',lang);
   if(lower.includes('email not confirmed')) return t('Email is not confirmed',lang);
   if(lower.includes('not authorized')) return t('Not authorized',lang);
