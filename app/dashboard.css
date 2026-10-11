@@ -504,8 +504,8 @@ body.dashboard-mode{
   transform:translateX(-80%);animation:dfBreadStickerShine 3.6s ease-in-out infinite;
 }
 .dashboard-mode .ali-showcase-banner{
-  display:grid;grid-template-columns:54px minmax(0,1fr) auto 25px;
-  grid-template-areas:"symbol copy platform flag";
+  display:grid;grid-template-columns:54px minmax(0,1fr) 25px;
+  grid-template-areas:"symbol copy flag";
   align-items:center;gap:12px;min-height:124px;padding:18px 20px;
   border:1px solid rgba(255,255,255,.19);border-radius:25px;
   background:radial-gradient(120% 150% at 4% 0%,rgba(69,213,200,.18),transparent 45%),linear-gradient(118deg,#101a35 0%,#1e2e56 46%,#482b74 100%);
@@ -546,51 +546,14 @@ body.dashboard-mode{
 .dashboard-mode .made-by-subtitle{
   display:block;margin-top:7px;color:#c9d5f2;font-size:9px;font-weight:850;
   letter-spacing:1.45px;line-height:1.4;
-}
-.dashboard-mode .openai-platform-badge{
-  grid-area:platform;position:relative;display:flex;align-items:center;gap:8px;
-  min-height:37px;padding:7px 10px;border-radius:999px;
-  border:1px solid rgba(205,228,255,.24);
-  background:linear-gradient(110deg,rgba(255,255,255,.11),rgba(151,193,255,.1));
-  color:#f4f7ff;font-size:11px;font-weight:800;white-space:nowrap;
-  box-shadow:inset 0 1px rgba(255,255,255,.12),0 0 24px rgba(160,175,255,.07);
-  overflow:hidden;
-}
-.dashboard-mode .openai-platform-badge::before{
-  content:"";position:absolute;inset:0;
-  background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.17) 50%,transparent 80%);
-  transform:translateX(-130%);animation:dfOpenAIShimmer 3.2s ease-in-out infinite;
-}
-.dashboard-mode .openai-platform-mark{
-  position:relative;display:block;flex:none;width:21px;height:21px;border:1.5px solid #aad9ff;
-  border-radius:50%;animation:dfOpenAIRotate 7s linear infinite;
-}
-.dashboard-mode .openai-platform-mark i{
-  position:absolute;width:5px;height:5px;border:1.2px solid #d9c4ff;border-radius:50%;
-  background:#8bcaff;box-shadow:0 0 7px rgba(141,207,255,.7);
-}
-.dashboard-mode .openai-platform-mark i:nth-child(1){left:7px;top:-2px}
-.dashboard-mode .openai-platform-mark i:nth-child(2){right:-2px;top:4px}
-.dashboard-mode .openai-platform-mark i:nth-child(3){right:-1px;bottom:3px}
-.dashboard-mode .openai-platform-mark i:nth-child(4){left:7px;bottom:-2px}
-.dashboard-mode .openai-platform-mark i:nth-child(5){left:-2px;bottom:3px}
-.dashboard-mode .openai-platform-mark i:nth-child(6){left:-2px;top:4px}
-.dashboard-mode .openai-live-dot{
-  width:6px;height:6px;flex:none;border-radius:50%;background:#7cf4c0;
-  box-shadow:0 0 0 0 rgba(124,244,192,.55);animation:dfOpenAIPulse 1.7s ease-out infinite;
-}
-.dashboard-mode .ali-showcase-banner .made-by-kyrgyz{
+}.dashboard-mode .ali-showcase-banner .made-by-kyrgyz{
   grid-area:flag;position:relative;margin:0;font-size:22px;z-index:1;
 }
 .dashboard-mode .photo-attribution{margin-top:7px}
 @keyframes dfBreadStickerFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-3px) rotate(1deg)}}
 @keyframes dfBreadStickerShine{0%,52%,100%{transform:translateX(-80%);opacity:0}60%{opacity:.9}88%{transform:translateX(80%);opacity:0}}
 @keyframes dfAliBannerShimmer{0%,100%{transform:translateX(-65%)}52%{transform:translateX(65%)}}
-@keyframes dfAliTitleGlow{to{background-position:220% center}}
-@keyframes dfOpenAIRotate{to{transform:rotate(360deg)}}
-@keyframes dfOpenAIPulse{0%{box-shadow:0 0 0 0 rgba(124,244,192,.55)}100%{box-shadow:0 0 0 8px rgba(124,244,192,0)}}
-@keyframes dfOpenAIShimmer{0%,20%{transform:translateX(-130%)}70%,100%{transform:translateX(130%)}}
-@media(max-width:640px){
+@keyframes dfAliTitleGlow{to{background-position:220% center}}@media(max-width:640px){
   .dashboard-mode .portal-hero{min-height:334px;border-radius:0 0 24px 24px}
   .dashboard-mode .portal-hero-content{min-height:334px;padding:12px 14px 43px}
   .dashboard-mode .hero-slide-controls{right:12px;bottom:11px;gap:6px;padding:4px 6px}
@@ -599,16 +562,14 @@ body.dashboard-mode{
   .dashboard-mode .hero-slide-dot.is-active{width:18px}
   .dashboard-mode .ali-showcase-banner{
     grid-template-columns:44px minmax(0,1fr);
-    grid-template-areas:"symbol copy" "platform platform";
+    grid-template-areas:"symbol copy";
     gap:10px;padding:15px 14px;min-height:118px;border-radius:22px;
   }
   .dashboard-mode .ali-showcase-banner .made-by-symbol{width:44px;height:44px;border-radius:14px}
   .dashboard-mode .ali-monogram span{font-size:27px}
   .dashboard-mode .ali-showcase-banner .made-by-copy strong{font-size:clamp(24px,7vw,29px)}
   .dashboard-mode .made-by-subtitle{font-size:8px;letter-spacing:1.15px}
-  .dashboard-mode .openai-platform-badge{width:max-content;max-width:100%;min-height:34px;padding:6px 10px;font-size:10px}
-  .dashboard-mode .openai-platform-mark{width:19px;height:19px}
-  .dashboard-mode .ali-showcase-banner .made-by-kyrgyz{display:none}
+      .dashboard-mode .ali-showcase-banner .made-by-kyrgyz{display:none}
   .dashboard-mode main{padding-bottom:calc(156px + env(safe-area-inset-bottom))}
 }
 @media(max-width:360px){
@@ -622,4 +583,45 @@ body.dashboard-mode{
   .dashboard-mode .ali-showcase-banner::before,.dashboard-mode .ali-showcase-banner::after{
     animation:none!important;transition:none!important;
   }
+}
+
+
+/* Final photo-fit pass: each real bakery image fills the hero without stretching or blending. */
+.dashboard-mode .portal-hero-photo.hero-slide{
+  background-size:cover!important;background-repeat:no-repeat!important;
+  transform:none!important;filter:saturate(1.08) contrast(1.035);
+}
+.dashboard-mode .portal-hero-photo[data-hero-photo="0"]{background-position:center 78%!important}
+.dashboard-mode .portal-hero-photo[data-hero-photo="1"]{background-position:center 72%!important}
+.dashboard-mode .portal-hero-photo[data-hero-photo="2"]{background-position:center 62%!important}
+.dashboard-mode .portal-hero::after{display:none!important;content:none!important}
+.dashboard-mode .panel-photo{
+  left:30%;right:0;background-image:url('./assets/leposhka-detail.svg');
+  background-size:cover!important;background-position:center 78%!important;
+  background-repeat:no-repeat!important;filter:saturate(1.08) contrast(1.04);
+}
+.dashboard-mode .panel-photo-shade{
+  background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.98) 26%,rgba(255,255,255,.68) 48%,rgba(255,255,255,.06) 82%);
+}
+.dashboard-mode .production-photo-sticker{
+  width:52px;height:52px;flex:none;padding:0;border-radius:50%;
+  background:transparent;border:0;box-shadow:0 7px 18px rgba(173,94,28,.24);
+  animation:dfBreadStickerFloat 3.1s ease-in-out infinite;
+}
+.dashboard-mode .production-photo-sticker img{
+  display:block;width:100%;height:100%;object-fit:contain;border-radius:50%;
+}
+.dashboard-mode .production-photo-sticker::after{content:none!important;display:none!important}
+@media(max-width:640px){
+  .dashboard-mode .portal-hero-photo[data-hero-photo="0"]{background-position:center 78%!important}
+  .dashboard-mode .portal-hero-photo[data-hero-photo="1"]{background-position:center 72%!important}
+  .dashboard-mode .portal-hero-photo[data-hero-photo="2"]{background-position:center 62%!important}
+  .dashboard-mode .panel-photo{left:28%;background-position:center 80%!important}
+  .dashboard-mode .production-photo-sticker{width:44px;height:44px}
+  .dashboard-mode .ali-showcase-banner{grid-template-columns:44px minmax(0,1fr) 22px;grid-template-areas:"symbol copy flag"}
+  .dashboard-mode .ali-showcase-banner .made-by-kyrgyz{display:block;font-size:19px}
+}
+@media(max-width:360px){
+  .dashboard-mode .ali-showcase-banner{grid-template-columns:40px minmax(0,1fr);grid-template-areas:"symbol copy"}
+  .dashboard-mode .ali-showcase-banner .made-by-kyrgyz{display:none}
 }
