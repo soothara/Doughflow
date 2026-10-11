@@ -1125,8 +1125,7 @@ body{min-height:100dvh}
 
 /* v16 screenshot-match mode: keep the supplied mobile dashboard composition */
 @media all{
-  .simulator-panel{display:none!important}
-  .portal-hero{margin-bottom:10px}
+  .dashboard-mode .simulator-panel{display:none}
 }
 
 
