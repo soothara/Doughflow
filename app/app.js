@@ -2,9 +2,11 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import './config.js';
 import { LANGUAGES, getSavedLang, saveLang, languageOptions, t, applyTranslations } from './i18n.js';
 
-const CFG = window.DOUGHFLOW_CONFIG || { supabaseUrl:'', supabaseAnonKey:'', appName:'DoughFlow' };
-const isDemo = !(CFG.supabaseUrl && CFG.supabaseAnonKey);
-const supabase = isDemo ? null : createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+const CFG = window.DOUGHFLOW_CONFIG || {};
+const isDemo = CFG.demoMode === true;
+const hasLiveConfig = Boolean(CFG.supabaseUrl && CFG.supabaseAnonKey);
+const configError = !isDemo && !hasLiveConfig;
+const supabase = (!isDemo && hasLiveConfig) ? createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
 
 const MATERIALS = [
   {code:'flour', name:'Flour', unit:'kg', decimals:2, packages:[{label:'50 kg sack',qty:50,kind:'sack'}]},
@@ -27,7 +29,7 @@ const DEFAULT_RECIPE = [
 
 const KEY='doughflow_demo_v1';
 const uid=()=>crypto.randomUUID();
-const today=()=>{const d=new Date();const pad=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}; const dateLocale=()=>lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-US'; const formatToday=()=>new Intl.DateTimeFormat(dateLocale(),{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(new Date());
+const today=()=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bishkek',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}`;}; const dateLocale=()=>lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-US'; const formatToday=()=>new Intl.DateTimeFormat(dateLocale(),{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'Asia/Bishkek'}).format(new Date());
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:3});
 const money=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -242,6 +244,107 @@ const NAV_ICONS={
   sales:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5h16M6 17V10M10 17V6M14 17v-3M18 17V4"/><path d="m15.5 5 2.5-1 1 2.5"/></svg>',
   more:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>'
 };
+
+function uiIcon(name,size=20){
+  const paths={
+    sack:'<path d="M9 3h6l-1 3 4 3-1 11H7L6 9l4-3-1-3Z"/><path d="M9 11c2 1 4 1 6 0M10 15h4"/>',
+    bread:'<path d="M4 12c-1-3 1-6 4-6 1-3 7-3 8 0 3 0 5 3 4 6l-1 6H5l-1-6Z"/><path d="m9 9 1 2m4-3 1 2"/>',
+    play:'<path d="m8 5 11 7-11 7V5Z" fill="currentColor" stroke="none"/>',
+    recipe:'<path d="M6 4h13v16H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"/><path d="M8 8h7M8 12h7M8 16h4"/>',
+    trend:'<path d="m3 17 5-5 4 3 8-9"/><path d="M15 6h5v5"/>',
+    pieces:'<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16M6.5 6.5l11 11m0-11-11 11"/>',
+    layers:'<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/>',
+    spark:'<path d="m12 2 2.2 6.2L20 10l-5.8 2.1L12 18l-2.2-5.9L4 10l5.8-1.8L12 2Z"/><path d="m19 15 .9 2.7L22 19l-2.1.8L19 22l-.8-2.2L16 19l2.2-1.3L19 15Z"/>',
+    cube:'<path d="m12 3 9 5v10l-9 5-9-5V8l9-5Z"/><path d="m3 8 9 5 9-5M12 13v10"/>',
+    activity:'<path d="M3 12h4l3-8 5 16 3-8h4"/>',
+    gauge:'<path d="M4 18a9 9 0 1 1 16 0"/><path d="m12 13 4-5M6 18h12"/>',
+    factory:'<path d="M4 20V9l6 4V9l6 4V5h4v15H4Z"/><path d="M7 17h2m3 0h2m3-7h1"/>',
+    package:'<path d="m12 3 9 5v10l-9 5-9-5V8l9-5Z"/><path d="m3 8 9 5 9-5M12 13v10"/>',
+    mouse:'<rect x="7" y="3" width="10" height="18" rx="5"/><path d="M12 3v5"/>',
+    info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>',
+    home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10Z"/>',
+    calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01"/>',
+    shield:'<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/>',
+    users:'<path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    check:'<path d="m5 12 4 4L19 6"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    minus:'<path d="M5 12h14"/>',
+    search:'<circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>',
+    filter:'<path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z"/>',
+    settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15.1 21 16.2l-1.6 2.7-1.8-.7a8 8 0 0 1-1.8 1l-.3 1.8h-3l-.3-1.8a8 8 0 0 1-1.8-1l-1.8.7L7 16.2l1.6-1.1a7 7 0 0 1 0-2L7 12l1.6-2.7 1.8.7a8 8 0 0 1 1.8-1l.3-1.8h3l.3 1.8a8 8 0 0 1 1.8 1l1.8-.7L21 12l-1.6 1.1a7 7 0 0 1 0 2Z"/>',
+    bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
+    download:'<path d="M12 3v12m-5-5 5 5 5-5M4 20h16"/>',
+    upload:'<path d="M12 16V4m-5 5 5-5 5 5M4 20h16"/>',
+    history:'<path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+    refresh:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.5-3"/>',
+    wrench:'<path d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3 18l3 3 5.3-5.3a5 5 0 0 0 6.4-6.4L14 13l-3-3 3.7-3.7Z"/>',
+    chart:'<path d="M4 19V5M4 19h17"/><path d="m7 15 4-4 3 2 5-7"/>',
+    truck:'<path d="M3 6h11v12H3zM14 10h4l3 3v5h-7z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="17.5" cy="19" r="1.5"/>',
+    clipboard:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M8 10h8M8 14h8M8 18h4"/>',
+    target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>',
+    moon:'<path d="M20.9 13A8.5 8.5 0 0 1 11 3.1 8.5 8.5 0 1 0 20.9 13Z"/>',
+    wifi:'<path d="M5 12.5a11 11 0 0 1 14 0M8 16a6.5 6.5 0 0 1 8 0m-5 3h2M2 9a16 16 0 0 1 20 0"/>',
+    lock:'<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/>',
+    eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+    alert:'<path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 3h.01"/>',
+    packageOpen:'<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="M3 8v9l9 5 9-5V8M12 13v9M7 5.8l9 5"/>',
+    thermometer:'<path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 11v6"/>',
+    sparkles:'<path d="m12 3 1.9 5.8L20 11l-6.1 2.1L12 19l-1.9-5.9L4 11l6.1-2.2L12 3Z"/><path d="m19 14 1 2.5 2 1-2 1-1 2.5-1-2.5-2-1 2-1 1-2.5Z"/>',
+    sliders:'<path d="M4 7h10m4 0h2M4 17h2m4 0h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+    more:'<circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/>',
+    chevron:'<path d="m9 5 7 7-7 7"/>'
+  };
+  return '<svg class="df-icon" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.spark)+'</svg>';
+}
+function wireSimulatorInteractions(){
+  const stage=document.getElementById('simulatorStage');
+  if(!stage)return;
+  const mode=document.getElementById('simModeToggle');
+  const world=document.getElementById('simWorld');
+  const run=document.getElementById('simRun');
+  const status=document.getElementById('simStatus');
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  mode?.addEventListener('click',()=>{
+    const enabled=!stage.classList.contains('sim-immersive');
+    stage.classList.toggle('sim-immersive',enabled);
+    mode.setAttribute('aria-pressed',String(enabled));
+    mode.classList.toggle('enabled',enabled);
+    showToast(enabled?t('Immersive 3D mode enabled.',lang):t('Standard view restored.',lang),'info',1800);
+  });
+  let running=false;
+  run?.addEventListener('click',()=>{
+    running=!running;
+    stage.classList.toggle('sim-running',running);
+    run.classList.toggle('running',running);
+    run.innerHTML=uiIcon(running?'activity':'play',16)+' '+(running?t('Pause visual simulation',lang):t('Run visual simulation',lang));
+    if(status)status.textContent=running?t('Simulation running',lang):t('Standby',lang);
+    showToast(running?t('Visual simulation started. No records changed.',lang):t('Simulation paused.',lang),'info',1800);
+  });
+  if(!reduced && window.matchMedia?.('(pointer:fine)')?.matches){
+    stage.addEventListener('pointermove',e=>{
+      if(stage.classList.contains('sim-immersive'))return;
+      const r=stage.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+      world.style.setProperty('--tilt-x',(-y*5).toFixed(2)+'deg');
+      world.style.setProperty('--tilt-y',(x*7).toFixed(2)+'deg');
+    });
+    stage.addEventListener('pointerleave',()=>{world.style.setProperty('--tilt-x','0deg');world.style.setProperty('--tilt-y','0deg');});
+  }
+  if(!reduced && window.matchMedia?.('(pointer:fine)')?.matches){
+    document.querySelectorAll('[data-tilt]').forEach(card=>{
+      card.addEventListener('pointermove',e=>{
+        const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+        card.style.setProperty('--card-rx',(-y*5).toFixed(2)+'deg');
+        card.style.setProperty('--card-ry',(x*6).toFixed(2)+'deg');
+      });
+      card.addEventListener('pointerleave',()=>{card.style.setProperty('--card-rx','0deg');card.style.setProperty('--card-ry','0deg');});
+      card.addEventListener('focus',()=>card.classList.add('tilt-focused'));
+      card.addEventListener('blur',()=>card.classList.remove('tilt-focused'));
+    });
+  }
+}
+
 function roleName(r){return ({admin:t('Admin',lang),hamurchi:t('Hamurchi',lang),naan:t('Naan / Leposhka Maker',lang),sales:t('Salesman',lang)})[r]||r;}
 function captureRouteDraft(){
   if(route==='dashboard'){
@@ -327,7 +430,9 @@ function navItems(role){
   return base;
 }
 async function init(){
-  if(!isDemo){
+  if(configError){
+    authError='DoughFlow configuration is missing. Contact the administrator.';
+  } else if(!isDemo){
     const {data:{session}}=await supabase.auth.getSession();
     if(session) await loadUser(session.user);
     supabase.auth.onAuthStateChange((event,s)=>{
@@ -421,7 +526,17 @@ async function refreshLiveState(){
 }
 async function render(){
   document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard');
-  if(!currentUser){ app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage(); document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value)); document.getElementById('loginError')?.setAttribute('data-auth-error','1'); if(authError) document.getElementById('loginError').textContent=authError; return; }
+  if(!currentUser){
+    app.innerHTML=loginHTML(); wireLogin(); applyCurrentLanguage();
+    document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
+    document.getElementById('loginError')?.setAttribute('data-auth-error','1');
+    if(configError){
+      const errorNode=document.getElementById('loginError');
+      if(errorNode) errorNode.textContent=t('DoughFlow configuration is missing. Contact the administrator.',lang);
+      document.querySelectorAll('#loginForm input, #loginForm button').forEach(el=>{el.disabled=true;});
+    } else if(authError) document.getElementById('loginError').textContent=authError;
+    return;
+  }
   if(!can(currentUser.role,route)) route='dashboard';
   app.innerHTML=appShellHTML();
   document.querySelectorAll('[data-route]').forEach(b=>b.addEventListener('click',()=>{route=b.dataset.route;render();}));
@@ -469,14 +584,6 @@ function loginHTML(){
           <button class="login-submit" type="submit"><span>⌁</span>${t('Unlock DoughFlow',lang)}<b>›</b></button>
           <div id="loginError" class="login-error">${esc(authError)}</div>
         </form>
-        <button type="button" id="legacyLoginToggle" class="legacy-login-link" hidden>${t('Use password sign-in temporarily',lang)}</button>
-        <form id="legacyLoginForm" class="modern-login-form legacy-login-form" hidden>
-          <div class="field"><label for="legacyEmail">${t('Email',lang)}</label><input id="legacyEmail" type="email" autocomplete="username" value="askat@gmail.com" required></div>
-          <div class="field"><label for="legacyPassword">${t('Password',lang)}</label><input id="legacyPassword" type="password" autocomplete="current-password" required></div>
-          <button type="submit" class="login-submit"><span>↪</span>${t('Sign in',lang)}<b>›</b></button>
-          <button type="button" id="backToPin" class="legacy-login-link">${t('Back to PIN sign-in',lang)}</button>
-          <div id="legacyLoginError" class="login-error"></div>
-        </form>
         <div class="login-footer-line"><span>🇰🇬 ${t('Bishkek',lang)}</span><span>•</span><span>DoughFlow</span></div>
       </div>
       <div class="login-credit"><span>✦</span> Сделано Али</div>
@@ -498,35 +605,6 @@ function ensureDemoPins(){
   saveDemo();
 }
 function wireLogin(){
-  const pinForm=document.getElementById('loginForm');
-  const legacyForm=document.getElementById('legacyLoginForm');
-  const legacyToggle=document.getElementById('legacyLoginToggle');
-  legacyToggle?.addEventListener('click',()=>{
-    if(pinForm) pinForm.hidden=true;
-    legacyToggle.hidden=true;
-    if(legacyForm) legacyForm.hidden=false;
-    document.getElementById('legacyEmail')?.focus();
-  });
-  document.getElementById('backToPin')?.addEventListener('click',()=>{
-    if(legacyForm) legacyForm.hidden=true;
-    if(pinForm) pinForm.hidden=false;
-    if(legacyToggle) legacyToggle.hidden=true;
-    document.getElementById('loginPin')?.focus();
-  });
-  legacyForm?.addEventListener('submit',async e=>{
-    e.preventDefault();
-    const email=String(document.getElementById('legacyEmail')?.value||'').trim();
-    const password=String(document.getElementById('legacyPassword')?.value||'');
-    const errorEl=document.getElementById('legacyLoginError');
-    const submit=legacyForm.querySelector('button[type="submit"]');
-    if(submit) submit.disabled=true;
-    if(errorEl) errorEl.textContent='';
-    try{
-      const {error}=await supabase.auth.signInWithPassword({email,password});
-      if(error && errorEl) errorEl.textContent=friendlyError(error);
-    }catch(error){if(errorEl) errorEl.textContent=friendlyError(error);}
-    finally{if(submit) submit.disabled=false;}
-  });
   const pinInput=document.getElementById('loginPin');
   const pinError=document.getElementById('loginError');
   document.getElementById('togglePin')?.addEventListener('click',()=>{
@@ -578,8 +656,7 @@ function wireLogin(){
       const payload=await response.json().catch(()=>({}));
       if(!response.ok){
         if(response.status===404||response.status>=500){
-          pinError.textContent=t('PIN login service is not deployed or configured yet. Use the temporary sign-in option below.',lang);
-          if(legacyToggle) legacyToggle.hidden=false;
+          pinError.textContent=t('PIN login is temporarily unavailable. Please contact the administrator.',lang);
           return;
         }
         const key=response.status===429?'Too many attempts. Try again later.':(payload.error==='Username or PIN is incorrect'?'Username or PIN is incorrect':payload.error||'Username or PIN is incorrect');
@@ -591,9 +668,8 @@ function wireLogin(){
       if(error) throw error;
     }catch(error){
       const message=String(error?.message||'');
-      if(/fetch|network|load failed/i.test(message) && legacyToggle){
-        pinError.textContent=t('PIN login service is not deployed or configured yet. Use the temporary sign-in option below.',lang);
-        legacyToggle.hidden=false;
+      if(/fetch|network|load failed/i.test(message)){
+        pinError.textContent=t('PIN login is temporarily unavailable. Please contact the administrator.',lang);
       }else pinError.textContent=friendlyError(error);
     }finally{
       if(submit) submit.disabled=false;
@@ -604,7 +680,7 @@ async function logout(){ if(isDemo){db.session=null;currentUser=null;authError='
 
 function appShellHTML(){
   const items=navItems(currentUser.role);
-  const initials=String(currentUser.name||'U').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  const initials=String(currentUser.name||'U').trim().split(/\s+/).filter(Boolean).slice(0,2).map(x=>Array.from(x)[0]).join('').toUpperCase()||'U';
   return `
     <div class="topbar">
       <div class="brand">
@@ -645,7 +721,7 @@ function renderMore(p){
   if(currentUser.role==='admin') extra.push(
     ['inventory',NAV_ICONS.stock,'Stock & inventory','See balances and stock movements'],
     ['reports',NAV_ICONS.sales,'Reports','Review production and usage'],
-    ['users','<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2"/></svg>','People','Manage staff and roles'],
+    ['users',uiIcon('users',24),'People','Manage staff and roles'],
     ['naan',NAV_ICONS.naan,'Naan / Leposhka','Open the naan workflow'],
     ['sales',NAV_ICONS.sales,'Sales','Open the sales workspace'],
     ['recipe',NAV_ICONS.recipe,'Recipe','Edit the working recipe']
@@ -673,12 +749,12 @@ function renderDashboard(p){
   const recipe=isDemo?db.recipe:liveState.recipe;
   const firstName=esc(currentUser.name.split(' ')[0]);
   const syncBanner=!isDemo&&liveState.syncError?"<div class='sync-banner' role='alert'>⚠️ <div><b>"+t('Data sync issue',lang)+"</b><small>"+t('Some data may be temporarily out of date.',lang)+"</small></div></div>":"";
-  const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
+  const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card' data-tilt tabindex='0'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
   const stockCards=stockRows.map(m=>{
     const tag=currentUser.role==='admin'?'button':'div';
     const attrs=currentUser.role==='admin'?" type='button' data-stock-open='inventory'":'';
     const view=stockBreakdown(m,m.stock,lang);
-    return "<"+tag+" class='stock-item"+(currentUser.role==='admin'?' stock-open':'')+"'"+attrs+"><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div class='stock-item-copy'><b>"+esc(t(m.name,lang))+"</b><strong class='"+(m.stock<=0?'empty-stock':'')+"'>"+esc(view.primary)+(m.stock<=0?" <em>!</em>":"")+"</strong><small>"+esc(view.secondary)+"</small></div><span>›</span></"+tag+">";
+    return "<"+tag+" class='stock-item"+(currentUser.role==='admin'?' stock-open':'')+"' data-tilt"+attrs+"><div class='stock-item-icon "+esc(m.code)+"'>"+materialIcon(m.code)+"</div><div class='stock-item-copy'><b>"+esc(t(m.name,lang))+"</b><strong class='"+(m.stock<=0?'empty-stock':'')+"'>"+esc(view.primary)+(m.stock<=0?" <em>!</em>":"")+"</strong><small>"+esc(view.secondary)+"</small></div><span class='stock-chevron'>"+uiIcon('chevron',16)+"</span></"+tag+">";
   }).join('');
   const questKey='doughflow_quest_reward_'+currentUser.id+'_'+today();
   const rewardClaimed=localStorage.getItem(questKey)==='1';
@@ -713,12 +789,28 @@ function renderDashboard(p){
     "</section>"+
     syncBanner+
     "<section class='metric-grid'>"+
-      "<div class='metric-card metric-green'><div class='metric-head'><span>🧺</span><b>"+t('Today’s Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>▥</i></div>"+
-      "<div class='metric-card metric-orange'><div class='metric-head'><span>🥯</span><b>"+t('Today’s Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>◔</i></div>"+
-      "<div class='metric-card metric-purple'><div class='metric-head'><span>▶</span><b>"+t('Production Runs',lang)+"</b></div><strong>"+totalRuns+"</strong><i>▥</i></div>"+
-      "<div class='metric-card metric-blue'><div class='metric-head'><span>▦</span><b>"+t('Recipe Version',lang)+"</b></div><strong>v"+(db?.recipe?.version||liveState.recipe?.version||1)+"</strong><i>⟳</i></div>"+
+      "<div class='metric-card metric-green' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('sack',21)+"</span><b>"+t('Today’s Sacks',lang)+"</b></div><strong>"+fmt(totalSacks)+"</strong><i>"+uiIcon('trend',44)+"</i></div>"+
+      "<div class='metric-card metric-orange' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('bread',21)+"</span><b>"+t('Today’s Pieces',lang)+"</b></div><strong>"+fmt(totalPieces)+"</strong><i>"+uiIcon('pieces',44)+"</i></div>"+
+      "<div class='metric-card metric-purple' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('play',21)+"</span><b>"+t('Production Runs',lang)+"</b></div><strong>"+totalRuns+"</strong><i>"+uiIcon('layers',44)+"</i></div>"+
+      "<div class='metric-card metric-blue' data-tilt><div class='metric-head'><span class='metric-icon-svg'>"+uiIcon('recipe',21)+"</span><b>"+t('Recipe Version',lang)+"</b></div><strong>v"+(liveState.recipe?.version||db?.recipe?.version||1)+"</strong><i>"+uiIcon('spark',44)+"</i></div>"+
     "</section>"+
     questHtml+
+    "<section class='simulator-panel' id='bakerySimulator' aria-label='Interactive bakery simulation'>"+
+      "<div class='simulator-topline'><div><span class='simulator-kicker'>"+uiIcon('spark',14)+" "+t('IMMERSIVE WORKSPACE',lang)+"</span><h2>"+t('Bakery Simulator',lang)+"</h2><p>"+t('Explore the production floor in 3D.',lang)+"</p></div><button type='button' class='sim-mode-toggle' id='simModeToggle' aria-pressed='false'>"+uiIcon('cube',17)+" <span>"+t('3D mode',lang)+"</span><span class='toggle-track'><i></i></span></button></div>"+
+      "<div class='simulator-stage' id='simulatorStage'>"+
+        "<div class='sim-stars' aria-hidden='true'></div><div class='sim-orbit orbit-one'></div><div class='sim-orbit orbit-two'></div>"+
+        "<div class='sim-hud sim-hud-left'><small>"+uiIcon('activity',13)+" "+t('FLOOR STATUS',lang)+"</small><b id='simStatus' aria-live='polite'>"+t('Standby',lang)+"</b><span><i class='sim-status-dot'></i> "+t('Ready for next batch',lang)+"</span></div>"+
+        "<div class='sim-hud sim-hud-right'><small>"+uiIcon('gauge',13)+" "+t('TODAY TARGET',lang)+"</small><b>"+fmt(totalSacks)+" <em>/ 6</em></b><div class='sim-target-track'><i style='width:"+questProgress+"%'></i></div><span>"+questProgress+"% "+t('complete',lang)+"</span></div>"+
+        "<div class='sim-world' id='simWorld'><div class='sim-floor-grid'></div><div class='sim-machine-shadow'></div>"+
+          "<div class='sim-bakery-machine'><div class='machine-top'><span class='machine-bolt'></span><span class='machine-bolt'></span><span class='machine-bolt'></span></div><div class='machine-sign'>DOUGH<span>FLOW</span></div><div class='machine-window'><div class='machine-loaf loaf-a'></div><div class='machine-loaf loaf-b'></div><div class='machine-loaf loaf-c'></div><div class='machine-shine'></div></div><div class='machine-controls'><i></i><i></i><i></i><span class='machine-dial'></span></div><div class='machine-base'></div></div>"+
+          "<div class='sim-sack sack-a'><span>DF</span><i></i></div><div class='sim-sack sack-b'><span>FLOUR</span><i></i></div><div class='sim-crate'><i></i><i></i><i></i></div>"+
+          "<div class='sim-conveyor'><div class='conveyor-belt'><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class='conveyor-loaf'></div><div class='conveyor-leg leg-a'></div><div class='conveyor-leg leg-b'></div></div>"+
+        "</div>"+
+        "<div class='sim-label label-machine'>"+uiIcon('factory',14)+" "+t('Mixing station',lang)+"</div><div class='sim-label label-stock'>"+uiIcon('package',14)+" "+t('Flour reserve',lang)+"</div>"+
+        "<div class='simulator-bottomline'><span class='sim-hint'>"+uiIcon('mouse',14)+" "+t('Move your pointer to explore',lang)+"</span><button type='button' class='sim-run-button' id='simRun'>"+uiIcon('play',16)+" "+t('Run visual simulation',lang)+"</button></div>"+
+      "</div>"+
+      "<div class='simulator-footnote'>"+uiIcon('info',14)+" "+t('Visual simulation only — it never changes production or inventory records.',lang)+"</div>"+
+    "</section>"+
     "<section class='portal-panel production-panel'>"+
       "<div class='panel-photo-strip'><div class='panel-photo'></div><div class='panel-photo-shade'></div><div class='panel-title-wrap'><div class='panel-sticker coral'>"+leposhkaIcon(34)+"</div><div><h2>"+t('New Production',lang)+"</h2><p>"+t('Select total sacks (you can add 0.5)',lang)+"</p></div></div></div>"+
       "<div class='portal-panel-inner'>"+
@@ -754,10 +846,11 @@ function renderDashboard(p){
   document.getElementById('dashboardHalf')?.addEventListener('click',()=>{selected=Math.min(9.5,Math.round((selected+0.5)*2)/2);sync();});
   document.getElementById('dashboardReset')?.addEventListener('click',()=>{selected=0;sync();});
   const openProduction=()=>{
+    const initialCount=selected||1;
     route='production';render();
     setTimeout(()=>{
       const input=document.getElementById('sackCount');
-      if(input){input.value=selected||0;input.dispatchEvent(new Event('input',{bubbles:true}));}
+      if(input){input.value=initialCount;input.dispatchEvent(new Event('input',{bubbles:true}));}
     },0);
   };
   document.getElementById('dashboardStart')?.addEventListener('click',openProduction);
@@ -777,6 +870,7 @@ function renderDashboard(p){
   });
   document.querySelectorAll('[data-stock-open]').forEach(b=>b.addEventListener('click',()=>{route='inventory';render();}));
   document.getElementById('openInventory')?.addEventListener('click',()=>{route='inventory';render();});
+  wireSimulatorInteractions();
 }
 function roleDashboard(p){
   if(currentUser.role==='hamurchi') p.innerHTML=`<div class="grid grid-2"><div class="card"><h2>Today</h2><div class="kpi">${isDemo?fmt(db.productions.filter(x=>x.date===today()&&x.createdBy===currentUser.name).reduce((a,b)=>a+b.mishokCount,0)):'—'} sack</div><div class="small">Enter your sacks and actual pieces from the Production panel.</div></div><div class="card"><h2>Recipe</h2><div class="kpi">v${db?.recipe?.version||1}</div><div class="small">You may update the working recipe. Future production uses the new version.</div></div></div>`;
@@ -1007,7 +1101,7 @@ function openStockModal(){
   modalRoot.innerHTML=`<div class="modal-backdrop show"><div class="modal"><div class="modal-head"><h2>${t('Receive stock',lang)}</h2><button id="closeModal">×</button></div><div class="field"><label>${t('Material',lang)}</label><select id="stockMaterial">${opts}</select></div><div id="packageChooser"></div><div class="field"><label>${t('Effective date',lang)}</label><input id="stockEffectiveDate" type="date" max="${today()}" value="${today()}"></div><div class="field"><label>${t('Notes',lang)}</label><input id="stockNote" placeholder="${t('Supplier / delivery note',lang)}"></div><div class="modal-footer"><button class="btn secondary" id="cancelModal">${t('Cancel',lang)}</button><button class="btn primary" id="saveStock">${t('Add stock',lang)}</button></div></div></div>`;
   const update=()=>{const m=STOCK_MATERIALS.find(x=>x.code===document.getElementById('stockMaterial').value);document.getElementById('packageChooser').innerHTML=`<div class="field"><label>${t('Package',lang)}</label><select id="stockPackage">${m.packages.map((x,i)=>`<option value="${i}">${esc(packageUnit(m,x,lang))}</option>`).join('')} </select></div><div class="field"><label>${t('Number of packages',lang)}</label><input id="packageCount" type="number" min="0.001" step="1" value="1"></div><div class="small">${t('The system will convert package quantity into the inventory base unit.',lang)}</div>`;};
   update();document.getElementById('stockMaterial').addEventListener('change',update);document.getElementById('closeModal').addEventListener('click',closeModal);document.getElementById('cancelModal').addEventListener('click',closeModal);
-  document.getElementById('saveStock').addEventListener('click',async()=>{const code=document.getElementById('stockMaterial').value;const m=STOCK_MATERIALS.find(x=>x.code===code);const pi=Number(document.getElementById('stockPackage').value);const count=Number(document.getElementById('packageCount').value||0);const date=document.getElementById('stockEffectiveDate').value;if(!(count>0)||!Number.isFinite(count))return;if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}const qty=m.packages[pi].qty*count;const reason=document.getElementById('stockNote').value||t('Stock received',lang);if(isDemo){const inv=db.inventory[code];inv.stock+=qty;inv.tx.push({id:uid(),dir:'in',qty,packages:count,packageLabel:m.packages[pi].label,reason,effectiveDate:date,at:new Date().toISOString(),by:currentUser.name});saveDemo();closeModal();render();}else{const {error}=await supabase.from('inventory_transactions').insert({material_code:code,direction:'in',qty_base:qty,package_count:count,package_label:m.packages[pi].label,reason,created_by:currentUser.id,effective_date:date});if(error){showToast(friendlyError(error),'error');return;}await refreshLiveState();closeModal();render();}});
+  document.getElementById('saveStock').addEventListener('click',async()=>{const code=document.getElementById('stockMaterial').value;const m=STOCK_MATERIALS.find(x=>x.code===code);const pi=Number(document.getElementById('stockPackage').value);const count=Number(document.getElementById('packageCount').value||0);const date=document.getElementById('stockEffectiveDate').value;if(!(count>0)||!Number.isFinite(count))return;if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}const qty=m.packages[pi].qty*count;const reason=(document.getElementById('stockNote').value||'').trim()||t('Stock received',lang);if(isDemo){const inv=db.inventory[code];inv.stock+=qty;inv.tx.push({id:uid(),dir:'in',qty,packages:count,packageLabel:m.packages[pi].label,reason,effectiveDate:date,at:new Date().toISOString(),by:currentUser.name});saveDemo();closeModal();render();}else{const {error}=await supabase.from('inventory_transactions').insert({material_code:code,direction:'in',qty_base:qty,package_count:count,package_label:m.packages[pi].label,reason,created_by:currentUser.id,effective_date:date});if(error){showToast(friendlyError(error),'error');return;}await refreshLiveState();closeModal();render();}});
 }
 function closeModal(){modalRoot.innerHTML='';}
 
