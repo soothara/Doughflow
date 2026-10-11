@@ -951,7 +951,7 @@ async function renderInventory(p){
     '<div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>'+t('Target balance on selected date',lang)+'</small><strong id="stockTargetPreview">0 kg</strong></div><div class="historical-before"><small>'+t('Current as of date',lang)+'</small><b id="stockAsOfPreview">—</b></div></div>'+
     '<div class="field"><label for="stockCorrectionReason">'+t('Reason for correction',lang)+'</label><input id="stockCorrectionReason" maxlength="180" placeholder="'+t('Example: physical count found a different balance',lang)+'"></div>'+
     '<div class="history-form-footer"><small>🔒 '+t('Admin-only action. Every correction is dated and auditable.',lang)+'</small><button class="btn primary" id="saveStockByDate">✓ '+t('Save dated correction',lang)+'</button></div></section>'+
-    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 '+t('Inventory activity',lang)+'</h2><p id="historyDateCaption"></p></div><button type="button" class="btn secondary" id="refreshHistory">↻ '+t('Refresh',lang)+'</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"></div></section>';
+    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 '+t('Inventory activity',lang)+'</h2><p id="historyDateCaption"></p></div><button type="button" class="btn secondary" id="refreshHistory">↻ '+t('Refresh',lang)+'</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"><div class="empty">Loading inventory activity…</div></div></section>';
 
   let snapshotMap={};
   let snapshotLoaded=false;
@@ -1035,7 +1035,7 @@ async function renderInventory(p){
           const selectFields='id,effective_date,material_code,direction,qty_base,reason,package_count,package_label,created_by,created_at';
           const fetchLedger=async(mode)=>{
             const all=[];
-            for(let offset=0;offset<50000;offset+=1000){
+            for(let offset=0;offset<5000;offset+=1000){
               let query=supabase.from('inventory_transactions').select(selectFields)
                 .order('effective_date',{ascending:true}).order('created_at',{ascending:true})
                 .range(offset,offset+999);
@@ -1046,7 +1046,7 @@ async function renderInventory(p){
               all.push(...rows);
               if(rows.length<1000)return all;
             }
-            throw new Error('Too many inventory rows for the read-only recovery. Run the inventory RPC migration.');
+            throw new Error('Inventory history is too large for safe client-side recovery. Restore the inventory RPC migration for fast loading.');
           };
           const [datedRows,laterRows]=await Promise.all([fetchLedger('on'),fetchLedger('after')]);
           const current=new Map((liveState.balances||[]).map(row=>[row.code,Number(row.stock)||0]));
@@ -1128,7 +1128,24 @@ async function renderInventory(p){
     finally{button.disabled=false;}
   });
   $('stockIn').addEventListener('click',()=>openStockModal());
-  updatePackageOptions();if(await loadDate(today()))setTargetFromSnapshot();
+  updatePackageOptions();
+  // Load dated history after the page is visible so slow RPCs never block menu switching.
+  void loadDate(today()).then(ok=>{if(ok&&document.body.dataset.route==='inventory'&&$('stockHistoryDate'))setTargetFromSnapshot();});
+  if(!isDemo){
+    void supabase.from('inventory_balances').select('*').then(({data,error})=>{
+      if(error||!Array.isArray(data)||document.body.dataset.route!=='inventory')return;
+      liveState.balances=data;
+      data.forEach(row=>{
+        const card=p.querySelector('[data-stock-card="'+row.code+'"]');
+        const material=STOCK_MATERIALS.find(m=>m.code===row.code);
+        if(!card||!material)return;
+        const breakdown=stockBreakdown(material,Number(row.stock)||0,lang);
+        const primary=card.querySelector('.stock-primary'),secondary=card.querySelector('.stock-secondary');
+        if(primary)primary.textContent=breakdown.primary;
+        if(secondary)secondary.textContent=breakdown.secondary;
+      });
+    }).catch(()=>{});
+  }
 }
 function openStockModal(){
   const opts=STOCK_MATERIALS.map(m=>`<option value="${m.code}">${esc(t(m.name,lang))}</option>`).join('');
