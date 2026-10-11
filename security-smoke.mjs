@@ -148,5 +148,6 @@ assert.ok(app.includes("Bakery photo: Your bakery"));
 assert.ok(mobileCss.includes("@keyframes dfIosIconPop"));
 assert.ok(mobileCss.includes("prefers-reduced-motion:reduce"));
 
-assert.ok(worker.includes("./assets/bakery.webp") && dashboardCss.includes("images.unsplash.com"), "real photo assets should be available without generated illustrations");
+assert.ok(worker.includes("./assets/bakery.webp") && worker.includes("./assets/leposhka-detail.svg") && worker.includes("./assets/leposhka-delivery.svg"), "real bakery photos should be precached for offline startup");
+assert.ok(!dashboardCss.includes("Landscape_view%2C_Ala_Archa_National_Park") && !dashboardCss.includes("images.unsplash.com"), "the dashboard hero must not fall back to a blended mountain/photo background");
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
