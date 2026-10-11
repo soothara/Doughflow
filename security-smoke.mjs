@@ -53,7 +53,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v23-20261011-fast-auth-navigation/);
+assert.match(worker, /doughflow-v24-20261011-kyrgyz-mountains-lepeshka-ios-icons/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -67,7 +67,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v23-20261011-fast-auth-navigation/);
+assert.match(worker, /doughflow-v24-20261011-kyrgyz-mountains-lepeshka-ios-icons/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -135,4 +135,15 @@ assert.match(app, /for\(let offset=0;offset<5000;offset\+=1000\)/, "read-only fa
 assert.match(app, /dashboard data must never gate sign-in/, "session restore should not wait for dashboard data");
 assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching should reuse the app shell");
 assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should use fast route switching");
+
+assert.match(dashboardCss, /Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01/);
+assert.match(dashboardCss, /Uzbek_bread%2C_obi_non%2C_lepyoshka/);
+assert.doesNotMatch(dashboardCss, /images\\.unsplash\\.com\\/photo-1464822759023-fed622ff2c3b|images\\.unsplash\\.com\\/photo-1509440159596/);
+assert.match(app, /chefHat:'<path/);
+assert.match(app, /uiIcon\('chefHat',26\)/);
+assert.match(app, /Mountains: Vilya Shoni \/ Wikimedia Commons/);
+assert.match(app, /Lepeshka: Benjamin Goetzinger \/ Wikimedia Commons/);
+assert.match(mobileCss, /@keyframes dfIosIconPop/);
+assert.match(mobileCss, /prefers-reduced-motion:reduce/);
+
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
