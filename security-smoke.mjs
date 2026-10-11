@@ -128,7 +128,7 @@ for (const char of mobileCss) {
 assert.equal(mobileBraceDepth, 0, "mobile CSS rules must have balanced braces");
 assert.doesNotMatch(app, /Bakery Simulator|simulatorHTML|renderSimulator|wireSimulatorInteractions|quest-panel|renderQuest|questPlay|questReward/i, "no simulator/quest code should remain");
 
-assert.doesNotMatch(app.slice(app.indexOf("async function renderInventory(p)"), app.indexOf("function openStockModal")), /await refreshLiveState\(\)/, "Stock route must not wait for the full dashboard refresh");
+assert.doesNotMatch(app.slice(app.indexOf("async function renderInventory(p)"), app.indexOf("const options=STOCK_MATERIALS.map")), /await refreshLiveState\(\)/, "Stock route must not wait for the full dashboard refresh");
 assert.match(app, /void loadDate\(today\(\)\)/, "inventory history should load after first paint");
 assert.match(app, /for\(let offset=0;offset<5000;offset\+=1000\)/, "read-only fallback work must be bounded");
 
