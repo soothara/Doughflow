@@ -662,3 +662,6 @@ body.dashboard-mode{
 
 /* HD third slide is a closer crop of the same original baker photo, not a generated face. */
 .dashboard-mode .portal-hero-photo.hero-slide-detail{background-size:165% auto;background-position:62% 40%}
+
+/* Use a closer crop of the same high-resolution baker image for slide three. */
+.dashboard-mode .portal-hero-photo.hero-slide-detail{background-size:155% auto;background-position:58% 35%}

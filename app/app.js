@@ -767,16 +767,9 @@ function renderDashboard(p){
     return `<${tag} class="stock-item${canOpen?' stock-open':''}" data-tilt${attrs}><div class="stock-item-icon ${esc(m.code)}">${materialIcon(m.code)}</div><div class="stock-item-copy"><b>${esc(t(m.name,lang))}</b><strong class="${empty?'empty-stock':''}">${esc(view.primary)}${empty?' <em>!</em>':''}</strong><small>${esc(view.secondary)}</small></div><span class="stock-chevron">${uiIcon('chevron',16)}</span></${tag}>`;
   }).join('');
   const heroImages=[
-    ['01-baker-tandoor-hd-20261012.webp','Baker working beside a traditional tandoor'],
-    ['02-leposhka-closeup-hd-20261012.avif','Golden leposhka bread close up'],
-    ['03-bishkek-context.webp','Bishkek bakery surroundings'],
-    ['04-bread-delivery-owner.webp','Bakery owner with bread delivery'],
-    ['05-bread-delivery-worker.webp','Bakery worker beside bread delivery van'],
-    ['06-van-bread-stock.webp','Fresh leposhka packed for delivery'],
-    ['07-bakery-team.webp','Askat bakery team at work'],
-    ['08-bakery-team-selfie.webp','Bakery team selfie'],
-    ['09-team-social.webp','Bakery team together'],
-    ['10-oven-production.webp','Fresh bread coming from the oven']
+    ['01-baker-tandoor-hd-20261012.webp','Baker at work beside the tandoor'],
+    ['02-leposhka-closeup-hd-20261012.avif','Fresh leposhka bread close up'],
+    ['01-baker-tandoor-hd-20261012.webp','Baker at work — closer view']
   ];
   const heroPhotoMarkup=heroImages.map(([src,label],index)=>'<div class="portal-hero-photo hero-slide'+(index===0?' is-active':'')+'" data-hero-photo="'+index+'" role="img" aria-label="'+label+'" style="background-image:url(./assets/doughflow-gallery/'+src+')"'+(index===0?'':' aria-hidden="true"')+'></div>').join('');
   const heroDotsMarkup=heroImages.map((_,index)=>'<button type="button" class="hero-slide-dot'+(index===0?' is-active':'')+'" data-hero-slide="'+index+'" aria-label="Show photo '+(index+1)+'" aria-current="'+(index===0?'true':'false')+'"></button>').join('');

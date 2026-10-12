@@ -53,7 +53,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v39-20261012-full-10photo-gallery-3s/);
+assert.match(worker, /doughflow-v40-20261012-hd-only-gallery-3s/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -67,7 +67,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v39-20261012-full-10photo-gallery-3s/);
+assert.match(worker, /doughflow-v40-20261012-hd-only-gallery-3s/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -138,16 +138,19 @@ assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should 
 
 const expectedHeroImages = ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"];
 const heroImageSection = app.slice(app.indexOf("const heroImages=["), app.indexOf("const heroPhotoMarkup="));
-assert.equal((heroImageSection.match(/\['/g) || []).length, 10, "hero carousel should contain ten distinct photo slides");
+const heroImageSection = app.slice(app.indexOf("const heroImages=["), app.indexOf("const heroPhotoMarkup="));
+assert.equal((heroImageSection.match(/\['/g) || []).length, 3, "hero carousel should show only the available HD photo slides");
+assert.ok(heroImageSection.includes("01-baker-tandoor-hd-20261012.webp") && heroImageSection.includes("02-leposhka-closeup-hd-20261012.avif"), "HD hero gallery should use the available high-resolution images");
+assert.match(worker, /doughflow-v40-20261012-hd-only-gallery-3s/, "service worker cache version must change when low-resolution slides are removed");
 for (const image of expectedHeroImages) assert.ok(heroImageSection.includes(image), "hero gallery should include " + image);
 for (const image of expectedHeroImages) assert.ok(worker.includes("./assets/doughflow-gallery/" + image), "service worker must precache " + image);
-assert.match(worker, /doughflow-v39-20261012-full-10photo-gallery-3s/, "service worker cache version must change when restoring the full gallery");
+assert.match(worker, /doughflow-v40-20261012-hd-only-gallery-3s/, "service worker cache version must change when restoring the full gallery");
 assert.ok(app.includes("data-hero-carousel") && app.includes("data-hero-next") && app.includes("data-hero-prev"), "hero photo carousel controls should be interactive");
 assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should rotate every three seconds");
 assert.ok(app.includes("const heroImages=["), "hero must define its selected photo gallery");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(app.includes(image), "selected hero gallery must include "+image);
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected authentic gallery image "+image);
-assert.match(worker, /doughflow-v39-20261012-full-10photo-gallery-3s/, "service worker cache version must change when gallery assets are replaced");
+assert.match(worker, /doughflow-v40-20261012-hd-only-gallery-3s/, "service worker cache version must change when gallery assets are replaced");
 assert.ok(app.includes("heroPhotoMarkup") && app.includes("heroDotsMarkup"), "hero slides and navigation dots should be generated from one gallery");
 assert.ok(dashboardCss.includes("High-visibility mobile hero") && dashboardCss.includes("rgba(6,18,29,.78)"), "hero photo and text should remain clearly visible");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero-photo.hero-slide.is-active{display:block}"), "only the active hero photo should be visible; do not blend photos");
