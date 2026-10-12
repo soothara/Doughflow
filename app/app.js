@@ -778,7 +778,7 @@ function renderDashboard(p){
     ['09-team-social.webp','Bakery team together'],
     ['10-oven-production.webp','Fresh bread coming from the oven']
   ];
-  const heroPhotoMarkup=heroImages.map(([src,label],index)=>'<div class="portal-hero-photo hero-slide'+(index===0?' is-active':'')++'" data-hero-photo="'+index+'" role="img" aria-label="'+label+'" style="background-image:url(./assets/doughflow-gallery/'+src+')"'+(index===0?'':' aria-hidden="true"')+'></div>').join('');
+  const heroPhotoMarkup=heroImages.map(([src,label],index)=>'<div class="portal-hero-photo hero-slide'+(index===0?' is-active':'')+'" data-hero-photo="'+index+'" role="img" aria-label="'+label+'" style="background-image:url(./assets/doughflow-gallery/'+src+')"'+(index===0?'':' aria-hidden="true"')+'></div>').join('');
   const heroDotsMarkup=heroImages.map((_,index)=>'<button type="button" class="hero-slide-dot'+(index===0?' is-active':'')+'" data-hero-slide="'+index+'" aria-label="Show photo '+(index+1)+'" aria-current="'+(index===0?'true':'false')+'"></button>').join('');
   p.innerHTML =
     "<section class='portal-hero' data-hero-carousel aria-label='DoughFlow photo highlights'>"+
