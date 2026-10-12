@@ -67,7 +67,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v36-20261012-authentic-gallery-3photos-3s/);
+assert.match(worker, /doughflow-v37-20261012-authentic-hd-gallery-3photos-3s/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -142,7 +142,7 @@ assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should 
 assert.ok(app.includes("const heroImages=["), "hero must define its selected photo gallery");
 for (const image of ["01-baker-tandoor.webp","02-leposhka-closeup.avif"]) assert.ok(app.includes(image), "selected hero gallery must include "+image);
 for (const image of ["01-baker-tandoor.webp","02-leposhka-closeup.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected authentic gallery image "+image);
-assert.match(worker, /doughflow-v36-20261012-authentic-gallery-3photos-3s/, "service worker cache version must change when gallery assets are replaced");
+assert.match(worker, /doughflow-v37-20261012-authentic-hd-gallery-3photos-3s/, "service worker cache version must change when gallery assets are replaced");
 assert.ok(app.includes("heroPhotoMarkup") && app.includes("heroDotsMarkup"), "hero slides and navigation dots should be generated from one gallery");
 assert.ok(dashboardCss.includes("High-visibility mobile hero") && dashboardCss.includes("rgba(6,18,29,.78)"), "hero photo and text should remain clearly visible");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero-photo.hero-slide.is-active{display:block}"), "only the active hero photo should be visible; do not blend photos");
