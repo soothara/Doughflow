@@ -1,0 +1,87 @@
+name: Upscale DoughFlow gallery photos
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/upscale-gallery.yml"
+      - "app/assets/doughflow-gallery/*.webp"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: doughflow-gallery-upscale
+  cancel-in-progress: false
+
+jobs:
+  upscale:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install CPU super-resolution dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy<2" pillow
+          python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          git clone --depth 1 https://github.com/xinntao/Real-ESRGAN.git /tmp/Real-ESRGAN
+          cd /tmp/Real-ESRGAN
+          python -m pip install -r requirements.txt
+          python setup.py develop
+
+      - name: Super-resolve gallery without face enhancement
+        run: |
+          mkdir -p /tmp/doughflow-upscaled
+          python /tmp/Real-ESRGAN/inference_realesrgan.py \
+            -n RealESRGAN_x4plus \
+            -i app/assets/doughflow-gallery \
+            -o /tmp/doughflow-upscaled \
+            --outscale 4 \
+            --tile 256 \
+            --tile_pad 10
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageFilter, ImageEnhance
+          source = Path("/tmp/doughflow-upscaled")
+          target = Path("app/assets/doughflow-gallery")
+          expected = [
+              "01-baker-tandoor.webp", "02-leposhka-closeup.webp",
+              "03-bishkek-context.webp", "04-bread-delivery-owner.webp",
+              "05-bread-delivery-worker.webp", "06-van-bread-stock.webp",
+              "07-bakery-team.webp", "08-bakery-team-selfie.webp",
+              "09-team-social.webp", "10-oven-production.webp",
+          ]
+          for name in expected:
+              candidates = list(source.glob(Path(name).stem + ".*"))
+              if not candidates:
+                  raise SystemExit(f"Missing super-resolution output for {name}")
+              with Image.open(candidates[0]) as im:
+                  im = im.convert("RGB").resize((1280, 720), Image.Resampling.LANCZOS)
+                  im = ImageEnhance.Contrast(im).enhance(1.025)
+                  im = im.filter(ImageFilter.UnsharpMask(radius=1.15, percent=115, threshold=3))
+                  im.save(target / name, "WEBP", quality=91, method=6)
+              print(f"{name}: {(target / name).stat().st_size:,} bytes")
+          PY
+
+      - name: Commit improved assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/assets/doughflow-gallery/*.webp
+          if git diff --cached --quiet; then
+            echo "No gallery changes to commit."
+            exit 0
+          fi
+          git commit -m "Improve DoughFlow gallery image resolution"
+          git push origin HEAD:main
