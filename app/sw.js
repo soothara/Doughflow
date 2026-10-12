@@ -14,7 +14,7 @@ const CORE_ASSETS = [
   './assets/bakery.webp',
   './assets/leposhka-detail.svg',
   './assets/leposhka-delivery.svg',
-  './assets/leposhka-emblem.svg'
+  './assets/leposhka-emblem.svg',
   './assets/doughflow-gallery/01-baker-tandoor-hd-20261012.webp',
   './assets/doughflow-gallery/02-leposhka-closeup-hd-20261012.avif',
   './assets/doughflow-gallery/03-bishkek-context.webp',
