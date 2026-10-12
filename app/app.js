@@ -767,9 +767,16 @@ function renderDashboard(p){
     return `<${tag} class="stock-item${canOpen?' stock-open':''}" data-tilt${attrs}><div class="stock-item-icon ${esc(m.code)}">${materialIcon(m.code)}</div><div class="stock-item-copy"><b>${esc(t(m.name,lang))}</b><strong class="${empty?'empty-stock':''}">${esc(view.primary)}${empty?' <em>!</em>':''}</strong><small>${esc(view.secondary)}</small></div><span class="stock-chevron">${uiIcon('chevron',16)}</span></${tag}>`;
   }).join('');
   const heroImages=[
-    ['01-baker-tandoor-hd-20261012.webp','Baker at work beside the tandoor'],
-    ['02-leposhka-closeup-hd-20261012.avif','Fresh leposhka bread close up'],
-    ['01-baker-tandoor-hd-20261012.webp','Baker at work — closer view']
+    ['01-baker-tandoor-hd-20261012.webp','Baker beside the tandoor'],
+    ['02-leposhka-closeup-hd-20261012.avif','Fresh leposhka close-up'],
+    ['03-bishkek-context.webp','Bishkek street scene'],
+    ['04-bread-delivery-owner.webp','Worker with a van full of leposhka'],
+    ['05-bread-delivery-worker.webp','Bread delivery worker'],
+    ['06-van-bread-stock.webp','Van stocked with leposhka'],
+    ['07-bakery-team.webp','Bakery team together'],
+    ['08-bakery-team-selfie.webp','Bakery team selfie'],
+    ['09-team-social.webp','Team social gathering'],
+    ['10-oven-production.webp','Bread production and stock']
   ];
   const heroPhotoMarkup=heroImages.map(([src,label],index)=>'<div class="portal-hero-photo hero-slide'+(index===0?' is-active':'')+'" data-hero-photo="'+index+'" role="img" aria-label="'+label+'" style="background-image:url(./assets/doughflow-gallery/'+src+')"'+(index===0?'':' aria-hidden="true"')+'></div>').join('');
   const heroDotsMarkup=heroImages.map((_,index)=>'<button type="button" class="hero-slide-dot'+(index===0?' is-active':'')+'" data-hero-slide="'+index+'" aria-label="Show photo '+(index+1)+'" aria-current="'+(index===0?'true':'false')+'"></button>').join('');
