@@ -767,9 +767,9 @@ function renderDashboard(p){
     return `<${tag} class="stock-item${canOpen?' stock-open':''}" data-tilt${attrs}><div class="stock-item-icon ${esc(m.code)}">${materialIcon(m.code)}</div><div class="stock-item-copy"><b>${esc(t(m.name,lang))}</b><strong class="${empty?'empty-stock':''}">${esc(view.primary)}${empty?' <em>!</em>':''}</strong><small>${esc(view.secondary)}</small></div><span class="stock-chevron">${uiIcon('chevron',16)}</span></${tag}>`;
   }).join('');
   const heroImages=[
-    ['01-baker-tandoor.webp','Baker working beside a traditional tandoor'],
-    ['02-leposhka-closeup.avif','Golden leposhka bread close up'],
-    ['01-baker-tandoor.webp','Closer view of the real baker at work']
+    ['01-baker-tandoor-hd-20261012.webp','Baker working beside a traditional tandoor'],
+    ['02-leposhka-closeup-hd-20261012.avif','Golden leposhka bread close up'],
+    ['01-baker-tandoor-hd-20261012.webp','Closer view of the real baker at work']
   ];
   const heroPhotoMarkup=heroImages.map(([src,label],index)=>'<div class="portal-hero-photo hero-slide'+(index===0?' is-active':'')+(index===2?' hero-slide-detail':'')+'" data-hero-photo="'+index+'" role="img" aria-label="'+label+'" style="background-image:url(./assets/doughflow-gallery/'+src+')"'+(index===0?'':' aria-hidden="true"')+'></div>').join('');
   const heroDotsMarkup=heroImages.map((_,index)=>'<button type="button" class="hero-slide-dot'+(index===0?' is-active':'')+'" data-hero-slide="'+index+'" aria-label="Show photo '+(index+1)+'" aria-current="'+(index===0?'true':'false')+'"></button>').join('');
