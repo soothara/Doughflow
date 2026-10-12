@@ -141,7 +141,8 @@ assert.ok(app.includes("data-hero-carousel") && app.includes("data-hero-next") &
 assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should rotate every three seconds");
 assert.ok(app.includes("const heroImages=["), "hero must define its selected photo gallery");
 for (const image of ["01-baker-tandoor.webp","02-leposhka-closeup.webp","06-van-bread-stock.webp"]) assert.ok(app.includes(image), "selected hero gallery must include "+image);
-for (const image of ["01-baker-tandoor.webp","02-leposhka-closeup.webp","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache "+image);
+for (const image of ["01-baker-tandoor.webp","02-leposhka-closeup.webp","06-van-bread-stock.webp"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected authentic gallery image "+image);
+assert.match(worker, /doughflow-v36-20261012-authentic-gallery-3photos-3s/, "service worker cache version must change when gallery assets are replaced");
 assert.ok(app.includes("heroPhotoMarkup") && app.includes("heroDotsMarkup"), "hero slides and navigation dots should be generated from one gallery");
 assert.ok(dashboardCss.includes("High-visibility mobile hero") && dashboardCss.includes("rgba(6,18,29,.78)"), "hero photo and text should remain clearly visible");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero-photo.hero-slide.is-active{display:block}"), "only the active hero photo should be visible; do not blend photos");
