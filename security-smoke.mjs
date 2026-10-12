@@ -136,13 +136,13 @@ assert.match(app, /dashboard data must never gate sign-in/, "session restore sho
 assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching should reuse the app shell");
 assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should use fast route switching");
 
-assert.ok(app.includes("leposhka-detail.svg") && app.includes("leposhka-delivery.svg") && app.includes("bakery.webp"), "hero carousel should use local bakery photos instead of external stock photos");
+assert.ok(app.includes("doughflow-gallery/") && app.includes("01-baker-tandoor.webp") && app.includes("10-oven-production.webp"), "hero carousel should use its local ten-photo gallery");
 assert.ok(app.includes("data-hero-carousel") && app.includes("data-hero-next") && app.includes("data-hero-prev"), "hero photo carousel controls should be interactive");
 assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should rotate every three seconds");
 assert.ok(app.includes("const heroImages=["), "hero must define the ten-image gallery");
 for (const image of ["01-baker-tandoor.webp","02-leposhka-closeup.webp","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"]) assert.ok(app.includes(image), "gallery must include "+image);
 for (const image of ["01-baker-tandoor.webp","02-leposhka-closeup.webp","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache "+image);
-assert.ok(app.includes("./assets/leposhka-detail.svg") && app.includes("./assets/leposhka-delivery.svg") && app.includes("./assets/bakery.webp"), "hero should use local bakery photos available offline");
+assert.ok(app.includes("heroPhotoMarkup") && app.includes("heroDotsMarkup"), "hero slides and navigation dots should be generated from one gallery");
 assert.ok(dashboardCss.includes("High-visibility mobile hero") && dashboardCss.includes("rgba(6,18,29,.78)"), "hero photo and text should remain clearly visible");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero-photo.hero-slide.is-active{display:block}"), "only the active hero photo should be visible; do not blend photos");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero::after{content:none!important;display:none!important}"), "decorative overlay photo must be disabled");
@@ -153,7 +153,7 @@ assert.doesNotMatch(app, /OpenAI Platform|openai-platform-badge/i, "OpenAI Platf
 assert.doesNotMatch(dashboardCss, /openai-platform|dfOpenAI/i, "unused OpenAI badge styles should be removed");
 assert.ok(app.includes("leposhka-emblem.svg"), "New Production should use the new leposhka emblem");
 assert.ok(worker.includes("./assets/leposhka-emblem.svg"), "the new emblem should be precached");
-assert.ok(app.includes("Bakery photo: Your bakery"));
+assert.ok(app.includes("Photo gallery · 10 bakery scenes · changes every 3 seconds"));
 assert.ok(mobileCss.includes("@keyframes dfIosIconPop"));
 assert.ok(mobileCss.includes("prefers-reduced-motion:reduce"));
 
