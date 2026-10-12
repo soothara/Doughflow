@@ -47,20 +47,6 @@ body.dashboard-mode{
   z-index:-2;
   background:linear-gradient(180deg,rgba(9,30,51,.43) 0%,rgba(10,35,55,.12) 38%,rgba(8,30,48,.48) 100%);
 }
-.dashboard-mode .portal-hero::after{
-  content:"";
-  position:absolute;
-  inset:9% 0 0 49%;
-  z-index:-1;
-  pointer-events:none;
-  opacity:.94;
-  background-image:url('./assets/bakery.webp');
-  background-position:58% center;
-  background-size:cover;
-  filter:saturate(1.08) contrast(1.03);
-  -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.3) 14%,#000 40%);
-  mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.3) 14%,#000 40%);
-}
 .dashboard-mode .portal-hero-content{
   position:relative;
   display:flex;
@@ -667,3 +653,9 @@ body.dashboard-mode{
   .dashboard-mode .portal-hero{min-height:300px}
   .dashboard-mode .portal-hero-content{min-height:300px;padding-bottom:46px}
 }
+
+
+/* Use one authentic slide at a time. The previous pseudo-element overlaid a second
+   bakery image on every slide, causing ghosted/doubled people and bread. */
+.dashboard-mode .portal-hero::after{content:none!important;display:none!important}
+.dashboard-mode .portal-hero-photo{background-blend-mode:normal}

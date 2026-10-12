@@ -769,14 +769,7 @@ function renderDashboard(p){
   const heroImages=[
     ['01-baker-tandoor.webp','Baker working beside a traditional tandoor'],
     ['02-leposhka-closeup.webp','Golden leposhka bread close up'],
-    ['03-bishkek-context.webp','Bishkek bakery and city context'],
-    ['04-bread-delivery-owner.webp','Bakery owner with bread delivery van'],
-    ['05-bread-delivery-worker.webp','Bakery worker with bread delivery van'],
-    ['06-van-bread-stock.webp','Van stocked with fresh leposhka'],
-    ['07-bakery-team.webp','Bakery team at work'],
-    ['08-bakery-team-selfie.webp','Bakery team selfie'],
-    ['09-team-social.webp','Bakery team sharing a meal'],
-    ['10-oven-production.webp','Fresh leposhka coming from the oven']
+    ['06-van-bread-stock.webp','Fresh leposhka prepared for delivery']
   ];
   const heroPhotoMarkup=heroImages.map(([src,label],index)=>'<div class="portal-hero-photo hero-slide'+(index===0?' is-active':'')+'" data-hero-photo="'+index+'" role="img" aria-label="'+label+'" style="background-image:url(./assets/doughflow-gallery/'+src+')"'+(index===0?'':' aria-hidden="true"')+'></div>').join('');
   const heroDotsMarkup=heroImages.map((_,index)=>'<button type="button" class="hero-slide-dot'+(index===0?' is-active':'')+'" data-hero-slide="'+index+'" aria-label="Show photo '+(index+1)+'" aria-current="'+(index===0?'true':'false')+'"></button>').join('');
