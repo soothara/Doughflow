@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v34-20261012-photo-refresh-3s';
+const CACHE = 'doughflow-v35-20261012-gallery-10photos-3s';
 
 const CORE_ASSETS = [
   './',
@@ -12,6 +12,16 @@ const CORE_ASSETS = [
   './manifest.webmanifest',
   './icon.svg',
   './assets/bakery.webp',
+  './assets/doughflow-gallery/01-baker-tandoor.webp',
+  './assets/doughflow-gallery/02-leposhka-closeup.webp',
+  './assets/doughflow-gallery/03-bishkek-context.webp',
+  './assets/doughflow-gallery/04-bread-delivery-owner.webp',
+  './assets/doughflow-gallery/05-bread-delivery-worker.webp',
+  './assets/doughflow-gallery/06-van-bread-stock.webp',
+  './assets/doughflow-gallery/07-bakery-team.webp',
+  './assets/doughflow-gallery/08-bakery-team-selfie.webp',
+  './assets/doughflow-gallery/09-team-social.webp',
+  './assets/doughflow-gallery/10-oven-production.webp',
   './assets/leposhka-detail.svg',
   './assets/leposhka-delivery.svg',
   './assets/leposhka-emblem.svg'

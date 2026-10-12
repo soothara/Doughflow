@@ -766,11 +766,23 @@ function renderDashboard(p){
     const empty=m.inventoryTracked!==false&&m.stock<=0;
     return `<${tag} class="stock-item${canOpen?' stock-open':''}" data-tilt${attrs}><div class="stock-item-icon ${esc(m.code)}">${materialIcon(m.code)}</div><div class="stock-item-copy"><b>${esc(t(m.name,lang))}</b><strong class="${empty?'empty-stock':''}">${esc(view.primary)}${empty?' <em>!</em>':''}</strong><small>${esc(view.secondary)}</small></div><span class="stock-chevron">${uiIcon('chevron',16)}</span></${tag}>`;
   }).join('');
+  const heroImages=[
+    ['01-baker-tandoor.webp','Baker working beside a traditional tandoor'],
+    ['02-leposhka-closeup.webp','Golden leposhka bread close up'],
+    ['03-bishkek-context.webp','Bishkek bakery and city context'],
+    ['04-bread-delivery-owner.webp','Bakery owner with bread delivery van'],
+    ['05-bread-delivery-worker.webp','Bakery worker with bread delivery van'],
+    ['06-van-bread-stock.webp','Van stocked with fresh leposhka'],
+    ['07-bakery-team.webp','Bakery team at work'],
+    ['08-bakery-team-selfie.webp','Bakery team selfie'],
+    ['09-team-social.webp','Bakery team sharing a meal'],
+    ['10-oven-production.webp','Fresh leposhka coming from the oven']
+  ];
+  const heroPhotoMarkup=heroImages.map(([src,label],index)=>'<div class="portal-hero-photo hero-slide'+(index===0?' is-active':'')+'" data-hero-photo="'+index+'" role="img" aria-label="'+label+'" style="background-image:url(./assets/doughflow-gallery/'+src+')"'+(index===0?'':' aria-hidden="true"')+'></div>').join('');
+  const heroDotsMarkup=heroImages.map((_,index)=>'<button type="button" class="hero-slide-dot'+(index===0?' is-active':'')+'" data-hero-slide="'+index+'" aria-label="Show photo '+(index+1)+'" aria-current="'+(index===0?'true':'false')+'"></button>').join('');
   p.innerHTML =
     "<section class='portal-hero' data-hero-carousel aria-label='DoughFlow photo highlights'>"+
-      "<div class='portal-hero-photo hero-slide is-active' data-hero-photo='0' role='img' aria-label='Fresh leposhka from our bakery' style=\"background-image:url('./assets/leposhka-detail.svg')\"></div>"+
-      "<div class='portal-hero-photo hero-slide' data-hero-photo='1' role='img' aria-label='Fresh leposhka prepared for delivery' style=\"background-image:url('./assets/leposhka-delivery.svg')\" aria-hidden='true'></div>"+
-      "<div class='portal-hero-photo hero-slide' data-hero-photo='2' role='img' aria-label='Bakery production photo' style=\"background-image:url('./assets/bakery.webp')\" aria-hidden='true'></div>"+
+      heroPhotoMarkup+
       "<div class='portal-hero-shade'></div>"+
       "<div class='portal-hero-content'>"+
         "<div class='hero-topline'>"+
@@ -782,7 +794,7 @@ function renderDashboard(p){
       "</div>"+
       "<div class='hero-slide-controls' aria-label='Photo carousel controls'>"+
         "<button type='button' class='hero-slide-arrow' data-hero-prev aria-label='Previous photo'>‹</button>"+
-        "<div class='hero-slide-dots'><button type='button' class='hero-slide-dot is-active' data-hero-slide='0' aria-label='Show photo 1' aria-current='true'></button><button type='button' class='hero-slide-dot' data-hero-slide='1' aria-label='Show photo 2' aria-current='false'></button><button type='button' class='hero-slide-dot' data-hero-slide='2' aria-label='Show photo 3' aria-current='false'></button></div>"+
+        "<div class='hero-slide-dots'>"+heroDotsMarkup+"</div>"+
         "<button type='button' class='hero-slide-arrow' data-hero-next aria-label='Next photo'>›</button>"+
       "</div>"+
     "</section>"+
@@ -815,7 +827,7 @@ function renderDashboard(p){
         "<div class='made-by-copy'><strong>Сделано Али</strong><span class='made-by-subtitle'>DOUGHFLOW · BAKERY CONTROL</span></div>"+
         "<div class='made-by-kyrgyz' aria-hidden='true'>🇰🇬</div>"+
       "</a>"+
-      "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:Landscape_view,_Ala_Archa_National_Park,_Chuy_region,_Kyrgyzstan_01.jpg' target='_blank' rel='noopener'>Mountains: Vilya Shoni / Wikimedia Commons</a> · <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='noopener'>CC BY-SA 4.0</a> · <span>Bakery photo: Your bakery</span></div>"+
+      "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:Landscape_view,_Ala_Archa_National_Park,_Chuy_region,_Kyrgyzstan_01.jpg' target='_blank' rel='noopener'>Photo gallery · 10 bakery scenes · changes every 3 seconds</div>"+
     "</div>";
 
   let selected=0;
