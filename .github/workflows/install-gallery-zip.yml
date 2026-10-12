@@ -1,0 +1,82 @@
+name: Install HD DoughFlow gallery assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'doughflow-gallery-hd-assets.zip'
+
+permissions:
+  contents: write
+
+jobs:
+  install-gallery:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Validate uploaded archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="doughflow-gallery-hd-assets.zip"
+          test -f "$archive" || { echo "Upload $archive to the repository root first."; exit 1; }
+          temp="$(mktemp -d)"
+          trap 'rm -rf "$temp"' EXIT
+          unzip -q "$archive" -d "$temp"
+          src="$temp/doughflow-gallery-hd-assets"
+          python3 - "$src" <<'PY'
+          from pathlib import Path
+          import sys
+          root = Path(sys.argv[1])
+          names = [
+              "03-bishkek-context.webp",
+              "04-bread-delivery-owner.webp",
+              "05-bread-delivery-worker.webp",
+              "06-van-bread-stock.webp",
+              "07-bakery-team.webp",
+              "08-bakery-team-selfie.webp",
+              "09-team-social.webp",
+              "10-oven-production.webp",
+          ]
+          for name in names:
+              p = root / name
+              if not p.is_file():
+                  raise SystemExit(f"Missing gallery photo: {name}")
+              data = p.read_bytes()
+              if len(data) < 30000:
+                  raise SystemExit(f"Photo is still too small to be the HD replacement: {name} ({len(data)} bytes)")
+              if data[:4] != b"RIFF" or data[8:12] != b"WEBP":
+                  raise SystemExit(f"Invalid WebP asset: {name}")
+              print(f"Validated {name}: {len(data):,} bytes")
+          PY
+
+      - name: Install gallery photos and run checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="$(find "$RUNNER_TEMP" -maxdepth 2 -type d -name doughflow-gallery-hd-assets -print -quit)"
+          # Re-extract in a known directory so paths are stable.
+          mkdir -p "$RUNNER_TEMP/doughflow-gallery-src"
+          unzip -oq doughflow-gallery-hd-assets.zip -d "$RUNNER_TEMP/doughflow-gallery-src"
+          src="$RUNNER_TEMP/doughflow-gallery-src/doughflow-gallery-hd-assets"
+          dest="app/assets/doughflow-gallery"
+          mkdir -p "$dest"
+          for asset in 03-bishkek-context.webp 04-bread-delivery-owner.webp 05-bread-delivery-worker.webp 06-van-bread-stock.webp 07-bakery-team.webp 08-bakery-team-selfie.webp 09-team-social.webp 10-oven-production.webp; do
+            cp "$src/$asset" "$dest/$asset"
+          done
+          node --input-type=module --check < app/app.js
+          node --check app/config.js
+          node --check app/sw.js
+          node security-smoke.mjs
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm doughflow-gallery-hd-assets.zip
+          git add app/assets/doughflow-gallery/03-bishkek-context.webp app/assets/doughflow-gallery/04-bread-delivery-owner.webp app/assets/doughflow-gallery/05-bread-delivery-worker.webp app/assets/doughflow-gallery/06-van-bread-stock.webp app/assets/doughflow-gallery/07-bakery-team.webp app/assets/doughflow-gallery/08-bakery-team-selfie.webp app/assets/doughflow-gallery/09-team-social.webp app/assets/doughflow-gallery/10-oven-production.webp
+          git add -- doughflow-gallery-hd-assets.zip
+          git commit -m "Replace blurry gallery photos with HD assets"
+          git push origin HEAD:main
