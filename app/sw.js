@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v36-20261012-authentic-gallery-3photos-3s';
+const CACHE = 'doughflow-v37-20261012-authentic-hd-gallery-3photos-3s';
 
 const CORE_ASSETS = [
   './',
@@ -13,8 +13,8 @@ const CORE_ASSETS = [
   './icon.svg',
   './assets/bakery.webp',
   './assets/doughflow-gallery/01-baker-tandoor.webp',
-  './assets/doughflow-gallery/02-leposhka-closeup.webp',
-  './assets/doughflow-gallery/06-van-bread-stock.webp',
+  './assets/doughflow-gallery/02-leposhka-closeup.avif',
+  './assets/doughflow-gallery/01-baker-tandoor.webp',
   './assets/leposhka-detail.svg',
   './assets/leposhka-delivery.svg',
   './assets/leposhka-emblem.svg'

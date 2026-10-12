@@ -659,3 +659,6 @@ body.dashboard-mode{
    bakery image on every slide, causing ghosted/doubled people and bread. */
 .dashboard-mode .portal-hero::after{content:none!important;display:none!important}
 .dashboard-mode .portal-hero-photo{background-blend-mode:normal}
+
+/* HD third slide is a closer crop of the same original baker photo, not a generated face. */
+.dashboard-mode .portal-hero-photo.hero-slide-detail{background-size:165% auto;background-position:62% 40%}
