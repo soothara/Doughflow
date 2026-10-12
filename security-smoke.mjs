@@ -136,7 +136,12 @@ assert.match(app, /dashboard data must never gate sign-in/, "session restore sho
 assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching should reuse the app shell");
 assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should use fast route switching");
 
-assert.ok(app.includes("doughflow-gallery/") && app.includes("01-baker-tandoor-hd-20261012.webp") && app.includes("02-leposhka-closeup-hd-20261012.avif"), "hero carousel should use the authentic HD bakery photos");
+const expectedHeroImages = ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"];
+const heroImageSection = app.slice(app.indexOf("const heroImages=["), app.indexOf("const heroPhotoMarkup="));
+assert.equal((heroImageSection.match(/\['/g) || []).length, 10, "hero carousel should contain ten distinct photo slides");
+for (const image of expectedHeroImages) assert.ok(heroImageSection.includes(image), "hero gallery should include " + image);
+for (const image of expectedHeroImages) assert.ok(worker.includes("./assets/doughflow-gallery/" + image), "service worker must precache " + image);
+assert.match(worker, /doughflow-v39-20261012-full-10photo-gallery-3s/, "service worker cache version must change when restoring the full gallery");
 assert.ok(app.includes("data-hero-carousel") && app.includes("data-hero-next") && app.includes("data-hero-prev"), "hero photo carousel controls should be interactive");
 assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should rotate every three seconds");
 assert.ok(app.includes("const heroImages=["), "hero must define its selected photo gallery");
