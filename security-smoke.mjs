@@ -136,15 +136,12 @@ assert.match(app, /dashboard data must never gate sign-in/, "session restore sho
 assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching should reuse the app shell");
 assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should use fast route switching");
 
-const expectedHeroImages = ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"];
-const heroImageSection = app.slice(app.indexOf("const heroImages=["), app.indexOf("const heroPhotoMarkup="));
 const heroImageSection = app.slice(app.indexOf("const heroImages=["), app.indexOf("const heroPhotoMarkup="));
 assert.equal((heroImageSection.match(/\['/g) || []).length, 3, "hero carousel should show only the available HD photo slides");
 assert.ok(heroImageSection.includes("01-baker-tandoor-hd-20261012.webp") && heroImageSection.includes("02-leposhka-closeup-hd-20261012.avif"), "HD hero gallery should use the available high-resolution images");
 assert.match(worker, /doughflow-v40-20261012-hd-only-gallery-3s/, "service worker cache version must change when low-resolution slides are removed");
-for (const image of expectedHeroImages) assert.ok(heroImageSection.includes(image), "hero gallery should include " + image);
-for (const image of expectedHeroImages) assert.ok(worker.includes("./assets/doughflow-gallery/" + image), "service worker must precache " + image);
-assert.match(worker, /doughflow-v40-20261012-hd-only-gallery-3s/, "service worker cache version must change when restoring the full gallery");
+for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected HD gallery image "+image);
+
 assert.ok(app.includes("data-hero-carousel") && app.includes("data-hero-next") && app.includes("data-hero-prev"), "hero photo carousel controls should be interactive");
 assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should rotate every three seconds");
 assert.ok(app.includes("const heroImages=["), "hero must define its selected photo gallery");
