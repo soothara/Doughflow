@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v60-20261013-final-settings-audit';
+const CACHE = 'doughflow-v61-20261013-admin-content-media';
 
 const CORE_ASSETS = [
   './',
