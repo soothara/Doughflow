@@ -555,14 +555,11 @@ function refreshVisiblePageData(){
     const p=document.getElementById('page');
     if(p)renderDashboard(p);
   }else if(route==='production'){
-    const p=document.getElementById('page');
-    if(p){
-      // Live-state refreshes can finish a few seconds after the operator starts typing.
-      // Preserve the unfinished production draft instead of resetting the sack picker.
-      const draft=captureRouteDraft();
-      renderProduction(p);
-      restoreRouteDraft(draft);
-    }
+    // Do not rerender the production form after a background data refresh.
+    // Replacing the page DOM while the operator is selecting sacks or entering pieces
+    // resets button focus/selection and can scroll mobile browsers back to the top.
+    // The next explicit navigation or successful save will render fresh production data.
+    return;
   }
 }
 
