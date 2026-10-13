@@ -118,9 +118,9 @@ begin
   values(p_transaction_id,'delete',auth.uid(),to_jsonb(v_old),null,'Admin removed historical inventory movement: '||trim(p_reason));
 end $$;
 
-revoke all on function public.admin_inventory_history(date) from public;
-revoke all on function public.admin_update_inventory_transaction(uuid,text,text,numeric,date,text,numeric,text) from public;
-revoke all on function public.admin_delete_inventory_transaction(uuid,text) from public;
+revoke all on function public.admin_inventory_history(date) from anon, public;
+revoke all on function public.admin_update_inventory_transaction(uuid,text,text,numeric,date,text,numeric,text) from anon, public;
+revoke all on function public.admin_delete_inventory_transaction(uuid,text) from anon, public;
 grant execute on function public.admin_inventory_history(date) to authenticated;
 grant execute on function public.admin_update_inventory_transaction(uuid,text,text,numeric,date,text,numeric,text) to authenticated;
 grant execute on function public.admin_delete_inventory_transaction(uuid,text) to authenticated;
