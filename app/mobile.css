@@ -463,3 +463,46 @@ body.modal-open #app .layout>.sidebar{display:none!important}
 .piece-weight-daily-total span{font-size:11px;font-weight:750;color:#526783;line-height:1.35}
 .piece-weight-daily-total strong{font-size:22px;line-height:1;letter-spacing:-.5px;color:#2157a8;font-variant-numeric:tabular-nums}
 .piece-weight-chip b{font-variant-numeric:tabular-nums}
+
+
+/* Month-wise reporting and guided stock control: mobile-first, thumb-friendly. */
+.report-month-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 13px;padding:13px 15px!important;border:1px solid #e4eaf4;background:linear-gradient(125deg,#fff,#f5f8ff)}
+.report-month-toolbar>div{display:flex;align-items:center;gap:10px;min-width:0}
+.report-month-icon{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:13px;background:#e7f0ff;color:#2369c7;font-size:22px;font-weight:900}
+.report-month-toolbar>div b,.report-month-toolbar>div small{display:block}
+.report-month-toolbar>div b{font-size:14px;color:#1b2940}
+.report-month-toolbar>div small{margin-top:3px;font-size:11px;line-height:1.35;color:#78859a}
+.report-month-toolbar>label{display:flex;flex-direction:column;gap:5px;flex:none;font-size:10px;font-weight:800;color:#6f7d92}
+.report-month-toolbar select{min-width:155px;max-width:220px;height:42px;padding:0 12px;border:1px solid #dce5f1;border-radius:12px;background:#fff;color:#1d2b41;font-size:13px;font-weight:750}
+.report-alltime-strip{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 0 14px;padding:10px 13px;border:1px solid #e6ebf3;border-radius:13px;background:#f7f9fc}
+.report-alltime-strip span{font-size:11px;color:#6f7d91;font-weight:750}
+.report-alltime-strip b{font-size:12px;color:#253650}
+.stock-quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 15px}
+.stock-shortcut{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;padding:15px;border:1px solid #e0e8f4;border-radius:18px;background:linear-gradient(145deg,#fff,#f6f9ff);text-align:left;box-shadow:0 5px 16px rgba(30,57,98,.045);cursor:pointer;transition:transform .16s ease,border-color .16s ease}
+.stock-shortcut:active{transform:scale(.985)}
+.stock-shortcut>span{display:grid;place-items:center;width:37px;height:37px;border-radius:12px;background:#e6f0ff;color:#2169c7;font-size:21px;font-weight:900}
+.stock-shortcut>b{font-size:14px;line-height:1.25;color:#1c2a40}
+.stock-shortcut>small{font-size:11px;line-height:1.4;color:#748198}
+.stock-shortcut>i{margin-top:2px;font-size:11px;font-weight:850;font-style:normal;color:#176fe0}
+.stock-help-chip{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #dceee4;border-radius:15px;background:linear-gradient(120deg,#f4fcf7,#fff)}
+.stock-help-chip>span{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:10px;background:#dff6e8;color:#168254;font-weight:900}
+.stock-help-chip b,.stock-help-chip small{display:block}
+.stock-help-chip b{font-size:12px;color:#1e6649}
+.stock-help-chip small{margin-top:3px;font-size:10px;line-height:1.45;color:#688274}
+.stock-card-premium{position:relative;overflow:hidden;border:1px solid #e5ebf4;background:linear-gradient(150deg,#fff 0%,#f8faff 100%);box-shadow:0 7px 20px rgba(25,45,80,.045)}
+.stock-card-premium .stock-primary{font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.stock-card-premium .stock-reorder-button{border-radius:12px}
+@media(max-width:640px){
+ .report-month-toolbar{align-items:stretch;flex-direction:column;gap:11px;padding:12px!important}
+ .report-month-toolbar select{width:100%;max-width:none;min-width:0;height:46px;font-size:16px}
+ .report-month-toolbar>label{font-size:11px}
+ .report-alltime-strip{align-items:flex-start;justify-content:flex-start;gap:7px 12px}
+ .report-alltime-strip span{width:100%}
+ .report-alltime-strip b{font-size:11px}
+ .stock-quick-actions{gap:8px;margin:10px 0 13px}
+ .stock-shortcut{padding:12px;border-radius:16px}
+ .stock-shortcut>b{font-size:12px}
+ .stock-shortcut>small{font-size:10px}
+ .stock-shortcut>i{font-size:10px}
+ .stock-help-chip{padding:10px 11px}
+}
