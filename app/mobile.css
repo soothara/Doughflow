@@ -335,3 +335,10 @@ body.modal-open #app{pointer-events:none}
   .inventory-row-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:120px}
   .inventory-row-actions .btn{min-height:38px;padding:7px 10px;font-size:12px}
 }
+
+
+/* Keep mobile navigation out of the way while a full-height modal is active. */
+body.modal-open #app .layout>.sidebar{display:none!important}
+.modal-backdrop.show>.modal .modal-footer{position:sticky;bottom:0}
+.inventory-row-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:120px}
+.inventory-row-actions .btn{white-space:nowrap}
