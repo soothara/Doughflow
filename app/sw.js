@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v44-20261013-modal-scroll-fix';
+const CACHE = 'doughflow-v42-20261013-empty-stock-yeast-grams-modal-scroll-fix';
 
 const CORE_ASSETS = [
   './',
