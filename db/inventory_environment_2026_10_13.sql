@@ -37,6 +37,7 @@ update public.inventory_transactions set movement_type=case
   else 'manual_issue'
 end where movement_type is null;
 alter table public.inventory_transactions drop constraint if exists inventory_transactions_movement_type_chk;
+alter table public.inventory_transactions drop constraint if exists inventory_transactions_movement_type_chk;
 alter table public.inventory_transactions alter column movement_type set default 'manual_receipt';
 alter table public.inventory_transactions alter column movement_type set not null;
 do $$ begin
