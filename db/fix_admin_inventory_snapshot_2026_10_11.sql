@@ -38,8 +38,8 @@ begin
   where m.active and m.inventory_tracked group by m.code order by m.code;
 end $$;
 
-revoke all on function public.admin_inventory_history(date) from public;
-revoke all on function public.admin_inventory_snapshot(date) from public;
+revoke all on function public.admin_inventory_history(date) from public, anon;
+revoke all on function public.admin_inventory_snapshot(date) from public, anon;
 grant execute on function public.admin_inventory_history(date) to authenticated;
 grant execute on function public.admin_inventory_snapshot(date) to authenticated;
 
