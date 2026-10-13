@@ -289,6 +289,6 @@ assert.ok(securityDefinerFix.includes("REVOKE ALL ON FUNCTION public.complete_pr
 
 assert.match(app, /shiftStatus=shiftActive\?'Shift active':'Outside shift hours'/, "shift schedule settings must be used on Home");
 assert.match(app, /dashboard-admin-notes/, "admin operating notes must appear on the Home dashboard");
-assert.match(app, /confirmDestructiveActions&& !?window\.confirm\('Remove this historical stock entry\?/, "inventory deletion must respect the destructive-action setting");
+assert.ok(app.includes("if(appSettings.confirmDestructiveActions&&!window.confirm('Remove this historical stock entry?"), "inventory deletion must respect the destructive-action setting");
 assert.match(app, /confirmDestructiveActions&&!window\.confirm\('Confirm dated stock correction\?/, "date-wise stock corrections must respect confirmation settings");
 assert.match(app, /confirmDestructiveActions&&!confirm\('Restore the original slideshow photo/, "slideshow restore must respect confirmation settings");
