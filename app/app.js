@@ -1354,3 +1354,12 @@ async function activeRecipeId(){ const {data}=await supabase.from('recipe_versio
 
 // Optional Supabase status helper: visible on demo build only.
 window.DoughFlow={resetDemo(){localStorage.removeItem(KEY);location.reload();},isDemo};
+
+
+// Start the application after all modules and page containers are ready.
+init().catch(error => {
+  console.error('DoughFlow startup failed:', error);
+  if (app) {
+    app.innerHTML = '<main style="max-width:640px;margin:10vh auto;padding:24px;font:16px/1.5 system-ui;color:#20242b"><h1>DoughFlow could not start</h1><p>The app encountered a startup error. Check your connection, then reload this page.</p><button type="button" onclick="location.reload()" style="padding:12px 18px;border:0;border-radius:10px;background:#244f3b;color:white;font-weight:700">Reload DoughFlow</button></main>';
+  }
+});
