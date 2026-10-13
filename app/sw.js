@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v65-20261013-production-scroll-fix';
+const CACHE = 'doughflow-v66-20261013-dashboard-sack-selector-fix';
 
 const CORE_ASSETS = [
   './',
