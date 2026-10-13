@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v56-20261013-shared-production';
+const CACHE = 'doughflow-v57-20261013-auto-link-report-refresh';
 
 const CORE_ASSETS = [
   './',
