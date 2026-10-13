@@ -52,7 +52,7 @@ alter table public.sales_records enable row level security;
 
 drop policy if exists naan_dispatches_select on public.naan_dispatches;
 create policy naan_dispatches_select on public.naan_dispatches for select to authenticated
-using (public.is_admin() or (public.is_role('naan') and created_by=auth.uid()) or (public.is_role('sales') and status='dispatched'));
+using (public.is_admin() or public.is_role('naan') or (public.is_role('sales') and status='dispatched'));
 drop policy if exists naan_dispatches_insert on public.naan_dispatches;
 create policy naan_dispatches_insert on public.naan_dispatches for insert to authenticated
 with check ((public.is_admin() or public.is_role('naan')) and created_by=auth.uid());
