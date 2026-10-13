@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v43-20261013-toast-position-fix';
+const CACHE = 'doughflow-v44-20261013-inline-stock-validation';
 
 const CORE_ASSETS = [
   './',
