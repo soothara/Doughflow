@@ -48,9 +48,9 @@ const APP_SETTINGS_DEMO_KEY='doughflow_settings_demo_v1';
 function applyAppSettings(){
   try{document.documentElement.style.setProperty('--df-accent',/^#[0-9a-fA-F]{6}$/.test(appSettings.accentColor||'')?appSettings.accentColor:DEFAULT_APP_SETTINGS.accentColor);}catch{}
   const name=String(appSettings.businessName||'DoughFlow').trim()||'DoughFlow';
-  document.querySelectorAll('.hero-brand b,.login-brand-row strong,[data-app-business-name]').forEach(el=>{el.textContent=name;});
+  document.querySelectorAll('.brand-copy strong,.hero-brand b,.login-brand-row strong,[data-app-business-name]').forEach(el=>{el.textContent=name;});
   const tagline=String(appSettings.tagline||'Bakery control').trim();
-  document.querySelectorAll('.hero-brand small,.login-brand-row small,[data-app-tagline]').forEach(el=>{el.textContent=tagline;});
+  document.querySelectorAll('.brand-copy span,.hero-brand small,.login-brand-row small,[data-app-tagline]').forEach(el=>{el.textContent=tagline;});
   document.title=name+' · '+tagline;
 }
 async function loadAppSettings(){
@@ -66,7 +66,7 @@ async function loadAppSettings(){
 }
 
 const uid=()=>crypto.randomUUID();
-const today=()=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bishkek',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}`;}; const dateLocale=()=>lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-US'; const formatToday=()=>new Intl.DateTimeFormat(dateLocale(),{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'Asia/Bishkek'}).format(new Date());
+const today=()=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone:(appSettings?.timezone||'Asia/Bishkek'),year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}`;}; const dateLocale=()=>lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-US'; const formatToday=()=>new Intl.DateTimeFormat(dateLocale(),{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:(appSettings?.timezone||'Asia/Bishkek')}).format(new Date());
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:3});
 const money=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
