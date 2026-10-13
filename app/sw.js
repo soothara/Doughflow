@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v59-20261013-full-connections-audit';
+const CACHE = 'doughflow-v60-20261013-final-settings-audit';
 
 const CORE_ASSETS = [
   './',
