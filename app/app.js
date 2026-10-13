@@ -947,10 +947,10 @@ function renderMore(p){
 function renderDashboard(p){
   const prod=isDemo?db.productions:liveState.productions;
   const todayRuns=prod.filter(x=>(isDemo?x.date:x.production_date)===today());
-  const todaySummary=!isDemo?liveState.summaryToday:null;
-  const totalSacks=todaySummary?Number(todaySummary.total_sacks):todayRuns.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
-  const totalPieces=todaySummary?Number(todaySummary.total_pieces):todayRuns.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
-  const totalRuns=todaySummary?Number(todaySummary.run_count):todayRuns.length;
+  // Today's headline metrics come directly from persisted production records.
+  const totalSacks=todayRuns.reduce((sum,run)=>sum+Number(isDemo?run.mishokCount:run.mishok_count||0),0);
+  const totalPieces=todayRuns.reduce((sum,run)=>sum+(isDemo?run.batches:(run.production_batches||[])).reduce((s,b)=>s+Number(b.pieces||0),0),0);
+  const totalRuns=todayRuns.length;
   const stockRows=MATERIALS.map(m=>({...m,stock:m.inventoryTracked===false?null:getStock(m.code)}));
   const recipe=isDemo?db.recipe:liveState.recipe;
   const recipeVersion=isDemo?db?.recipe?.version:liveState.recipe?.version;
@@ -1792,7 +1792,7 @@ async function renderReports(p){
     try{
       for(let offset=0;offset<100000;offset+=pageSize){
         const {data,error}=await supabase.from('production_runs')
-          .select('id,production_date,created_by,mishok_count,recipe_version_id,created_at,status,production_batches(batch_no,mishok_fraction,pieces)')
+          .select('id,production_date,created_by,mishok_count,recipe_version_id,created_at,status,production_batches(batch_no,mishok_fraction,pieces),production_materials(material_code,expected_qty,actual_qty,unit)')
           .eq('status','completed').order('production_date',{ascending:false}).order('created_at',{ascending:false})
           .range(offset,offset+pageSize-1);
         if(error)throw error;
@@ -1849,6 +1849,16 @@ async function renderReports(p){
       });
     }
   }
+  const todayProduction=productionRows.filter(run=>String(run.production_date)===today());
+  const todayProductionSacks=todayProduction.reduce((sum,run)=>sum+Number(run.mishok_count||0),0);
+  const todayProductionPieces=todayProduction.reduce((sum,run)=>sum+(run.production_batches||[]).reduce((acc,batch)=>acc+Number(batch.pieces||0),0),0);
+  const todayInputByMaterial=new Map();
+  todayProduction.forEach(run=>(run.production_materials||[]).forEach(item=>{
+    const current=todayInputByMaterial.get(item.material_code)||{expected:0,actual:0,unit:item.unit||'kg'};
+    current.expected+=Number(item.expected_qty)||0;current.actual+=Number(item.actual_qty)||0;
+    todayInputByMaterial.set(item.material_code,current);
+  }));
+  const todayInputRows=todayInputByMaterial.size?[...todayInputByMaterial.entries()].map(([code,item])=>'<tr><td>'+esc(MATERIALS.find(m=>m.code===code)?.name||code)+'</td><td>'+fmt(item.expected)+' '+esc(item.unit)+'</td><td><b>'+fmt(item.actual)+' '+esc(item.unit)+'</b></td><td>'+fmt(item.actual-item.expected)+' '+esc(item.unit)+'</td></tr>').join(''):"<tr><td colspan='4' class='empty'>No ingredient input saved for today.</td></tr>";
   const allDaily=[...dailyMap.values()].sort((a,b)=>b.date.localeCompare(a.date));
   const monthDaily=allDaily.filter(day=>day.date.startsWith(selectedMonth));
   const monthlySacks=monthDaily.reduce((sum,day)=>sum+day.sacks,0);
@@ -1875,6 +1885,11 @@ async function renderReports(p){
   const historyRows=monthDaily.map(day=>"<tr><td>"+esc(day.date)+"</td><td>"+fmt(day.sacks)+"</td><td>"+fmt(day.pieces)+"</td><td>"+(day.source==='production'?"<span class='report-source-pill production'>Production"+(day.runs>1?" · "+day.runs+" runs":'')+"</span>":"<span class='report-source-pill notebook'>Notebook</span>")+"</td></tr>").join('');
   p.innerHTML=`<div class="page-head report-page-head"><div><div class="eyebrow">PRODUCTION INSIGHTS</div><h1>Reports</h1><p>Daily production inputs and notebook sack records are connected here automatically.</p></div></div>
   <section class="report-month-toolbar card"><div><span class="report-month-icon">▦</span><div><b>Monthly report</b><small>Updated from saved production and notebook entries</small></div></div><label for="reportMonthSelect">Report month<select id="reportMonthSelect">${monthOptions}</select></label></section>
+  <section class="report-today-production card"><div class="report-section-heading"><div><div class="eyebrow">AUTO-LINKED INPUT</div><h2>Today's saved production</h2><p>${esc(formatToday())} · read directly from the Production form</p></div><span class="report-section-count">${fmt(todayProduction.length)} runs</span></div>
+    <div class="report-today-stats"><div><small>Sacks</small><strong>${fmt(todayProductionSacks)}</strong></div><div><small>Total pieces</small><strong>${fmt(todayProductionPieces)}</strong></div><div><small>Production runs</small><strong>${fmt(todayProduction.length)}</strong></div></div>
+    <div class="report-subheading"><b>Actual ingredient input today</b><small>Actual recorded consumption compared with recipe expectation.</small></div>
+    <div class="table-wrap"><table><thead><tr><th>Ingredient</th><th>Expected</th><th>Actual used</th><th>Variance</th></tr></thead><tbody>${todayInputRows}</tbody></table></div>
+  </section>
   <section class="report-production-summary">
     <article class="report-stat-card"><span class="report-stat-icon">▤</span><small>Sacks recorded this month</small><strong>${fmt(monthlySacks)}</strong></article>
     <article class="report-stat-card"><span class="report-stat-icon">◉</span><small>Total pieces this month</small><strong>${fmt(monthlyPieces)}</strong></article>
