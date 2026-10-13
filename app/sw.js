@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v44-20261013-inline-stock-validation';
+const CACHE = 'doughflow-v45-20261013-inventory-workbench';
 
 const CORE_ASSETS = [
   './',
