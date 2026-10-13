@@ -456,3 +456,10 @@ body.modal-open #app .layout>.sidebar{display:none!important}
   .piece-weight-stats b{font-size:10px}
   .report-production-history .table-wrap table{min-width:520px}
 }
+
+
+/* Daily sack totals: emphasize combined pieces without repeating units on every sack. */
+.piece-weight-daily-total{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 11px;padding:12px 13px;border-radius:12px;background:linear-gradient(100deg,#eaf2ff,#f2f7ff);border:1px solid #dce8fc}
+.piece-weight-daily-total span{font-size:11px;font-weight:750;color:#526783;line-height:1.35}
+.piece-weight-daily-total strong{font-size:22px;line-height:1;letter-spacing:-.5px;color:#2157a8;font-variant-numeric:tabular-nums}
+.piece-weight-chip b{font-variant-numeric:tabular-nums}
