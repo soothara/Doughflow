@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v49-20261013-production-history-linked';
+const CACHE = 'doughflow-v50-20261013-month-reports-stock-ui';
 
 const CORE_ASSETS = [
   './',
