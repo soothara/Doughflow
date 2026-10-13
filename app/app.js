@@ -1450,12 +1450,84 @@ function openInventoryTransactionModal(row,onSaved=()=>{}){
     }catch(error){showError(friendlyError(error));button.disabled=false;}
   });
 }
-function openStockModal(){
-  const opts=STOCK_MATERIALS.map(m=>`<option value="${m.code}">${esc(t(m.name,lang))}</option>`).join('');
-  modalRoot.innerHTML=`<div class="modal-backdrop show"><section class="modal receive-stock-modal" role="dialog" aria-modal="true" aria-labelledby="receiveStockTitle"><div class="modal-head"><h2 id="receiveStockTitle">${t('Receive stock',lang)}</h2><button id="closeModal">×</button></div><div class="field"><label>${t('Material',lang)}</label><select id="stockMaterial">${opts}</select></div><div id="packageChooser"></div><div class="field"><label>${t('Effective date',lang)}</label><input id="stockEffectiveDate" type="date" max="${today()}" value="${today()}"></div><div class="field"><label>${t('Notes',lang)}</label><input id="stockNote" placeholder="${t('Supplier / delivery note',lang)}"></div><div class="modal-footer"><button class="btn secondary" id="cancelModal">${t('Cancel',lang)}</button><button class="btn primary" id="saveStock">${t('Add stock',lang)}</button></div></section></div>`;
-  const update=()=>{const m=STOCK_MATERIALS.find(x=>x.code===document.getElementById('stockMaterial').value);document.getElementById('packageChooser').innerHTML=`<div class="field"><label>${t('Package',lang)}</label><select id="stockPackage">${m.packages.map((x,i)=>`<option value="${i}">${esc(packageUnit(m,x,lang))}</option>`).join('')} </select></div><div class="field"><label>${t('Number of packages',lang)}</label><input id="packageCount" type="number" min="0.001" step="${m.packages[0]?.kind==='sack'?'0.5':'1'}" value="1"></div><div class="small">${t('The system will convert package quantity into the inventory base unit.',lang)}</div>`;document.getElementById('stockPackage').addEventListener('change',()=>{const pkg=m.packages[Number(document.getElementById('stockPackage').value)];document.getElementById('packageCount').step=pkg?.kind==='sack'?'0.5':'1';});};
-  update();document.getElementById('stockMaterial').addEventListener('change',update);document.getElementById('closeModal').addEventListener('click',closeModal);document.getElementById('cancelModal').addEventListener('click',closeModal);
-  document.getElementById('saveStock').addEventListener('click',async()=>{const code=document.getElementById('stockMaterial').value;const m=STOCK_MATERIALS.find(x=>x.code===code);const pi=Number(document.getElementById('stockPackage').value);const count=Number(document.getElementById('packageCount').value||0);const date=document.getElementById('stockEffectiveDate').value;if(!(count>0)||!Number.isFinite(count))return;if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}const qty=m.packages[pi].qty*count;const reason=(document.getElementById('stockNote').value||'').trim()||t('Stock received',lang);if(isDemo){const inv=db.inventory[code];inv.stock+=qty;inv.tx.push({id:uid(),dir:'in',qty,packages:count,packageLabel:m.packages[pi].label,reason,effectiveDate:date,at:new Date().toISOString(),by:currentUser.name});saveDemo();closeModal();render();}else{const {error}=await supabase.from('inventory_transactions').insert({material_code:code,direction:'in',qty_base:qty,package_count:count,package_label:m.packages[pi].label,reason,created_by:currentUser.id,effective_date:date});if(error){showToast(friendlyError(error),'error');return;}await refreshLiveState();closeModal();render();}});
+function openStockModal(presetType='purchase'){
+  if(currentUser?.role!=='admin'){showToast(t('Admin access only.',lang),'error');return;}
+  const entryTypes=INVENTORY_MOVEMENT_TYPES.filter(x=>!['adjustment','production'].includes(x.value));
+  const preferred=entryTypes.some(x=>x.value===presetType)?presetType:'purchase';
+  const typeOptions=entryTypes.map(x=>'<option value="'+x.value+'" '+(x.value===preferred?'selected':'')+'>'+esc(x.label)+'</option>').join('');
+  const opts=STOCK_MATERIALS.map(m=>'<option value="'+m.code+'">'+esc(t(m.name,lang))+'</option>').join('');
+  modalRoot.innerHTML=`<div class="modal-backdrop show"><section class="modal receive-stock-modal" role="dialog" aria-modal="true" aria-labelledby="receiveStockTitle">
+    <div class="modal-head"><div><div class="eyebrow">Inventory ledger</div><h2 id="receiveStockTitle">Record stock movement</h2></div><button type="button" id="closeModal" aria-label="Close">×</button></div>
+    <p class="small">Every movement updates the balance and keeps a dated record. Use date-wise correction for a physical count.</p>
+    <div class="field"><label for="stockMovementType">Movement type *</label><select id="stockMovementType">${typeOptions}</select></div>
+    <div class="field"><label for="stockMaterial">Material *</label><select id="stockMaterial">${opts}</select></div>
+    <div id="packageChooser"></div>
+    <div class="field"><label for="stockEffectiveDate">Effective date *</label><input id="stockEffectiveDate" type="date" max="${today()}" value="${today()}"></div>
+    <div class="field"><label for="stockSupplier">Supplier / recipient</label><input id="stockSupplier" maxlength="120" placeholder="Supplier, customer or department"></div>
+    <div class="field"><label for="stockReference">Invoice / delivery reference</label><input id="stockReference" maxlength="100" placeholder="Invoice number, delivery note or reference"></div>
+    <div class="field"><label for="stockNote">Reason / notes *</label><input id="stockNote" required minlength="3" maxlength="180" placeholder="e.g. Flour delivery, damaged yeast, kitchen use"></div>
+    <div id="stockMovementError" class="inventory-database-notice error" role="alert" hidden></div>
+    <div class="historical-preview"><span class="history-preview-icon">⇄</span><div><small>Movement preview</small><strong id="stockMovementPreview">Stock in · 50 kg</strong><div id="stockMovementDirection" class="small">Adds to inventory</div></div></div>
+    <div class="modal-footer"><button type="button" class="btn secondary" id="cancelModal">Cancel</button><button type="button" class="btn primary" id="saveStock">Save movement</button></div>
+  </section></div>`;
+  const $=id=>document.getElementById(id);
+  const material=()=>STOCK_MATERIALS.find(x=>x.code===$('stockMaterial').value)||STOCK_MATERIALS[0];
+  const pkg=()=>material().packages[Number($('stockPackage').value)]||material().packages[0];
+  const type=()=> $('stockMovementType').value;
+  const direction=()=>movementDirection(type());
+  const showError=message=>{const el=$('stockMovementError');el.hidden=!message;el.textContent=message||'';};
+  const updatePreview=()=>{
+    const m=material(),p=pkg(),count=Number($('packageCount').value||0),qty=Number(p?.qty||0)*count,dir=direction();
+    $('packageCount').step=p?.kind==='sack'?'0.5':'1';
+    $('stockMovementPreview').textContent=(dir==='in'?'Stock in · ':'Stock out · ')+stockBreakdown(m,qty,lang).primary+' · '+formatInventoryNumber(qty,lang)+' kg';
+    $('stockMovementDirection').textContent=dir==='in'?'Adds to inventory':'Removes from inventory';
+    $('saveStock').textContent=dir==='in'?'Save stock in':'Save stock out';
+  };
+  const updatePackages=()=>{
+    const m=material();
+    $('packageChooser').innerHTML='<div class="field"><label for="stockPackage">Package / container *</label><select id="stockPackage">'+m.packages.filter(x=>x.kind!=='recipe').map(x=>'<option value="'+m.packages.indexOf(x)+'">'+esc(packageUnit(m,x,lang))+'</option>').join('')+'</select></div><div class="field"><label for="packageCount">Number of packages *</label><input id="packageCount" type="number" min="0.001" step="'+(m.packages[0]?.kind==='sack'?'0.5':'1')+'" value="1"></div><div class="small">Quantity is converted automatically into the inventory base unit (kg).</div>';
+    $('stockPackage').addEventListener('change',updatePreview);
+    $('packageCount').addEventListener('input',updatePreview);
+    updatePreview();
+  };
+  $('stockMovementType').addEventListener('change',updatePreview);
+  $('stockMaterial').addEventListener('change',updatePackages);
+  $('closeModal').addEventListener('click',closeModal);
+  $('cancelModal').addEventListener('click',closeModal);
+  updatePackages();
+  $('saveStock').addEventListener('click',async()=>{
+    const m=material(),p=pkg(),count=Number($('packageCount').value||0),date=$('stockEffectiveDate').value,
+      movement=type(),dir=direction(),reason=$('stockNote').value.trim(),
+      supplier=$('stockSupplier').value.trim(),reference=$('stockReference').value.trim();
+    const qty=Number(p?.qty||0)*count;
+    if(!date||date>today()){showError('Choose today or a past date. No stock was changed.');return;}
+    if(!(count>0)||!Number.isFinite(qty)||(p?.kind==='sack'&&Math.abs(count*2-Math.round(count*2))>0.000001)||(p?.kind!=='sack'&&Math.abs(count-Math.round(count))>0.000001)){showError('Enter a valid package quantity. Sack quantities may use half-sacks.');return;}
+    if(reason.length<3){showError('Enter a reason of at least 3 characters so this movement is traceable.');$('stockNote').focus();return;}
+    const save=$('saveStock');save.disabled=true;showError('');
+    try{
+      if(isDemo){
+        const inv=db.inventory[m.code],tx=inv.tx||[];
+        if(dir==='out'){
+          const asOf=tx.filter(x=>(x.effectiveDate||String(x.at||'').slice(0,10))<=date).reduce((sum,x)=>sum+(x.dir==='out'?-Number(x.qty||0):Number(x.qty||0)),0);
+          const current=tx.reduce((sum,x)=>sum+(x.dir==='out'?-Number(x.qty||0):Number(x.qty||0)),0);
+          const dayBalances=new Map();tx.forEach(x=>{const d=x.effectiveDate||String(x.at||'').slice(0,10);dayBalances.set(d,(dayBalances.get(d)||0)+(x.dir==='out'?-Number(x.qty||0):Number(x.qty||0)));});
+          let running=0,minLater=Infinity;[...dayBalances.entries()].sort((x,y)=>x[0].localeCompare(y[0])).forEach(([d,delta])=>{running+=delta;if(d>=date)minLater=Math.min(minLater,running);});
+          if(asOf-qty<-0.00005||current-qty<-0.00005||(minLater!==Infinity&&minLater-qty<-0.00005))throw new Error('Insufficient stock for that date or a later balance.');
+        }
+        inv.stock+=dir==='in'?qty:-qty;
+        inv.tx.push({id:uid(),dir,qty,packages:count,packageLabel:p.label,reason,effectiveDate:date,at:new Date().toISOString(),by:currentUser.name,movementType:movement,supplierName:supplier,referenceCode:reference});
+        saveDemo();
+      }else{
+        const {error}=await supabase.rpc('admin_record_inventory_movement',{
+          p_material_code:m.code,p_direction:dir,p_movement_type:movement,p_qty_base:Number(qty.toFixed(4)),
+          p_effective_date:date,p_reason:reason,p_package_count:count,p_package_label:p.label,
+          p_supplier_name:supplier||null,p_reference_code:reference||null
+        });
+        if(error)throw error;
+      }
+      closeModal();await refreshLiveState();render();showToast('Inventory movement saved.','success');
+    }catch(error){showError(friendlyError(error));save.disabled=false;}
+  });
 }
 function closeModal(){modalRoot.innerHTML='';}
 
