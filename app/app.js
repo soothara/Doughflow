@@ -70,11 +70,11 @@ function applyAppSettings(){
 }
 async function loadAppSettings(){
   if(isDemo){
-    try{const saved=JSON.parse(localStorage.getItem(APP_SETTINGS_DEMO_KEY)||'{}');appSettings={...DEFAULT_APP_SETTINGS,...saved};}catch{appSettings={...DEFAULT_APP_SETTINGS};}
+    try{const saved=JSON.parse(localStorage.getItem(APP_SETTINGS_DEMO_KEY)||'{}');appSettings={...DEFAULT_APP_SETTINGS,...saved,timezone:'Asia/Bishkek'};}catch{appSettings={...DEFAULT_APP_SETTINGS};}
   }else{
     try{
       const {data,error}=await supabase.from('app_settings').select('setting_value').eq('setting_key','global').maybeSingle();
-      if(!error&&data?.setting_value&&typeof data.setting_value==='object')appSettings={...DEFAULT_APP_SETTINGS,...data.setting_value};
+      if(!error&&data?.setting_value&&typeof data.setting_value==='object')appSettings={...DEFAULT_APP_SETTINGS,...data.setting_value,timezone:'Asia/Bishkek'};
     }catch{}
   }
   applyAppSettings();
@@ -101,6 +101,10 @@ function packageUnit(material,pkg,language=lang){
 }
 function inventoryCountLabel(kind,count,language=lang){
   const n=Number(count);
+  if(kind==='sack'&&language==='en'&&String(appSettings?.sackLabel||'').trim()){
+    const plural=String(appSettings.sackLabel).trim();
+    return n===1?plural.replace(/s$/i,''):plural;
+  }
   if(language==='ky'){
     if(kind==='sack') return 'кап'; if(kind==='carton'||kind==='box') return 'куту'; if(kind==='bundle') return 'боо'; return 'даана';
   }
@@ -470,7 +474,7 @@ async function setLanguage(next){
   const draft=captureRouteDraft();
   const scrollY=window.scrollY;
   lang=saveLang(currentUser?.id||'guest',next);
-  if(currentUser) currentUser.lang=lang;
+  if(currentUser){currentUser.lang=lang;currentUser.hasExplicitLanguage=true;}
   if(isDemo && db?.session){ db.session.lang=lang; saveDemo(); }
   await render();
   restoreRouteDraft(draft);
@@ -483,7 +487,7 @@ async function setLanguage(next){
 function languageFlag(){ return lang==='ru'?'🇷🇺':lang==='ky'?'🇰🇬':'🇬🇧'; }
 function languageName(){ return LANGUAGES[lang]||'English'; }
 function languageSwitcher(){ return `<select id="languageSelect" class="language-select" aria-label="${t('Language',lang)}">${languageOptions(lang)}</select>`; }
-function applyCurrentLanguage(){ applyTranslations(document,lang); const sel=document.getElementById('languageSelect'); if(sel) sel.value=lang; document.documentElement.lang = lang==='ru'?'ru':lang==='ky'?'ky':'en'; } applyAppSettings();
+function applyCurrentLanguage(){ applyTranslations(document,lang); const sel=document.getElementById('languageSelect'); if(sel) sel.value=lang; document.documentElement.lang = lang==='ru'?'ru':lang==='ky'?'ky':'en'; applyAppSettings(); }
 function can(role, section){
   if(section==='more') return true;
   if(role==='admin') return true;
@@ -521,10 +525,11 @@ async function init(){
     const {data:{session}}=await sessionPromise;
     if(session) await loadUser(session.user);
   } else {
-    currentUser=db.session.user ? {...db.session.user,role:db.session.role,lang:db.session.lang||getSavedLang(db.session.user.id)} : null;
+    const storedLang=db.session.user?(localStorage.getItem('doughflow_lang_v1_'+db.session.user.id)||localStorage.getItem('doughflow_lang_v1')):null;
+    currentUser=db.session.user ? {...db.session.user,role:db.session.role,lang:db.session.lang||storedLang||appSettings.defaultLanguage||'en',hasExplicitLanguage:!!(db.session.lang||storedLang)} : null;
     lang=currentUser?.lang||lang;
   }
-  if(currentUser) await loadAppSettings();
+  if(currentUser){await loadAppSettings();if(!currentUser.hasExplicitLanguage){lang=appSettings.defaultLanguage||'en';currentUser.lang=lang;saveLang(currentUser.id||'guest',lang);currentUser.hasExplicitLanguage=true;}}
   render();
   if(!isDemo && currentUser) void refreshLiveState().then(()=>refreshVisiblePageData());
   if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
@@ -551,7 +556,8 @@ async function loadUser(user){
   }else{
     authError='';
 
-    currentUser={id:user.id,name:data.full_name||user.email||'User',role:data.role,lang:data.preferred_language||getSavedLang(user.id)};
+    const storedLang=localStorage.getItem('doughflow_lang_v1_'+user.id)||localStorage.getItem('doughflow_lang_v1');
+    currentUser={id:user.id,name:data.full_name||user.email||'User',role:data.role,lang:data.preferred_language||storedLang||appSettings.defaultLanguage||'en',hasExplicitLanguage:!!(data.preferred_language||storedLang)};
     lang=currentUser.lang;
     saveLang(user.id,lang);
   }
@@ -849,10 +855,10 @@ async function renderSettings(p){
     <div class="settings-slide-note"><span>🔒</span><span><b>Admin-controlled shared media</b><small>Uploads go to DoughFlow storage. Only administrators can replace or restore slideshow photos.</small></span></div>
   </section>
   <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🎨</span><div><h2>Appearance & language</h2><p>Set the workspace accent and default language.</p></div></div>
-    <div class="settings-form-grid"><div class="field"><label for="settingAccent">Accent color</label><div class="settings-color-row"><input id="settingAccent" type="color" value="${/^#[0-9a-fA-F]{6}$/.test(s.accentColor||'')?s.accentColor:'#2477ee'}"><span id="settingAccentValue">${esc(s.accentColor)}</span></div></div><div class="field"><label for="settingLanguage">Default language for new sessions</label><select id="settingLanguage"><option value="en" ${s.defaultLanguage==='en'?'selected':''}>English</option><option value="ru" ${s.defaultLanguage==='ru'?'selected':''}>Русский — Russian</option><option value="ky" ${s.defaultLanguage==='ky'?'selected':''}>Кыргызча — Kyrgyz</option></select></div><div class="field"><label for="settingTimezone">Business time zone</label><select id="settingTimezone">${[['Asia/Bishkek','Bishkek (UTC+6)'],['Europe/Helsinki','Helsinki'],['Asia/Karachi','Pakistan'],['UTC','UTC']].map(([v,l])=>'<option value="'+v+'" '+(s.timezone===v?'selected':'')+'>'+l+'</option>').join('')}</select></div><div class="field"><label for="settingCurrency">Currency code</label><select id="settingCurrency">${[['KGS','KGS — Kyrgyz som'],['PKR','PKR — Pakistani rupee'],['EUR','EUR — Euro'],['USD','USD — US dollar']].map(([v,l])=>'<option value="'+v+'" '+(s.currency===v?'selected':'')+'>'+l+'</option>').join('')}</select></div></div>
+    <div class="settings-form-grid"><div class="field"><label for="settingAccent">Accent color</label><div class="settings-color-row"><input id="settingAccent" type="color" value="${/^#[0-9a-fA-F]{6}$/.test(s.accentColor||'')?s.accentColor:'#2477ee'}"><span id="settingAccentValue">${esc(s.accentColor)}</span></div></div><div class="field"><label for="settingLanguage">Default language for new sessions</label><select id="settingLanguage"><option value="en" ${s.defaultLanguage==='en'?'selected':''}>English</option><option value="ru" ${s.defaultLanguage==='ru'?'selected':''}>Русский — Russian</option><option value="ky" ${s.defaultLanguage==='ky'?'selected':''}>Кыргызча — Kyrgyz</option></select></div><div class="field"><label for="settingTimezone">Business time zone (fixed for production dates)</label><select id="settingTimezone" disabled><option value="Asia/Bishkek" selected>Bishkek (UTC+6)</option></select></div><div class="field"><label for="settingCurrency">Currency code</label><select id="settingCurrency">${[['KGS','KGS — Kyrgyz som'],['PKR','PKR — Pakistani rupee'],['EUR','EUR — Euro'],['USD','USD — US dollar']].map(([v,l])=>'<option value="'+v+'" '+(s.currency===v?'selected':'')+'>'+l+'</option>').join('')}</select></div></div>
   </section>
   <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🧰</span><div><h2>Operations preferences</h2><p>Set your working terminology and default shift times. Recipe quantities and stock package sizes remain controlled in their dedicated modules.</p></div></div>
-    <div class="settings-form-grid"><div class="field"><label for="settingWeightUnit">Inventory base unit</label><select id="settingWeightUnit"><option value="kg" ${s.weightUnit==='kg'?'selected':''}>Kilograms (kg)</option><option value="g" ${s.weightUnit==='g'?'selected':''}>Grams (g)</option></select></div><div class="field"><label for="settingPieceUnit">Count unit</label><select id="settingPieceUnit"><option value="pieces" ${s.pieceUnit==='pieces'?'selected':''}>Pieces</option><option value="units" ${s.pieceUnit==='units'?'selected':''}>Units</option></select></div><div class="field"><label for="settingSackLabel">Sack terminology</label><input id="settingSackLabel" maxlength="24" value="${esc(s.sackLabel)}"></div><div class="field"><label for="settingShiftStart">Shift start</label><input id="settingShiftStart" type="time" value="${esc(s.shiftStart)}"></div><div class="field"><label for="settingShiftEnd">Shift end</label><input id="settingShiftEnd" type="time" value="${esc(s.shiftEnd)}"></div></div>
+    <div class="settings-form-grid"><div class="field"><label for="settingWeightUnit">Inventory storage unit (fixed)</label><select id="settingWeightUnit" disabled><option value="kg" selected>Kilograms (kg) — database base unit</option></select></div><div class="field"><label for="settingPieceUnit">Bread count unit (fixed)</label><select id="settingPieceUnit" disabled><option value="pieces" selected>Pieces — actual count</option></select></div><div class="field"><label for="settingSackLabel">Sack terminology</label><input id="settingSackLabel" maxlength="24" value="${esc(s.sackLabel)}"></div><div class="field"><label for="settingShiftStart">Shift start</label><input id="settingShiftStart" type="time" value="${esc(s.shiftStart)}"></div><div class="field"><label for="settingShiftEnd">Shift end</label><input id="settingShiftEnd" type="time" value="${esc(s.shiftEnd)}"></div></div>
     <div class="settings-toggle-list"><label class="settings-toggle"><span><b>Low-stock alert indicators</b><small>Show inventory reorder status and alerts.</small></span><input id="settingLowStock" type="checkbox" ${s.lowStockAlerts?'checked':''}></label><label class="settings-toggle"><span><b>Confirm destructive actions</b><small>Keep confirmation steps for deleting or replacing records.</small></span><input id="settingConfirm" type="checkbox" ${s.confirmDestructiveActions?'checked':''}></label><label class="settings-toggle"><span><b>Compact inventory cards</b><small>Use a space-saving stock overview on mobile.</small></span><input id="settingCompact" type="checkbox" ${s.compactStockCards?'checked':''}></label></div>
     <div class="field"><label for="settingAdminNotes">Admin operating notes</label><textarea id="settingAdminNotes" rows="3" maxlength="1500" placeholder="Add internal notes for administrators">${esc(s.adminNotes)}</textarea></div>
   </section>
@@ -1945,7 +1951,9 @@ async function renderSales(p){
     const customer=row.customer_name||row.customerName||'Walk-in';
     const product=row.product_name||row.productName||'Leposhka';
     const qty=pieces(row),unitPrice=Number(row.unit_price??row.unitPrice)||0,amountValue=amount(row),paidValue=paid(row);
-    return '<tr><td>'+esc(saleDate)+'</td><td><b>'+esc(customer)+'</b><small class="table-secondary">'+esc(product)+'</small></td><td>'+fmt(qty)+'</td><td>'+currencyFmt(unitPrice)+'</td><td><b>'+currencyFmt(amountValue)+'</b></td><td>'+currencyFmt(paidValue)+'<small class="table-secondary">Due '+currencyFmt(Math.max(0,amountValue-paidValue))+'</small></td><td><span class="workflow-status-pill '+statusOf(row).toLowerCase().replace(/ /g,'-')+'">'+statusOf(row)+'</span></td><td><div class="workflow-row-actions"><button type="button" class="btn secondary" data-sale-edit="'+esc(id)+'">Edit</button><button type="button" class="btn danger" data-sale-delete="'+esc(id)+'">Delete</button></div></td></tr>';
+    const canManage=currentUser.role==='admin'||String(row.created_by||'')===String(currentUser.id);
+    const actions=canManage?'<div class="workflow-row-actions"><button type="button" class="btn secondary" data-sale-edit="'+esc(id)+'">Edit</button><button type="button" class="btn danger" data-sale-delete="'+esc(id)+'">Delete</button></div>':'<span class="small">Read only</span>';
+    return '<tr><td>'+esc(saleDate)+'</td><td><b>'+esc(customer)+'</b><small class="table-secondary">'+esc(product)+'</small></td><td>'+fmt(qty)+'</td><td>'+currencyFmt(unitPrice)+'</td><td><b>'+currencyFmt(amountValue)+'</b></td><td>'+currencyFmt(paidValue)+'<small class="table-secondary">Due '+currencyFmt(Math.max(0,amountValue-paidValue))+'</small></td><td><span class="workflow-status-pill '+statusOf(row).toLowerCase().replace(/ /g,'-')+'">'+statusOf(row)+'</span></td><td>'+actions+'</td></tr>';
   }).join('');
   p.innerHTML='<div class="page-head workflow-page-head"><div><div class="eyebrow">DAILY CASHFLOW</div><h1>Sales</h1><p>Record Leposhka sales, money collected and unpaid balances. Totals update from saved sales.</p></div><span class="settings-admin-pill">'+(currentUser.role==='admin'?'Admin workspace':'Sales workspace')+'</span></div>'+
     '<section class="report-month-toolbar card"><div><span class="report-month-icon">↗</span><div><b>Sales report</b><small>Monthly totals from saved sales entries</small></div></div><label for="salesMonth">Report month<input id="salesMonth" type="month" value="'+esc(month)+'"></label></section>'+
