@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v64-20261013-language-draft-fix';
+const CACHE = 'doughflow-v65-20261013-production-scroll-fix';
 
 const CORE_ASSETS = [
   './',
