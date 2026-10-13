@@ -1824,7 +1824,7 @@ async function renderReports(p){
       day.items.push({sack:day.items.length+1,pieces:itemPieces,fraction});
     }
   }
-  const allDateKeys=[...new Set([...notebookByDate.keys(),...productionByDate.keys(),today().slice(0,7)+'-01'.slice(0,0)])].filter(Boolean);
+  const allDateKeys=[...new Set([...notebookByDate.keys(),...productionByDate.keys()])].filter(Boolean);
   const allMonths=[...new Set([...allDateKeys.map(date=>date.slice(0,7)),today().slice(0,7)])].sort().reverse();
   const selectedMonth=allMonths.includes(currentReportMonth)?currentReportMonth:today().slice(0,7);
   p.dataset.reportMonth=selectedMonth;
