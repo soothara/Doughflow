@@ -1264,15 +1264,18 @@ function openStockModal(){
 }
 function closeModal(){modalRoot.innerHTML='';}
 
-function renderReports(p){
+async function renderReports(p){
   const runs=isDemo?db.productions:liveState.productions;
   const summary=!isDemo?liveState.summaryAll:null;
   const total=summary?Number(summary.total_sacks):runs.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
   const pieces=summary?Number(summary.total_pieces):runs.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
   const avg=total?pieces/total:0;
-  p.innerHTML=`<div class="page-head"><div><h1>Reports</h1><p>Operational summary from saved production.</p></div></div><div class="grid grid-3"><div class="card"><div class="kpi-label">All-time sacks</div><div class="kpi">${fmt(total)}</div></div><div class="card"><div class="kpi-label">All-time pieces</div><div class="kpi">${fmt(pieces)}</div></div><div class="card"><div class="kpi-label">Pieces / sack</div><div class="kpi">${fmt(avg)}</div></div></div><div style="height:16px"></div><div class="card"><h2>Production history</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Pieces</th><th>Worker</th></tr></thead><tbody>${runs.length?runs.map(r=>`<tr><td>${esc(isDemo?r.date:r.production_date)}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt((isDemo?r.batches:r.production_batches||[]).reduce((a,b)=>a+Number(b.pieces||0),0))}</td><td>${esc(isDemo?r.createdBy:r.created_by===currentUser.id?currentUser.name:'User')}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No production yet.</td></tr>'}</tbody></table></div></div>`;
+  let weightRows=[],weightError='';
+  if(!isDemo){const {data,error}=await supabase.from('bread_weight_entries').select('record_date,sample_no,weight_g').order('record_date',{ascending:false}).order('sample_no',{ascending:true});if(error)weightError='Weight log could not be loaded: '+friendlyError(error);else weightRows=data||[];}
+  const grouped=new Map();weightRows.forEach(x=>{if(!grouped.has(x.record_date))grouped.set(x.record_date,[]);grouped.get(x.record_date).push(x);});
+  const weightHistory=Array.from(grouped.entries()).map(([date,items])=>`<tr><td>${esc(date)}</td><td>${items.map(x=>`${String(x.sample_no).padStart(2,'0')}: ${fmt(x.weight_g)} g`).join(' · ')}</td><td>${items.length}</td></tr>`).join('');
+  p.innerHTML=`<div class="page-head"><div><h1>Reports</h1><p>Operational summary from saved production.</p></div></div><div class="grid grid-3"><div class="card"><div class="kpi-label">All-time sacks</div><div class="kpi">${fmt(total)}</div></div><div class="card"><div class="kpi-label">All-time pieces</div><div class="kpi">${fmt(pieces)}</div></div><div class="card"><div class="kpi-label">Pieces / sack</div><div class="kpi">${fmt(avg)}</div></div></div><div style="height:16px"></div><div class="card"><h2>Daily leposhka weight log</h2><p class="small">Historical sample weights transcribed from the notebook. Weights are in grams and do not change inventory or production stock.</p>${weightError?`<div class="alert warn">${esc(weightError)}</div>`:''}<div class="table-wrap"><table><thead><tr><th>Date</th><th>Sample weights</th><th>Samples</th></tr></thead><tbody>${weightHistory||'<tr><td colspan="3" class="empty">No weight entries found.</td></tr>'}</tbody></table></div></div><div style="height:16px"></div><div class="card"><h2>Production history</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Pieces</th><th>Worker</th></tr></thead><tbody>${runs.length?runs.map(r=>`<tr><td>${esc(isDemo?r.date:r.production_date)}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt((isDemo?r.batches:r.production_batches||[]).reduce((a,b)=>a+Number(b.pieces||0),0))}</td><td>${esc(isDemo?r.createdBy:r.created_by===currentUser.id?currentUser.name:'User')}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No production yet.</td></tr>'}</tbody></table></div></div>`;
 }
-
 async function renderUsers(p){
   if(currentUser.role!=='admin'){
     p.innerHTML="<div class='card'><h2>"+t('Users',lang)+"</h2><div class='alert error'>"+t('Admin access only.',lang)+"</div></div>";
