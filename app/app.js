@@ -882,7 +882,7 @@ async function renderSettings(p){
   <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🎨</span><div><h2>Appearance & language</h2><p>Set the workspace accent and default language.</p></div></div>
     <div class="settings-form-grid"><div class="field"><label for="settingAccent">Accent color</label><div class="settings-color-row"><input id="settingAccent" type="color" value="${/^#[0-9a-fA-F]{6}$/.test(s.accentColor||'')?s.accentColor:'#2477ee'}"><span id="settingAccentValue">${esc(s.accentColor)}</span></div></div><div class="field"><label for="settingLanguage">Default language for new sessions</label><select id="settingLanguage"><option value="en" ${s.defaultLanguage==='en'?'selected':''}>English</option><option value="ru" ${s.defaultLanguage==='ru'?'selected':''}>Русский — Russian</option><option value="ky" ${s.defaultLanguage==='ky'?'selected':''}>Кыргызча — Kyrgyz</option></select></div><div class="field"><label for="settingTimezone">Business time zone (fixed for production dates)</label><select id="settingTimezone" disabled><option value="Asia/Bishkek" selected>Bishkek (UTC+6)</option></select></div><div class="field"><label for="settingCurrency">Currency code</label><select id="settingCurrency">${[['KGS','KGS — Kyrgyz som'],['PKR','PKR — Pakistani rupee'],['EUR','EUR — Euro'],['USD','USD — US dollar']].map(([v,l])=>'<option value="'+v+'" '+(s.currency===v?'selected':'')+'>'+l+'</option>').join('')}</select></div></div>
   </section>
-  <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🧰</span><div><h2>Operations preferences</h2><p>Set your working terminology and default shift times. Recipe quantities and stock package sizes remain controlled in their dedicated modules.</p></div></div>
+  <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🧰</span><div><h2>Operations preferences</h2><p>Set working terminology and the shift schedule displayed on Home. Recipe quantities and package sizes stay in their own modules.</p></div></div>
     <div class="settings-form-grid"><div class="field"><label for="settingWeightUnit">Inventory storage unit (fixed)</label><select id="settingWeightUnit" disabled><option value="kg" selected>Kilograms (kg) — database base unit</option></select></div><div class="field"><label for="settingPieceUnit">Bread count unit (fixed)</label><select id="settingPieceUnit" disabled><option value="pieces" selected>Pieces — actual count</option></select></div><div class="field"><label for="settingSackLabel">Sack terminology</label><input id="settingSackLabel" maxlength="24" value="${esc(s.sackLabel)}"></div><div class="field"><label for="settingShiftStart">Shift start</label><input id="settingShiftStart" type="time" value="${esc(s.shiftStart)}"></div><div class="field"><label for="settingShiftEnd">Shift end</label><input id="settingShiftEnd" type="time" value="${esc(s.shiftEnd)}"></div></div>
     <div class="settings-toggle-list"><label class="settings-toggle"><span><b>Low-stock alert indicators</b><small>Show inventory reorder status and alerts.</small></span><input id="settingLowStock" type="checkbox" ${s.lowStockAlerts?'checked':''}></label><label class="settings-toggle"><span><b>Confirm destructive actions</b><small>Keep confirmation steps for deleting or replacing records.</small></span><input id="settingConfirm" type="checkbox" ${s.confirmDestructiveActions?'checked':''}></label><label class="settings-toggle"><span><b>Compact inventory cards</b><small>Use a space-saving stock overview on mobile.</small></span><input id="settingCompact" type="checkbox" ${s.compactStockCards?'checked':''}></label></div>
     <div class="field"><label for="settingAdminNotes">Admin operating notes</label><textarea id="settingAdminNotes" rows="3" maxlength="1500" placeholder="Add internal notes for administrators">${esc(s.adminNotes)}</textarea></div>
@@ -921,7 +921,7 @@ async function renderSettings(p){
   }));
   p.querySelectorAll('[data-slide-reset]').forEach(button=>button.addEventListener('click',async()=>{
     const index=Number(button.dataset.slideReset);if(button.disabled)return;
-    if(!confirm('Restore the original slideshow photo '+(index+1)+'?'))return;
+    if(appSettings.confirmDestructiveActions&&!confirm('Restore the original slideshow photo '+(index+1)+'?'))return;
     button.disabled=true;const status=p.querySelector('#settingsSlideStatus'+index);
     try{const slides=[...(appSettings.slideshow||[])];slides[index]=null;while(slides.length&&!slides[slides.length-1])slides.pop();await persistSlides(slides);p.querySelector('#settingsSlidePreview'+index).style.backgroundImage='url("'+defaultSlideUrl(index)+'")';p.querySelector('#settingsSlideBadge'+index).textContent='DEFAULT PHOTO';status.textContent='Original photo restored for all users.';showToast('Default photo restored.','success');}
     catch(error){status.textContent='Could not restore: '+friendlyError(error);button.disabled=false;}
@@ -1017,6 +1017,16 @@ function renderDashboard(p){
   const recipe=isDemo?db.recipe:liveState.recipe;
   const recipeVersion=isDemo?db?.recipe?.version:liveState.recipe?.version;
   const firstName=esc(currentUser.name.split(' ')[0]);
+  const shiftStart=String(appSettings.shiftStart||'21:00');
+  const shiftEnd=String(appSettings.shiftEnd||'12:00');
+  const currentLocalTime=new Intl.DateTimeFormat('en-GB',{timeZone:appSettings.timezone||'Asia/Bishkek',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());
+  const shiftNow=Number(currentLocalTime.replace(':',''));
+  const shiftStartNum=Number(shiftStart.replace(':',''));
+  const shiftEndNum=Number(shiftEnd.replace(':',''));
+  const shiftActive=shiftStartNum===shiftEndNum?true:(shiftStartNum<shiftEndNum?shiftNow>=shiftStartNum&&shiftNow<shiftEndNum:shiftNow>=shiftStartNum||shiftNow<shiftEndNum);
+  const shiftStatus=shiftActive?'Shift active':'Outside shift hours';
+  const adminNotes=currentUser.role==='admin'?String(appSettings.adminNotes||'').trim():'';
+  const adminNotesHtml=adminNotes?"<div class='dashboard-admin-notes'><span aria-hidden='true'>▤</span><div><b>Admin notes</b><p>"+esc(adminNotes).replace(/\\r?\\n/g,'<br>')+"</p></div></div>":'';
   const syncBanner=!isDemo&&liveState.syncError?"<div class='sync-banner' role='alert'>⚠️ <div><b>"+t('Data sync issue',lang)+"</b><small>"+t('Some data may be temporarily out of date.',lang)+"</small></div></div>":"";
   const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card' data-tilt tabindex='0'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
   const stockCards=stockRows.map(m=>{
@@ -1040,7 +1050,7 @@ function renderDashboard(p){
           "<label class='hero-language'><span>"+languageFlag()+"</span><select id='heroLanguageSelect' aria-label=\""+t('Language',lang)+"\">"+languageOptions(lang)+"</select><b>⌄</b></label>"+
           "<div class='hero-user'><span class='hero-avatar'>"+esc(Array.from(String(currentUser.name||'A').trim())[0]?.toUpperCase()||'A')+"</span><span><b class='no-translate'>"+esc(currentUser.name)+"</b><small>"+roleName(currentUser.role)+"</small></span></div>"+
         "</div>"+
-        "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+esc(appSettings.homeSubtitle||'Let’s make great leposhka today!')+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div></div>"+
+        "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+esc(appSettings.homeSubtitle||'Let’s make great leposhka today!')+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div><div class='hero-shift-pill'><span aria-hidden='true'>◷</span><span><b>Shift schedule</b><small>"+esc(shiftStart)+"–"+esc(shiftEnd)+" · "+esc(shiftStatus)+"</small></span></div></div>"+adminNotesHtml+
       "</div>"+
       "<div class='hero-slide-controls' aria-label='Photo carousel controls'>"+
         "<button type='button' class='hero-slide-arrow' data-hero-prev aria-label='Previous photo'>‹</button>"+
@@ -1407,7 +1417,7 @@ async function renderInventory(p){
       if(!row)return;
       const date=String(row.effective_date||'').slice(0,10);
       const label=(row.material_name||row.material_code)+' · '+movementTypeLabel(row.movement_type||'manual_receipt')+' · '+formatInventoryNumber(row.qty_base,lang)+' kg · '+date;
-      if(!window.confirm('Remove this historical stock entry?\n'+label+'\nThe action will be recorded in the admin audit log.'))return;
+      if(appSettings.confirmDestructiveActions&&!window.confirm('Remove this historical stock entry?\n'+label+'\nThe action will be recorded in the admin audit log.'))return;
       const reason=window.prompt('Why are you removing this entry?');
       if(reason===null)return;
       if(reason.trim().length<3){showToast('Enter a reason of at least 3 characters.','error');return;}
@@ -1614,6 +1624,7 @@ async function renderInventory(p){
       showToast(t('Historical correction would make current inventory negative; reconcile later transactions first.',lang),'error');return;
     }
     if(Math.abs(target-prev)<0.00005){showToast(t('No stock change required.',lang));return;}
+    if(appSettings.confirmDestructiveActions&&!window.confirm('Confirm dated stock correction?\\n'+t(m.name,lang)+': '+formatInventoryNumber(prev,lang)+' kg → '+formatInventoryNumber(target,lang)+' kg on '+date+'.'))return;
     const button=$('saveStockByDate');button.disabled=true;
     try{
       if(isDemo){
