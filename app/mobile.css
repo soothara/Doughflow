@@ -355,3 +355,37 @@ body.modal-open #app .layout>.sidebar{display:none!important}
   #toastRoot .toast-text{min-width:0!important;flex:1 1 auto!important}
   #toastRoot .toast-close{flex:0 0 30px!important}
 }
+
+
+/* Inventory control centre: dense desktop tools reflow into finger-friendly phone controls. */
+.inventory-page-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.inventory-page-actions .btn{min-height:43px}
+.stock-alert-line{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 8px;min-height:23px;flex-wrap:wrap}
+.stock-alert-status{font-size:11px;font-weight:800;color:#667085}
+.stock-alert-line.low .stock-alert-status{color:#b42318}
+.stock-alert-line.ok .stock-alert-status{color:#067647}
+.stock-alert-line small{font-size:11px;color:#667085}
+.stock-reorder-button{width:100%;min-height:39px!important;font-size:12px!important;padding:7px 10px!important}
+.history-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end;margin:12px 0 17px}
+.history-filters .field{min-width:0;margin:0}
+.history-filters input,.history-filters select{width:100%;min-width:0}
+.history-filters>.btn{min-height:46px;grid-column:auto}
+.inventory-row-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:120px}
+.inventory-row-actions .btn{white-space:nowrap}
+.inventory-history-card details{min-width:140px}
+.inventory-history-card details pre{max-width:380px;max-height:240px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.45 ui-monospace,monospace}
+@media(max-width:640px){
+  .inventory-page-actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .inventory-page-actions .btn{width:100%;min-width:0;font-size:12px;padding:9px 8px}
+  body[data-route="inventory"] .page-head>.inventory-page-actions{margin-top:5px}
+  .history-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .history-filters .field{min-width:0}
+  .history-filters .field label{font-size:11px;min-height:0}
+  .history-filters .field input,.history-filters .field select{height:47px;min-height:47px;padding:8px;font-size:14px}
+  .history-filters>#applyHistoryFilters{grid-column:1/-1;width:100%}
+  .inventory-history-card .history-card-heading{align-items:flex-start;flex-direction:column}
+  .inventory-history-card .history-card-heading>.inventory-page-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .stock-reorder-button{font-size:11px!important}
+  .inventory-edit-modal,.receive-stock-modal{overscroll-behavior-y:contain}
+  .inventory-row-actions{min-width:0;flex-direction:column}
+}
