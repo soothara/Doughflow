@@ -289,8 +289,9 @@ assert.ok(securityDefinerFix.includes("REVOKE ALL ON FUNCTION public.verify_pin_
 assert.ok(securityDefinerFix.includes("GRANT EXECUTE ON FUNCTION public.verify_pin_login(text,text) TO service_role"), "the PIN-login Edge Function service role must retain execute permission");
 assert.ok(securityDefinerFix.includes("REVOKE ALL ON FUNCTION public.complete_production(date,numeric,uuid,jsonb,jsonb) FROM PUBLIC, anon"), "production save RPC must not be directly callable by anonymous users");
 
-assert.match(app, /shiftStatus=shiftActive\?'Shift active':'Outside shift hours'/, "shift schedule settings must be used on Home");
-assert.match(app, /dashboard-admin-notes/, "admin operating notes must appear on the Home dashboard");
+assert.doesNotMatch(app, /hero-shift-pill|Shift schedule|shiftStatus=shiftActive/, "Home dashboard should stay clean without the shift schedule widget");
+assert.doesNotMatch(app, /dashboard-admin-notes|settingAdminNotes/, "redundant admin notes should not clutter Home or Settings");
+assert.doesNotMatch(app, /stockNote|stockCorrectionReason|Why are you removing this entry\?/, "inventory forms should not require manual reason/note prompts");
 assert.ok(app.includes("if(appSettings.confirmDestructiveActions&&!window.confirm('Remove this historical stock entry?"), "inventory deletion must respect the destructive-action setting");
 assert.match(app, /confirmDestructiveActions&&!window\.confirm\('Confirm dated stock correction\?/, "date-wise stock corrections must respect confirmation settings");
 assert.match(app, /confirmDestructiveActions&&!confirm\('Restore the original slideshow photo/, "slideshow restore must respect confirmation settings");
