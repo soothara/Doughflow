@@ -2022,9 +2022,33 @@ async function renderNaan(p){
   const month=p.dataset.dispatchMonth||today().slice(0,7);
   const part=month.split('-').map(Number),year=part[0],monthNo=part[1],from=month+'-01',to=monthNo===12?String(year+1)+'-01-01':String(year)+'-'+String(monthNo+1).padStart(2,'0')+'-01';
   const defaultDate=month===today().slice(0,7)?today():from;
-  let rows=[],dataError='';
-  if(isDemo){db.naanDispatches=db.naanDispatches||[];rows=db.naanDispatches.filter(x=>String(x.dispatch_date||x.dispatchDate).startsWith(month)).sort((x,y)=>String(y.dispatch_date||y.dispatchDate).localeCompare(String(x.dispatch_date||x.dispatchDate)));}
-  else{const result=await supabase.from('naan_dispatches').select('id,dispatch_date,recipient_name,sack_count,total_pieces,vehicle_registration,driver_name,status,notes,created_by,created_at,updated_at').gte('dispatch_date',from).lt('dispatch_date',to).order('dispatch_date',{ascending:false}).order('created_at',{ascending:false}).limit(1000);if(result.error)dataError=friendlyError(result.error);else rows=result.data||[];}
+  let rows=[],capacities=[],dataError='';
+  if(isDemo){
+    db.naanDispatches=db.naanDispatches||[];db.productions=db.productions||[];
+    rows=db.naanDispatches.filter(x=>String(x.dispatch_date||x.dispatchDate).startsWith(month)).sort((x,y)=>String(y.dispatch_date||y.dispatchDate).localeCompare(String(x.dispatch_date||x.dispatchDate)));
+    const byProductionDate=new Map();
+    db.productions.forEach(r=>{
+      const date=String(r.date||r.production_date||'');if(!date)return;
+      if(!byProductionDate.has(date))byProductionDate.set(date,{production_date:date,produced_sacks:0,produced_pieces:0,reserved_sacks:0,reserved_pieces:0});
+      const cap=byProductionDate.get(date);cap.produced_sacks+=Number((r.mishokCount??r.mishok_count)||0);cap.produced_pieces+=(r.batches||r.production_batches||[]).reduce((sum,b)=>sum+Number(b.pieces||0),0);
+    });
+    (db.naanDispatches||[]).filter(d=>['prepared','dispatched'].includes(d.status)).forEach(d=>{
+      const date=String(d.source_production_date||d.sourceProductionDate||d.dispatch_date||d.dispatchDate||'');const cap=byProductionDate.get(date);if(cap){cap.reserved_sacks+=Number((d.sack_count??d.sackCount)||0);cap.reserved_pieces+=Number((d.total_pieces??d.totalPieces)||0);}
+    });
+    capacities=[...byProductionDate.values()].map(x=>({...x,remaining_sacks:Math.max(0,x.produced_sacks-x.reserved_sacks),remaining_pieces:Math.max(0,x.produced_pieces-x.reserved_pieces)})).sort((x,y)=>y.production_date.localeCompare(x.production_date));
+  }else{
+    const [dispatchResult,capacityResult]=await Promise.all([
+      supabase.from('naan_dispatches').select('id,dispatch_date,source_production_date,recipient_name,sack_count,total_pieces,vehicle_registration,driver_name,status,notes,created_by,created_at,updated_at').gte('dispatch_date',from).lt('dispatch_date',to).order('dispatch_date',{ascending:false}).order('created_at',{ascending:false}).limit(1000),
+      supabase.rpc('available_production_for_dispatch',{})
+    ]);
+    if(dispatchResult.error)dataError=friendlyError(dispatchResult.error);else rows=dispatchResult.data||[];
+    if(capacityResult.error)dataError=dataError||friendlyError(capacityResult.error);else capacities=capacityResult.data||[];
+  }
+  const preferredSourceDate=p.dataset.dispatchSourceDate||today();
+  const selectedSourceDate=capacities.some(x=>x.production_date===preferredSourceDate)?preferredSourceDate:(capacities.some(x=>x.production_date===today())?today():(capacities[0]?.production_date||today()));
+  p.dataset.dispatchSourceDate=selectedSourceDate;
+  const selectedCapacity=capacities.find(x=>x.production_date===selectedSourceDate);
+  const sourceDateOptions=capacities.map(x=>'<option value="'+esc(x.production_date)+'" '+(x.production_date===selectedSourceDate?'selected':'')+'>'+esc(x.production_date)+' · '+fmt(x.remaining_sacks)+' sacks / '+fmt(x.remaining_pieces)+' pieces available</option>').join('');
   const sacks=rows.filter(row=>(row.status||'')==='dispatched').reduce((sum,row)=>sum+Number(row.sack_count||0),0);
   const piecesOut=rows.filter(row=>(row.status||'')==='dispatched').reduce((sum,row)=>sum+Number(row.total_pieces||row.totalPieces||0),0);
   const pending=rows.filter(row=>(row.status||'prepared')==='prepared').length;
