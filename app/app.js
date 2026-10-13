@@ -1769,70 +1769,126 @@ function openStockModal(presetType='purchase'){
 function closeModal(){modalRoot.innerHTML='';}
 
 async function renderReports(p){
-  const runs=isDemo?db.productions:liveState.productions;
-  const summary=!isDemo?liveState.summaryAll:null;
-  const total=summary?Number(summary.total_sacks):runs.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
-  const pieces=summary?Number(summary.total_pieces):runs.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
-  const avg=total?pieces/total:0;
-  let sackRows=[];
-  let sackError='';
-  if(!isDemo){
-    const {data,error}=await supabase.from('notebook_sack_entries')
+  const requestId=(Number(p.dataset.reportRequest||0)+1);
+  p.dataset.reportRequest=String(requestId);
+  const currentReportMonth=p.dataset.reportMonth||'';
+  const locale=lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-GB';
+  const monthLabel=month=>new Date(month+'-01T12:00:00').toLocaleDateString(locale,{month:'long',year:'numeric'});
+  let notebookRows=[],productionRows=[],notebookError='',productionError='';
+  if(isDemo){
+    notebookRows=[];
+    productionRows=(db.productions||[]).map(r=>({
+      id:r.id||uid(),production_date:r.date,created_by:r.createdBy,mishok_count:r.mishokCount,status:'completed',
+      production_batches:(r.batches||[]).map((b,i)=>({batch_no:i+1,mishok_fraction:b.sack||1,pieces:b.pieces||0}))
+    }));
+  }else{
+    const notebookPromise=supabase.from('notebook_sack_entries')
       .select('record_date,sack_no,pieces_in_sack')
       .order('record_date',{ascending:false}).order('sack_no',{ascending:true});
-    if(error) sackError=friendlyError(error);
-    else sackRows=data||[];
+    const notebookResult=await notebookPromise;
+    if(notebookResult.error)notebookError=friendlyError(notebookResult.error);
+    else notebookRows=notebookResult.data||[];
+    const pageSize=1000;
+    try{
+      for(let offset=0;offset<100000;offset+=pageSize){
+        const {data,error}=await supabase.from('production_runs')
+          .select('id,production_date,created_by,mishok_count,recipe_version_id,created_at,status,production_batches(batch_no,mishok_fraction,pieces)')
+          .eq('status','completed').order('production_date',{ascending:false}).order('created_at',{ascending:false})
+          .range(offset,offset+pageSize-1);
+        if(error)throw error;
+        productionRows.push(...(data||[]));
+        if(!data||data.length<pageSize)break;
+      }
+    }catch(error){productionError=friendlyError(error);}
   }
-  const allByDate=new Map();
-  for(const row of sackRows){
-    const key=String(row.record_date);
-    if(!allByDate.has(key))allByDate.set(key,[]);
-    allByDate.get(key).push({sack:Number(row.sack_no),pieces:Number(row.pieces_in_sack)});
+  if(Number(p.dataset.reportRequest)!==requestId||document.body.dataset.route!=='reports')return;
+  const notebookByDate=new Map();
+  for(const row of notebookRows){
+    const date=String(row.record_date);
+    if(!notebookByDate.has(date))notebookByDate.set(date,[]);
+    notebookByDate.get(date).push({sack:Number(row.sack_no),pieces:Number(row.pieces_in_sack),fraction:1});
   }
-  const allMonths=[...new Set(sackRows.map(row=>String(row.record_date).slice(0,7)))].sort().reverse();
-  const preferredMonth=p.dataset.reportMonth||'';
-  const selectedMonth=allMonths.includes(preferredMonth)?preferredMonth:(allMonths.includes(today().slice(0,7))?today().slice(0,7):(allMonths[0]||today().slice(0,7)));
-  const monthRows=sackRows.filter(row=>String(row.record_date).startsWith(selectedMonth));
-  const byDate=new Map([...allByDate.entries()].filter(([date])=>date.startsWith(selectedMonth)));
-  const sackCount=monthRows.length;
-  const totalNotebookPieces=monthRows.reduce((sum,row)=>sum+Number(row.pieces_in_sack),0);
-  const allTimeSacks=sackRows.length;
-  const allTimePieces=sackRows.reduce((sum,row)=>sum+Number(row.pieces_in_sack),0);
-  const averagePieces=sackCount?totalNotebookPieces/sackCount:0;
-  const dates=[...byDate.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
-  const reportSacks=isDemo?total:sackCount;
-  const reportPieces=isDemo?pieces:totalNotebookPieces;
-  const reportAverage=reportSacks?reportPieces/reportSacks:0;
-  const monthLabel=month=>new Date(month+'-01T12:00:00').toLocaleDateString(lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-GB',{month:'long',year:'numeric'});
-  const monthOptions=[...new Set([...allMonths,selectedMonth])].sort().reverse().map(month=>'<option value="'+esc(month)+'"'+(month===selectedMonth?' selected':'')+'>'+esc(monthLabel(month))+'</option>').join('');
-  const dailyCards=sackError
-    ? "<div class='notice'>Unable to load notebook sack records: "+esc(sackError)+"</div>"
-    : dates.length
-      ? "<div class='piece-weight-days'>"+dates.map(([date,items])=>{
-          const vals=items.map(x=>x.pieces);
-          const mean=vals.reduce((sum,n)=>sum+n,0)/vals.length;
-          const low=Math.min(...vals),high=Math.max(...vals);
-          const dailyTotal=vals.reduce((sum,n)=>sum+n,0);
-          const detail=items.map(x=>"<span class='piece-weight-chip'><small>Sack "+String(x.sack).padStart(2,'0')+"</small><b>"+fmt(x.pieces)+"</b></span>").join("");
-          const displayDate=new Date(date+"T12:00:00").toLocaleDateString(lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-GB',{day:'numeric',month:'short',year:'numeric'});
-          return "<article class='piece-weight-day'><div class='piece-weight-day-head'><div><span class='piece-weight-date'>"+esc(displayDate)+"</span><span class='piece-weight-day-sub'>Notebook sack count</span></div><span class='piece-weight-sack-count'><b>"+items.length+"</b> sacks</span></div><div class='piece-weight-daily-total'><span>Total pieces in these sacks</span><strong>"+fmt(dailyTotal)+"</strong></div><div class='piece-weight-chips'>"+detail+"</div><div class='piece-weight-stats'><span><small>Avg. pieces / sack</small><b>"+fmt(mean)+"</b></span><span><small>Fewest in a sack</small><b>"+fmt(low)+"</b></span><span><small>Most in a sack</small><b>"+fmt(high)+"</b></span></div></article>";
-        }).join("")+"</div>"
-      : "<div class='empty'>No notebook sack counts found for "+esc(monthLabel(selectedMonth))+". Choose another month above.</div>";
-  p.innerHTML=`<div class="page-head report-page-head"><div><div class="eyebrow">Production insights</div><h1>Reports</h1><p>Choose a month to review daily sack counts and total bread pieces.</p></div></div>
-    <section class="report-month-toolbar card"><div><span class="report-month-icon">▦</span><div><b>Monthly report</b><small>Filter daily sack counts and piece totals by month</small></div></div><label for="reportMonthSelect">Report month<select id="reportMonthSelect">${monthOptions}</select></label></section>
-    <section class="report-production-summary">
-      <article class="report-stat-card"><span class="report-stat-icon">▤</span><small>Notebook sacks recorded</small><strong>${fmt(reportSacks)}</strong></article>
-      <article class="report-stat-card"><span class="report-stat-icon">◉</span><small>Total pieces counted</small><strong>${fmt(reportPieces)}</strong></article>
-      <article class="report-stat-card"><span class="report-stat-icon">↗</span><small>Average pieces per sack</small><strong>${fmt(reportAverage)}</strong></article>
-    </section>
-    <section class="report-alltime-strip"><span>All-time notebook totals</span><b>${fmt(allTimeSacks)} sacks</b><b>${fmt(allTimePieces)} pieces</b></section>
-    <section class="piece-weight-report card">
-      <div class="piece-weight-report-title"><div><div class="eyebrow">Notebook records</div><h2>${esc(monthLabel(selectedMonth))}: sacks &amp; pieces</h2><p>Each numbered entry is a <b>sack</b>. Its number is the count of bread pieces inside that sack — not a gram weight.</p></div><span class="piece-weight-period">${fmt(dates.length)} days</span></div>
-      <div class="piece-weight-overview"><div><small>Sacks recorded</small><strong>${fmt(sackCount)}</strong></div><div><small>Total pieces counted</small><strong>${fmt(totalNotebookPieces)}</strong></div><div><small>Days recorded</small><strong>${fmt(dates.length)}</strong></div></div>
-      <div class="piece-weight-note"><span>ⓘ</span><p>Original notebook counts are preserved exactly as recorded. Unusually low counts are included in the monthly totals.</p></div>
-      <div class="piece-weight-day-list">${dailyCards}</div>
-    </section>
-    <section class="card report-production-history"><div class="report-section-heading"><div><div class="eyebrow">Operations</div><h2>Production history</h2></div><span class="report-section-count">${runs.length||dates.length} days</span></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Total pieces</th><th>Source</th></tr></thead><tbody>${runs.length?runs.map(r=>`<tr><td>${esc(isDemo?r.date:r.production_date)}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt((isDemo?r.batches:r.production_batches||[]).reduce((a,b)=>a+Number(b.pieces||0),0))}</td><td>${esc(isDemo?r.createdBy:r.created_by===currentUser.id?currentUser.name:'User')}</td></tr>`).join(''):dates.map(([date,items])=>`<tr><td>${esc(date)}</td><td>${fmt(items.length)}</td><td>${fmt(items.reduce((sum,item)=>sum+item.pieces,0))}</td><td>Notebook</td></tr>`).join('')}</tbody></table></div></section>`;
+  const productionByDate=new Map();
+  for(const run of productionRows){
+    const date=String(run.production_date);
+    if(!productionByDate.has(date))productionByDate.set(date,{runs:[],sacks:0,pieces:0,items:[],createdBy:[]});
+    const day=productionByDate.get(date);
+    day.runs.push(run);
+    day.sacks+=Number(run.mishok_count||0);
+    if(run.created_by&&!day.createdBy.includes(run.created_by))day.createdBy.push(run.created_by);
+    const batches=[...(run.production_batches||[])].sort((x,y)=>Number(x.batch_no)-Number(y.batch_no));
+    for(const batch of batches){
+      const fraction=Number(batch.mishok_fraction||1);
+      const itemPieces=Number(batch.pieces||0);
+      day.pieces+=itemPieces;
+      day.items.push({sack:day.items.length+1,pieces:itemPieces,fraction});
+    }
+  }
+  const allDateKeys=[...new Set([...notebookByDate.keys(),...productionByDate.keys(),today().slice(0,7)+'-01'.slice(0,0)])].filter(Boolean);
+  const allMonths=[...new Set([...allDateKeys.map(date=>date.slice(0,7)),today().slice(0,7)])].sort().reverse();
+  const selectedMonth=allMonths.includes(currentReportMonth)?currentReportMonth:today().slice(0,7);
+  p.dataset.reportMonth=selectedMonth;
+  const dailyMap=new Map();
+  for(const date of allDateKeys){
+    const notebook=notebookByDate.get(date)||[];
+    const production=productionByDate.get(date);
+    if(production){
+      const notebookPieces=notebook.reduce((sum,item)=>sum+item.pieces,0);
+      dailyMap.set(date,{
+        date,source:'production',sacks:production.sacks,pieces:production.pieces,
+        items:production.items,runs:production.runs.length,createdBy:production.createdBy,
+        notebookSacks:notebook.length,notebookPieces,
+        hasNotebook:notebook.length>0,
+        mismatch:notebook.length>0&&(Math.abs(notebook.length-production.sacks)>0.001||notebookPieces!==production.pieces)
+      });
+    }else if(notebook.length){
+      dailyMap.set(date,{
+        date,source:'notebook',sacks:notebook.length,pieces:notebook.reduce((sum,item)=>sum+item.pieces,0),
+        items:notebook,runs:0,createdBy:[],notebookSacks:notebook.length,notebookPieces:notebook.reduce((sum,item)=>sum+item.pieces,0),
+        hasNotebook:true,mismatch:false
+      });
+    }
+  }
+  const allDaily=[...dailyMap.values()].sort((a,b)=>b.date.localeCompare(a.date));
+  const monthDaily=allDaily.filter(day=>day.date.startsWith(selectedMonth));
+  const monthlySacks=monthDaily.reduce((sum,day)=>sum+day.sacks,0);
+  const monthlyPieces=monthDaily.reduce((sum,day)=>sum+day.pieces,0);
+  const monthlyAverage=monthlySacks?monthlyPieces/monthlySacks:0;
+  const allSacks=allDaily.reduce((sum,day)=>sum+day.sacks,0);
+  const allPieces=allDaily.reduce((sum,day)=>sum+day.pieces,0);
+  const allMonthsOptions=allMonths.map(month=>'<option value="'+esc(month)+'"'+(month===selectedMonth?' selected':'')+'>'+esc(monthLabel(month))+'</option>').join('');
+  const cards=monthDaily.map(day=>{
+    const items=day.items||[];
+    const vals=items.map(item=>item.pieces);
+    const average=day.sacks?day.pieces/day.sacks:0;
+    const low=vals.length?Math.min(...vals):0,high=vals.length?Math.max(...vals):0;
+    const details=items.map((item,index)=>{
+      const label=item.fraction<1?'Half sack '+String(index+1).padStart(2,'0'):'Sack '+String(index+1).padStart(2,'0');
+      return "<span class='piece-weight-chip'><small>"+esc(label)+"</small><b>"+fmt(item.pieces)+"</b></span>";
+    }).join('');
+    const displayDate=new Date(day.date+'T12:00:00').toLocaleDateString(locale,{day:'numeric',month:'short',year:'numeric'});
+    const sourcePill=day.source==='production'?"<span class='report-source-pill production'>● Production input</span>":"<span class='report-source-pill notebook'>▤ Notebook entry</span>";
+    const mismatch=day.mismatch?"<div class='report-reconcile-note'>⚠ Production and notebook entries differ. Monthly totals use the saved production record once, to avoid double-counting. Notebook: "+fmt(day.notebookSacks)+" sacks / "+fmt(day.notebookPieces)+" pieces.</div>":'';
+    return "<article class='piece-weight-day'><div class='piece-weight-day-head'><div><span class='piece-weight-date'>"+esc(displayDate)+"</span><span class='piece-weight-day-sub'>"+sourcePill+"</span></div><span class='piece-weight-sack-count'><b>"+fmt(day.sacks)+"</b> sacks</span></div><div class='piece-weight-daily-total'><span>Total pieces recorded today</span><strong>"+fmt(day.pieces)+"</strong></div>"+(details?"<div class='piece-weight-chips'>"+details+"</div>":"")+"<div class='piece-weight-stats'><span><small>Avg. per sack</small><b>"+fmt(average)+"</b></span><span><small>Fewest</small><b>"+fmt(low)+"</b></span><span><small>Most</small><b>"+fmt(high)+"</b></span></div>"+mismatch+"</article>";
+  }).join('');
+  const monthOptions=allMonthsOptions||'<option value="'+esc(selectedMonth)+'">'+esc(monthLabel(selectedMonth))+'</option>';
+  const historyRows=monthDaily.map(day=>"<tr><td>"+esc(day.date)+"</td><td>"+fmt(day.sacks)+"</td><td>"+fmt(day.pieces)+"</td><td>"+(day.source==='production'?"<span class='report-source-pill production'>Production"+(day.runs>1?" · "+day.runs+" runs":'')+"</span>":"<span class='report-source-pill notebook'>Notebook</span>")+"</td></tr>").join('');
+  p.innerHTML=`<div class="page-head report-page-head"><div><div class="eyebrow">PRODUCTION INSIGHTS</div><h1>Reports</h1><p>Daily production inputs and notebook sack records are connected here automatically.</p></div></div>
+  <section class="report-month-toolbar card"><div><span class="report-month-icon">▦</span><div><b>Monthly report</b><small>Updated from saved production and notebook entries</small></div></div><label for="reportMonthSelect">Report month<select id="reportMonthSelect">${monthOptions}</select></label></section>
+  <section class="report-production-summary">
+    <article class="report-stat-card"><span class="report-stat-icon">▤</span><small>Sacks recorded this month</small><strong>${fmt(monthlySacks)}</strong></article>
+    <article class="report-stat-card"><span class="report-stat-icon">◉</span><small>Total pieces this month</small><strong>${fmt(monthlyPieces)}</strong></article>
+    <article class="report-stat-card"><span class="report-stat-icon">↗</span><small>Average pieces per sack</small><strong>${fmt(monthlyAverage)}</strong></article>
+  </section>
+  <section class="report-alltime-strip"><span>All-time combined totals</span><b>${fmt(allSacks)} sacks</b><b>${fmt(allPieces)} pieces</b></section>
+  ${productionError?"<div class='notice warn'>Production history could not be loaded: "+esc(productionError)+". Report totals may be incomplete.</div>":""}
+  ${notebookError?"<div class='notice warn'>Notebook history could not be loaded: "+esc(notebookError)+". Report totals may be incomplete.</div>":""}
+  <section class="piece-weight-report card"><div class="piece-weight-report-title"><div><div class="eyebrow">DAILY BREAKDOWN</div><h2>${esc(monthLabel(selectedMonth))}: sacks &amp; pieces</h2><p>Formal production records take priority for a date with saved production. Notebook counts fill dates without production, so a day is never counted twice.</p></div><span class="piece-weight-period">${fmt(monthDaily.length)} days</span></div>
+    <div class="piece-weight-overview"><div><small>Days with records</small><strong>${fmt(monthDaily.length)}</strong></div><div><small>Sacks total</small><strong>${fmt(monthlySacks)}</strong></div><div><small>Pieces total</small><strong>${fmt(monthlyPieces)}</strong></div></div>
+    <div class="piece-weight-note"><span>ⓘ</span><p>Today’s Production form is linked automatically. The saved production record is used as the daily source when available; notebook records remain available as a comparison.</p></div>
+    <div class="piece-weight-day-list">${cards||"<div class='empty'>No production or notebook entries found for "+esc(monthLabel(selectedMonth))+". Enter production today or choose another month.</div>"}</div>
+  </section>
+  <section class="card report-production-history"><div class="report-section-heading"><div><div class="eyebrow">DAILY TOTALS</div><h2>Production &amp; notebook history</h2></div><span class="report-section-count">${fmt(monthDaily.length)} days</span></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Total pieces</th><th>Source</th></tr></thead><tbody>${historyRows||"<tr><td colspan='4' class='empty'>No daily entries for this month.</td></tr>"}</tbody></table></div></section>`;
   p.querySelector('#reportMonthSelect')?.addEventListener('change',event=>{
     p.dataset.reportMonth=event.target.value;
     renderReports(p);
