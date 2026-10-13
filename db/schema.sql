@@ -264,7 +264,7 @@ cross join (values
  ('flour',50::numeric,'kg','Operational reference per mishok; actual flour is not weighed for the entry screen.',1),
  ('water',31.2::numeric,'kg','Combined water; no hot/cold split.',2),
  ('oil',1::numeric,'kg','Standard.',3),
- ('yeast',0.045::numeric,'kg','Default 45 g; operational range 35–55 g.',4),
+ ('yeast',0.055::numeric,'kg','Default 55 g; operational range 35–55 g.',4),
  ('salt',1.2::numeric,'kg','1 kg or 750 g packets.',5),
  ('sugar',0.5::numeric,'kg','Standard.',6)
 ) v(code,qty,unit,note,ord)
