@@ -316,3 +316,22 @@ body[data-route="production"] .production-work-card .btn{min-height:48px}
   .nav button.active .nav-icon svg{animation:none}
   .nav-icon,.nav-icon svg,.nav button,.more-icon,.more-card,.stock-item-icon svg{transition:none}
 }
+
+
+/* Full-height phone sheet: the stock form scrolls inside the popup, never the page behind it. */
+html.modal-open,body.modal-open{overflow:hidden!important;overscroll-behavior:none!important}
+body.modal-open #app .layout>.sidebar{display:none!important;visibility:hidden!important;pointer-events:none!important}
+body.modal-open #app{pointer-events:none}
+#modalRoot{position:relative;z-index:2147483000}
+.modal-backdrop.show{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-height:100dvh!important;z-index:2147483000!important;display:flex!important;align-items:flex-end!important;justify-content:center!important;overflow:hidden!important;padding:env(safe-area-inset-top) 0 0!important;box-sizing:border-box!important;background:rgba(15,23,42,.58)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+@media(max-width:640px){
+  .modal-backdrop.show{align-items:flex-end!important}
+  .modal-backdrop.show>.modal{width:100%!important;max-width:none!important;height:calc(100dvh - env(safe-area-inset-top) - 8px)!important;max-height:calc(100dvh - env(safe-area-inset-top) - 8px)!important;min-height:0!important;flex:0 1 auto!important;margin:0!important;padding:18px 16px calc(20px + env(safe-area-inset-bottom))!important;border-radius:25px 25px 0 0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-y!important;box-sizing:border-box!important}
+  .modal-backdrop.show>.modal .modal-head{position:sticky;top:-18px;z-index:5;margin:-18px -16px 16px;padding:17px 16px 12px;background:rgba(255,255,255,.97);border-radius:25px 25px 0 0;backdrop-filter:blur(12px)}
+  .modal-backdrop.show>.modal .modal-footer{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom));z-index:5;display:flex;gap:10px;margin:18px -16px calc(-20px - env(safe-area-inset-bottom));padding:12px 16px calc(14px + env(safe-area-inset-bottom));background:rgba(255,255,255,.98);box-shadow:0 -8px 22px rgba(20,35,55,.08)}
+  .modal-backdrop.show>.modal .modal-footer .btn{flex:1;min-width:0;min-height:50px}
+  .modal-backdrop.show>.modal .field{margin-bottom:15px}
+  .modal-backdrop.show>.modal input,.modal-backdrop.show>.modal select{min-height:52px;font-size:16px}
+  .inventory-row-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:120px}
+  .inventory-row-actions .btn{min-height:38px;padding:7px 10px;font-size:12px}
+}
