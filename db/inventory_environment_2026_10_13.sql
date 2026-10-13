@@ -217,7 +217,7 @@ begin
  if auth.uid() is null or not public.is_admin() then raise exception 'Not authorized'; end if;
  if p_from is null or p_to is null or p_from>p_to then raise exception 'Choose a valid audit date range'; end if;
  return query select a.id,a.transaction_id,a.action,a.actor_id,a.occurred_at,a.before_record,a.after_record,a.note
- from public.inventory_transaction_audit a where a.occurred_at::date between p_from and p_to order by a.occurred_at desc;
+ from public.inventory_transaction_audit a where (a.occurred_at at time zone 'Asia/Bishkek')::date between p_from and p_to order by a.occurred_at desc;
 end $$;
 
 revoke all on function public.admin_inventory_history(date) from public;
