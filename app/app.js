@@ -790,7 +790,6 @@ function renderMore(p){
   const extra=[];
   if(currentUser.role==='admin') extra.push(
     ['inventory',NAV_ICONS.stock,'Stock & inventory','See balances and stock movements'],
-    ['reports',NAV_ICONS.sales,'Reports','Review production and usage'],
     ['users',uiIcon('users',24),'People','Manage staff and roles'],
     ['naan',NAV_ICONS.naan,'Naan / Leposhka','Open the naan workflow'],
     ['sales',NAV_ICONS.sales,'Sales','Open the sales workspace'],
