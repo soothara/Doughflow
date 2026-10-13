@@ -63,7 +63,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v57-20261013-auto-link-report-refresh/);
+assert.match(worker, /doughflow-v58-20261013-connected-settings-controls/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -77,7 +77,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:\(appSettings\?\.timezone\|\|'Asia\/Bishkek'\)/, "business time zone must come from saved settings with a safe default");
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v57-20261013-auto-link-report-refresh/);
+assert.match(worker, /doughflow-v58-20261013-connected-settings-controls/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -149,7 +149,7 @@ assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should 
 const heroImageSection = app.slice(app.indexOf("const DEFAULT_SLIDESHOW ="), app.indexOf("const defaultSlideUrl="));
 assert.equal((heroImageSection.match(/\{file:/g) || []).length, 10, "hero carousel should define ten default photo slides");
 assert.ok(heroImageSection.includes("01-baker-tandoor-hd-20261012.webp") && heroImageSection.includes("02-leposhka-closeup-hd-20261012.avif"), "HD hero gallery should use the available high-resolution images");
-assert.match(worker, /doughflow-v57-20261013-auto-link-report-refresh/, "service worker cache version must change when the gallery changes");
+assert.match(worker, /doughflow-v58-20261013-connected-settings-controls/, "service worker cache version must change when the gallery changes");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache gallery image "+image);
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected HD gallery image "+image);
 
@@ -158,7 +158,7 @@ assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should 
 assert.ok(app.includes("const heroImages=DEFAULT_SLIDESHOW.map"), "hero must render its selected photo gallery from saved settings");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(app.includes(image), "selected hero gallery must include "+image);
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected authentic gallery image "+image);
-assert.match(worker, /doughflow-v57-20261013-auto-link-report-refresh/, "service worker cache version must change when gallery assets are replaced");
+assert.match(worker, /doughflow-v58-20261013-connected-settings-controls/, "service worker cache version must change when gallery assets are replaced");
 assert.ok(app.includes("heroPhotoMarkup") && app.includes("heroDotsMarkup"), "hero slides and navigation dots should be generated from one gallery");
 assert.ok(dashboardCss.includes("High-visibility mobile hero") && dashboardCss.includes("rgba(6,18,29,.78)"), "hero photo and text should remain clearly visible");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero-photo.hero-slide.is-active{display:block}"), "only the active hero photo should be visible; do not blend photos");
@@ -286,3 +286,9 @@ assert.match(app, /inventoryAudit:inventoryAuditResult\.data\|\|\[\]/, "backup m
 assert.ok(securityDefinerFix.includes("REVOKE ALL ON FUNCTION public.verify_pin_login(text,text) FROM PUBLIC, anon, authenticated"), "PIN verification must be callable only by the server service role");
 assert.ok(securityDefinerFix.includes("GRANT EXECUTE ON FUNCTION public.verify_pin_login(text,text) TO service_role"), "the PIN-login Edge Function service role must retain execute permission");
 assert.ok(securityDefinerFix.includes("REVOKE ALL ON FUNCTION public.complete_production(date,numeric,uuid,jsonb,jsonb) FROM PUBLIC, anon"), "production save RPC must not be directly callable by anonymous users");
+
+assert.match(app, /shiftStatus=shiftActive\?'Shift active':'Outside shift hours'/, "shift schedule settings must be used on Home");
+assert.match(app, /dashboard-admin-notes/, "admin operating notes must appear on the Home dashboard");
+assert.match(app, /confirmDestructiveActions&& !?window\.confirm\('Remove this historical stock entry\?/, "inventory deletion must respect the destructive-action setting");
+assert.match(app, /confirmDestructiveActions&&!window\.confirm\('Confirm dated stock correction\?/, "date-wise stock corrections must respect confirmation settings");
+assert.match(app, /confirmDestructiveActions&&!confirm\('Restore the original slideshow photo/, "slideshow restore must respect confirmation settings");
