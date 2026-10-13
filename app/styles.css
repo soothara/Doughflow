@@ -322,7 +322,7 @@ main{padding:30px 28px 115px}
   margin-bottom:18px;padding:30px;border-radius:30px;color:#fff;
   background:
     linear-gradient(90deg,rgba(8,24,46,.88) 0%,rgba(8,24,46,.56) 48%,rgba(8,24,46,.18) 100%),
-    url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=85') center/cover;
+    var(--df-mountain-image, url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=85')) center/cover;
   box-shadow:0 18px 42px rgba(31,45,67,.17);
 }
 .hero-welcome:after{
@@ -331,7 +331,7 @@ main{padding:30px 28px 115px}
   width:250px;height:180px;border-radius:50% 45% 18% 18%;
   background:
     linear-gradient(180deg,rgba(255,255,255,.02),rgba(60,30,10,.08)),
-    url('https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=88') center/cover;
+    var(--df-bread-image, url('https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=88')) center/cover;
   box-shadow:0 18px 28px rgba(0,0,0,.22);
   transform:rotate(-3deg);
   z-index:1;
@@ -479,7 +479,7 @@ button:active{transform:scale(.965)}
 }
 .portal-hero-photo{
   position:absolute;inset:-8%;
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg'), url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85');
+  background-image:var(--df-mountain-image, url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg')), url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85');
   background-size:cover,cover;background-position:center 45%,center;background-repeat:no-repeat;
   transform:scale(1.03);
   animation:heroDrift 18s ease-in-out infinite alternate;
@@ -537,7 +537,7 @@ button:active{transform:scale(.965)}
 }
 .panel-photo{
   position:absolute;inset:0 0 0 43%;
-  background-image:url('./assets/bakery.webp');
+  background-image:var(--df-bread-image, url('./assets/bakery.webp'));
   background-size:cover;background-position:center 55%;
 }
 .panel-photo-shade{position:absolute;inset:0;background:linear-gradient(90deg,#fffdf9 0%,rgba(255,253,249,.96) 38%,rgba(255,253,249,.12) 75%)}
@@ -651,10 +651,10 @@ button:active{transform:scale(.965)}
 
 /* ===== Final visual polish: Kyrgyz leposhka photography + premium login ===== */
 .portal-hero-photo{
-  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg'), url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85');
+  background-image:var(--df-mountain-image, url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg/1268px-Landscape_view%2C_Ala_Archa_National_Park%2C_Chuy_region%2C_Kyrgyzstan_01.jpg')), url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=85');
 }
 .panel-photo{
-  background-image:url('./assets/bakery.webp');
+  background-image:var(--df-bread-image, url('./assets/bakery.webp'));
   background-size:cover;
   background-position:center 48%;
   animation:leposhkaDrift 16s ease-in-out infinite alternate;
@@ -712,7 +712,7 @@ button:active{transform:scale(.965)}
   position:absolute;inset:-6%;
   background:
     linear-gradient(90deg,rgba(5,20,38,.86),rgba(5,20,38,.36) 65%,rgba(5,20,38,.20)),
-    url('./assets/bakery.webp') center/cover;
+    var(--df-bread-image, url('./assets/bakery.webp')) center/cover;
   filter:saturate(1.08) brightness(.86);
   animation:loginDrift 18s ease-in-out infinite alternate;
 }
