@@ -12,6 +12,7 @@ const inventoryCorrectionAudit = read("./db/inventory_correction_audit_2026_10_1
 const inventoryPrivilegeFix = read("./db/revoke_anon_inventory_admin_rpcs_20261013.sql");
 const productionTeamRead = read("./db/share_production_history_with_authenticated_team_2026_10_13.sql");
 const productionSummaryMigration = read("./db/shared_production_summary_2026_10_13.sql");
+const securityDefinerFix = read("./db/privilege_hardening_security_definer_2026_10_13.sql");
 const pinOnlyMigration = read("./db/pin_only_login_2026_10_11.sql");
 const schema = read("./db/schema.sql");
 
@@ -62,7 +63,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v56-20261013-shared-production/);
+assert.match(worker, /doughflow-v57-20261013-auto-link-report-refresh/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -76,7 +77,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:\(appSettings\?\.timezone\|\|'Asia\/Bishkek'\)/, "business time zone must come from saved settings with a safe default");
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v56-20261013-shared-production/);
+assert.match(worker, /doughflow-v57-20261013-auto-link-report-refresh/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -148,7 +149,7 @@ assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should 
 const heroImageSection = app.slice(app.indexOf("const DEFAULT_SLIDESHOW ="), app.indexOf("const defaultSlideUrl="));
 assert.equal((heroImageSection.match(/\{file:/g) || []).length, 10, "hero carousel should define ten default photo slides");
 assert.ok(heroImageSection.includes("01-baker-tandoor-hd-20261012.webp") && heroImageSection.includes("02-leposhka-closeup-hd-20261012.avif"), "HD hero gallery should use the available high-resolution images");
-assert.match(worker, /doughflow-v56-20261013-shared-production/, "service worker cache version must change when the gallery changes");
+assert.match(worker, /doughflow-v57-20261013-auto-link-report-refresh/, "service worker cache version must change when the gallery changes");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache gallery image "+image);
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected HD gallery image "+image);
 
@@ -157,7 +158,7 @@ assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should 
 assert.ok(app.includes("const heroImages=DEFAULT_SLIDESHOW.map"), "hero must render its selected photo gallery from saved settings");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(app.includes(image), "selected hero gallery must include "+image);
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected authentic gallery image "+image);
-assert.match(worker, /doughflow-v56-20261013-shared-production/, "service worker cache version must change when gallery assets are replaced");
+assert.match(worker, /doughflow-v57-20261013-auto-link-report-refresh/, "service worker cache version must change when gallery assets are replaced");
 assert.ok(app.includes("heroPhotoMarkup") && app.includes("heroDotsMarkup"), "hero slides and navigation dots should be generated from one gallery");
 assert.ok(dashboardCss.includes("High-visibility mobile hero") && dashboardCss.includes("rgba(6,18,29,.78)"), "hero photo and text should remain clearly visible");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero-photo.hero-slide.is-active{display:block}"), "only the active hero photo should be visible; do not blend photos");
@@ -276,3 +277,12 @@ assert.ok(app.includes("todayProductionPieces=todayProduction.reduce"), "Reports
 assert.ok(productionSummaryMigration.includes("auth.uid() IS NOT NULL") && productionSummaryMigration.includes("REVOKE ALL ON FUNCTION public.production_summary(date,date) FROM PUBLIC, anon"), "production summary must require authentication and block anonymous execution");
 assert.ok(productionSummaryMigration.includes("GRANT EXECUTE ON FUNCTION public.production_summary(date,date) TO authenticated, service_role"), "authenticated team members must be able to load aggregate production totals");
 assert.ok(schema.includes("auth.uid() is not null") && schema.includes("from public, anon"), "fresh schema must use the same safe shared production summary");
+
+assert.match(app, /function scrollAppToTop\(\)/, "page navigation must reset scroll position");
+assert.match(app, /if\(route==='reports'\)\{const page=document\.getElementById\('page'\);if\(page\)renderReports\(page\);\}/, "tapping the Reports tab again must refresh today's live data");
+assert.match(app, /id="refreshReports"/, "Reports must provide a manual refresh action");
+assert.match(app, /inventoryAuditResult=await supabase\.rpc\('admin_inventory_audit'/, "complete backup must include inventory audit history");
+assert.match(app, /inventoryAudit:inventoryAuditResult\.data\|\|\[\]/, "backup must serialize inventory audit history");
+assert.ok(securityDefinerFix.includes("REVOKE ALL ON FUNCTION public.verify_pin_login(text,text) FROM PUBLIC, anon, authenticated"), "PIN verification must be callable only by the server service role");
+assert.ok(securityDefinerFix.includes("GRANT EXECUTE ON FUNCTION public.verify_pin_login(text,text) TO service_role"), "the PIN-login Edge Function service role must retain execute permission");
+assert.ok(securityDefinerFix.includes("REVOKE ALL ON FUNCTION public.complete_production(date,numeric,uuid,jsonb,jsonb) FROM PUBLIC, anon"), "production save RPC must not be directly callable by anonymous users");
