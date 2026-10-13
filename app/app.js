@@ -1125,9 +1125,35 @@ async function renderInventory(p){
     if(!rows.length){$('inventoryHistoryRows').innerHTML='<div class="empty">'+t('No inventory transactions on this date.',lang)+'</div>';return;}
     const body=rows.map(row=>{
       const m=STOCK_MATERIALS.find(x=>x.code===row.material_code)||STOCK_MATERIALS[0],v=stockBreakdown(m,Number(row.qty_base)||0,lang),inc=row.direction==='in';
-      return '<tr><td><b>'+esc(t(row.material_name||m.name,lang))+'</b><small class="table-secondary">'+esc(row.package_label||'')+'</small></td><td><span class="movement-pill '+(inc?'in':'out')+'">'+(inc?'＋ '+t('Stock in',lang):'− '+t('Stock out',lang))+'</span></td><td><b>'+esc(v.primary)+'</b><small class="table-secondary">'+esc(v.secondary)+'</small></td><td><span class="history-reason">'+esc(row.reason||'')+'</span></td><td>'+esc(row.created_by_name||'')+'</td></tr>';
+      const id=String(row.transaction_id||row.id||'');
+      const actions=row.production_run_id?'<span class="small">Production-linked</span>':'<div class="inventory-row-actions"><button type="button" class="btn secondary" data-inventory-edit="'+esc(id)+'">Edit</button><button type="button" class="btn danger" data-inventory-delete="'+esc(id)+'">Remove</button></div>';
+      return '<tr><td><b>'+esc(t(row.material_name||m.name,lang))+'</b><small class="table-secondary">'+esc(row.package_label||'')+'</small></td><td><span class="movement-pill '+(inc?'in':'out')+'">'+(inc?'＋ '+t('Stock in',lang):'− '+t('Stock out',lang))+'</span></td><td><b>'+esc(v.primary)+'</b><small class="table-secondary">'+esc(v.secondary)+'</small></td><td><span class="history-reason">'+esc(row.reason||'')+'</span></td><td>'+esc(row.created_by_name||'')+'</td><td>'+actions+'</td></tr>';
     }).join('');
-    $('inventoryHistoryRows').innerHTML='<table><thead><tr><th>'+t('Material',lang)+'</th><th>'+t('Movement',lang)+'</th><th>'+t('Quantity',lang)+'</th><th>'+t('Reason / audit note',lang)+'</th><th>'+t('Entered by',lang)+'</th></tr></thead><tbody>'+body+'</tbody></table>';
+    $('inventoryHistoryRows').innerHTML='<table><thead><tr><th>'+t('Material',lang)+'</th><th>'+t('Movement',lang)+'</th><th>'+t('Quantity',lang)+'</th><th>'+t('Reason / audit note',lang)+'</th><th>'+t('Entered by',lang)+'</th><th>Admin actions</th></tr></thead><tbody>'+body+'</tbody></table>';
+    $('inventoryHistoryRows').querySelectorAll('[data-inventory-edit]').forEach(button=>button.addEventListener('click',()=>{
+      const row=rows.find(x=>String(x.transaction_id||x.id||'')===button.dataset.inventoryEdit);
+      if(row)openInventoryTransactionModal(row,async()=>{await refreshLiveState();await loadDate(date);});
+    }));
+    $('inventoryHistoryRows').querySelectorAll('[data-inventory-delete]').forEach(button=>button.addEventListener('click',async()=>{
+      const row=rows.find(x=>String(x.transaction_id||x.id||'')===button.dataset.inventoryDelete);
+      if(!row)return;
+      const label=(row.material_name||row.material_code)+' · '+row.direction+' · '+formatInventoryNumber(row.qty_base,lang)+' kg · '+date;
+      if(!window.confirm('Remove this historical stock entry?\n'+label+'\nThe action will be recorded in the admin audit log.'))return;
+      const reason=window.prompt('Why are you removing this entry?');
+      if(reason===null)return;
+      if(reason.trim().length<3){showToast('Enter a reason of at least 3 characters.','error');return;}
+      button.disabled=true;
+      try{
+        if(isDemo){
+          const inv=db.inventory[row.material_code];inv.tx=inv.tx.filter(x=>String(x.id)!==String(row.transaction_id||row.id));
+          inv.stock=inv.tx.reduce((sum,x)=>sum+(x.dir==='out'?-Number(x.qty||0):Number(x.qty||0)),0);saveDemo();
+        }else{
+          const {error}=await supabase.rpc('admin_delete_inventory_transaction',{p_transaction_id:row.transaction_id||row.id,p_reason:reason.trim()});
+          if(error)throw error;
+        }
+        await refreshLiveState();await loadDate(date);showToast('Historical stock entry removed. Audit record retained.','success');render();
+      }catch(error){showToast(friendlyError(error),'error');button.disabled=false;}
+    }));
   };
   const loadDate=async date=>{
     if(!date)return false;
@@ -1136,7 +1162,7 @@ async function renderInventory(p){
     updateCorrectionButton();
     if(isDemo){
       snapshotMap=Object.fromEntries(STOCK_MATERIALS.map(m=>[m.code,stockAtDemo(m.code,date)]));
-      const rows=STOCK_MATERIALS.flatMap(m=>(db.inventory?.[m.code]?.tx||[]).filter(x=>(x.effectiveDate||String(x.at||'').slice(0,10))===date).map(x=>({effective_date:date,material_code:m.code,material_name:m.name,direction:x.dir,qty_base:x.qty,reason:x.reason||'Inventory movement',package_label:x.packageLabel||'',created_by_name:x.by||'Admin',created_at:x.at}))).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+      const rows=STOCK_MATERIALS.flatMap(m=>(db.inventory?.[m.code]?.tx||[]).filter(x=>(x.effectiveDate||String(x.at||'').slice(0,10))===date).map(x=>({transaction_id:x.id,id:x.id,production_run_id:null,effective_date:date,material_code:m.code,material_name:m.name,direction:x.dir,qty_base:x.qty,package_count:x.packages??null,package_label:x.packageLabel||'',reason:x.reason||'Inventory movement',created_by_name:x.by||'Admin',created_at:x.at}))).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
       drawHistory(rows,date);
       snapshotLoaded=true;
       showInventoryNotice('');
@@ -1273,6 +1299,57 @@ async function renderInventory(p){
       });
     }).catch(()=>{});
   }
+}
+function openInventoryTransactionModal(row,onSaved=()=>{}){
+  if(currentUser?.role!=='admin'){showToast(t('Admin access only.',lang),'error');return;}
+  const originalMaterial=STOCK_MATERIALS.find(m=>m.code===row.material_code)||STOCK_MATERIALS[0];
+  modalRoot.innerHTML=`<div class="modal-backdrop show"><section class="modal inventory-edit-modal" role="dialog" aria-modal="true" aria-labelledby="editStockTitle"><div class="modal-head"><div><div class="eyebrow">Admin inventory controls</div><h2 id="editStockTitle">Edit historical stock</h2></div><button type="button" id="closeModal" aria-label="Close">×</button></div>
+    <p class="small">Changes recalculate inventory from the selected date. Original values are retained in the audit log.</p>
+    <div class="field"><label for="editStockMaterial">Material</label><select id="editStockMaterial">${STOCK_MATERIALS.map(m=>'<option value="'+m.code+'" '+(m.code===originalMaterial.code?'selected':'')+'>'+esc(t(m.name,lang))+'</option>').join('')}</select></div>
+    <div class="field"><label for="editStockDirection">Movement</label><select id="editStockDirection">${['in','out'].map(d=>'<option value="'+d+'" '+(d===row.direction?'selected':'')+'>'+(d==='in'?'Stock in':'Stock out')+'</option>').join('')}</select></div>
+    <div class="field"><label for="editStockDate">Effective date</label><input id="editStockDate" type="date" max="${today()}" value="${esc(String(row.effective_date||today()).slice(0,10))}"></div>
+    <div class="field"><label for="editStockPackage">Package / container</label><select id="editStockPackage"></select></div>
+    <div class="field"><label for="editStockCount">Full packages</label><input id="editStockCount" type="number" min="0" step="1" value="0"></div>
+    <div class="field"><label for="editStockRemainder">Open remainder</label><div class="unit-input-pair"><input id="editStockRemainder" type="number" min="0" step="0.001" value="0"><select id="editStockRemainderUnit"><option value="kg">kg</option><option value="g">g</option></select></div></div>
+    <div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>Quantity that will be posted</small><strong id="editStockPreview">0 kg</strong></div></div>
+    <div class="field"><label for="editStockReason">Reason / audit note</label><input id="editStockReason" maxlength="180" value="${esc(row.reason||'')}" placeholder="Why is this historical entry changing?"></div>
+    <div id="editStockError" class="inventory-database-notice error" role="alert" hidden></div>
+    <div class="modal-footer"><button type="button" class="btn secondary" id="cancelModal">Cancel</button><button type="button" class="btn primary" id="saveStockEdit">Save changes</button></div>
+  </section></div>`;
+  const $=id=>document.getElementById(id);
+  const getMaterial=()=>STOCK_MATERIALS.find(m=>m.code===$('editStockMaterial').value)||STOCK_MATERIALS[0];
+  const getPackage=()=>{const m=getMaterial();return m.packages[Number($('editStockPackage').value)]||m.packages[0];};
+  const showError=message=>{const el=$('editStockError');el.hidden=!message;el.textContent=message||'';};
+  const preview=()=>{const pkg=getPackage(),count=Math.max(0,Number($('editStockCount').value)||0),raw=Math.max(0,Number($('editStockRemainder').value)||0),rem=$('editStockRemainderUnit').value==='g'?raw/1000:raw,qty=count*Number(pkg?.qty||0)+rem;$('editStockCount').step=pkg?.kind==='sack'?'0.5':'1';$('editStockPreview').textContent=stockBreakdown(getMaterial(),qty,lang).primary+' · '+formatInventoryNumber(qty,lang)+' kg';};
+  const setPackageOptions=()=>{
+    const m=getMaterial(),quantity=Number(row.qty_base)||0;
+    $('editStockPackage').innerHTML=m.packages.filter(x=>x.kind!=='recipe').map(x=>'<option value="'+m.packages.indexOf(x)+'">'+esc(packageUnit(m,x,lang))+'</option>').join('');
+    const selected=m.packages.findIndex(x=>x.label===row.package_label&&x.kind!=='recipe');
+    $('editStockPackage').value=String(selected>=0?selected:m.packages.findIndex(x=>x.kind!=='recipe'));
+    const pkg=getPackage(),size=Number(pkg?.qty||1);let count=Math.floor((quantity+0.000001)/size),rem=quantity-count*size;
+    if(pkg?.kind==='sack'&&Math.abs(rem-size/2)<0.00001){count+=0.5;rem=0;}
+    $('editStockCount').value=count;
+    $('editStockRemainderUnit').value=rem>0&&rem<1?'g':'kg';
+    $('editStockRemainder').value=Number((rem*($('editStockRemainderUnit').value==='g'?1000:1)).toFixed(3));
+    $('editStockRemainderUnit').dataset.unit=$('editStockRemainderUnit').value;preview();
+  };
+  $('editStockMaterial').addEventListener('change',setPackageOptions);
+  $('editStockPackage').addEventListener('change',setPackageOptions);
+  $('editStockCount').addEventListener('input',preview);$('editStockRemainder').addEventListener('input',preview);
+  $('editStockRemainderUnit').addEventListener('change',()=>{const input=$('editStockRemainder'),old=input.dataset.unit||'kg',next=input.parentElement.querySelector('select').value;if(old!==next)input.value=Number((Number(input.value||0)*(old==='g'?0.001:1000)).toFixed(3));input.dataset.unit=next;preview();});
+  $('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);setPackageOptions();
+  $('saveStockEdit').addEventListener('click',async()=>{
+    const m=getMaterial(),pkg=getPackage(),count=Number($('editStockCount').value||0),raw=Number($('editStockRemainder').value||0),rem=$('editStockRemainderUnit').value==='g'?raw/1000:raw,qty=count*Number(pkg?.qty||0)+rem,date=$('editStockDate').value,reason=$('editStockReason').value.trim();
+    if(!date||date>today()){showError('Choose today or a past date.');return;}
+    if(count<0||rem<0||!Number.isFinite(qty)||qty<=0){showError('Quantity must be greater than zero.');return;}
+    if(reason.length<3){showError('Enter a reason of at least 3 characters.');return;}
+    const button=$('saveStockEdit');button.disabled=true;showError('');
+    try{
+      if(isDemo){const inv=db.inventory[row.material_code],entry=inv.tx.find(x=>String(x.id)===String(row.transaction_id||row.id));if(!entry)throw new Error('Inventory transaction not found');entry.dir=$('editStockDirection').value;entry.qty=qty;entry.effectiveDate=date;entry.reason=reason;entry.packageLabel=pkg.label;entry.packages=count;inv.stock=inv.tx.reduce((sum,x)=>sum+(x.dir==='out'?-Number(x.qty||0):Number(x.qty||0)),0);saveDemo();}
+      else{const {error}=await supabase.rpc('admin_update_inventory_transaction',{p_transaction_id:row.transaction_id||row.id,p_material_code:m.code,p_direction:$('editStockDirection').value,p_qty_base:Number(qty.toFixed(4)),p_effective_date:date,p_reason:reason,p_package_count:count||null,p_package_label:pkg.label});if(error)throw error;}
+      closeModal();showToast('Historical stock entry updated. Audit record retained.','success');await onSaved();
+    }catch(error){showError(friendlyError(error));button.disabled=false;}
+  });
 }
 function openStockModal(){
   const opts=STOCK_MATERIALS.map(m=>`<option value="${m.code}">${esc(t(m.name,lang))}</option>`).join('');
