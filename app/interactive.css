@@ -1,6 +1,6 @@
 /* DoughFlow interactive layer: PIN gate, Bakery Quest and inventory history */
 .pin-portal{min-height:100dvh;display:grid;place-items:center;position:relative;overflow:hidden;padding:24px 14px 42px;background:#071a2d;color:#17243a;isolation:isolate}
-.pin-backdrop{position:absolute;inset:-5%;z-index:-1;background:linear-gradient(125deg,rgba(3,19,37,.91),rgba(15,52,80,.68)),url('https://upload.wikimedia.org/wikipedia/commons/2/22/Bishkek.jpg') center/cover;animation:pinDrift 18s ease-in-out infinite alternate}
+.pin-backdrop{position:absolute;inset:-5%;z-index:-1;background:linear-gradient(125deg,rgba(3,19,37,.91),rgba(15,52,80,.68)),var(--df-login-image, url('https://upload.wikimedia.org/wikipedia/commons/2/22/Bishkek.jpg')) center/cover;animation:pinDrift 18s ease-in-out infinite alternate}
 @keyframes pinDrift{to{transform:scale(1.08) translate3d(-1%,1%,0)}}
 .pin-card{width:min(440px,100%);padding:22px;border-radius:30px;background:rgba(255,253,248,.97);border:1px solid rgba(255,255,255,.7);box-shadow:0 28px 90px #0005;animation:pinIn .45s cubic-bezier(.22,1,.36,1)}
 @keyframes pinIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
