@@ -683,15 +683,8 @@ function scrollAppToTop(){
 async function navigateTo(nextRoute){
   if(!currentUser||!can(currentUser.role,nextRoute))return;
   if(nextRoute===route){
-    scrollAppToTop();
-    const renderId=++routeRenderId;
-    if(route==='dashboard'||route==='production'){
-      void refreshLiveState().then(()=>{
-        if(renderId===routeRenderId&&currentUser&&route===nextRoute)void renderPage();
-      });
-    }else{
-      void renderPage();
-    }
+    // The active navigation item is not a refresh command. Re-rendering Production here
+    // destroys the operator's sack/pieces inputs and scroll position.
     return;
   }
   route=nextRoute;
@@ -1246,6 +1239,15 @@ function normalizeSackCount(value){
 }
 
 function renderProduction(p){
+  // Restore the operator's in-progress entry if any asynchronous render replaces this form.
+  let savedProductionDraft=null;
+  try{
+    const raw=sessionStorage.getItem('doughflow-production-form-draft');
+    if(raw){
+      const parsed=JSON.parse(raw);
+      if(parsed&&Number.isFinite(Number(parsed.sackCount))&&Number(parsed.sackCount)>=0&&Number(parsed.sackCount)<=9.5)savedProductionDraft=parsed;
+    }
+  }catch{}
   const existing=isDemo?db.productions.filter(x=>x.date===today()):liveState.productions.filter(x=>x.production_date===today());
   const recipe=isDemo?db.recipe:liveState.recipe;
   p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">DAILY WORKFLOW</div><h1>${esc(siteText('productionTitle','Production'))}</h1><p>${esc(siteText('productionSubtitle','Choose a batch, record actual pieces, and finish with confidence.'))}</p></div></div><section class="workflow-progress-card" aria-live="polite"><div class="workflow-progress-top"><span class="workflow-step-icon">01</span><div class="workflow-progress-copy"><strong id="productionJourneyTitle">Choose your batch</strong><small id="productionJourneyText">Select total sacks to begin. Half-sacks are supported.</small></div><span class="workflow-step-count" id="productionJourneyCount">0 / 3</span></div><div class="workflow-progress-track"><span id="productionJourneyFill" style="width:0%"></span></div><div class="workflow-phase-list"><span>1 · Sacks</span><span>2 · Pieces</span><span>3 · Review</span></div></section><div class="grid grid-2"><div class="card production-work-card"><div class="workflow-heading"><span class="workflow-step-number">01</span><div><h2>New production</h2><p>Batch size and actual output</p></div></div><div class="field"><label>Sack count</label><div class="sack-picker"><button type="button" class="sack-choice" data-sack="1">1</button><button type="button" class="sack-choice " data-sack="2">2</button><button type="button" class="sack-choice " data-sack="3">3</button><button type="button" class="sack-choice " data-sack="4">4</button><button type="button" class="sack-choice " data-sack="5">5</button><button type="button" class="sack-choice " data-sack="6">6</button><button type="button" class="sack-choice " data-sack="7">7</button><button type="button" class="sack-choice " data-sack="8">8</button><button type="button" class="sack-choice " data-sack="9">9</button><button type="button" class="sack-choice half-choice" data-half="0.5">＋ 0.5</button></div><div class="sack-total"><span>Total sacks</span><strong id="sackTotal">0</strong><button type="button" class="reset-sack" id="resetSack">Reset</button></div><input id="sackCount" class="sr-only" type="number" min="0" max="9.5" step="0.5" value="0"></div><div id="batchEditor"></div><div style="height:10px"></div><h3>Material consumption</h3><div id="consumptionEditor"></div><div class="notice" style="margin:12px 0">A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveProduction">Complete production</button><button class="btn secondary" id="clearProduction">Clear</button></div></div><div class="card"><h2>Today’s production</h2>${existing.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Sacks</th><th>Pieces</th><th>Recipe</th></tr></thead><tbody>${existing.map(r=>{const bs=isDemo?r.batches:r.production_batches||[]; return `<tr><td>${esc(isDemo?r.timeLabel:new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt(bs.reduce((s,z)=>s+Number(z.pieces||0),0))}</td><td>v${isDemo?r.recipeVersion:(liveState.recipe?.version||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No production saved today.</div>'}</div></div>`;
@@ -1274,10 +1276,26 @@ function renderProduction(p){
   };
   editor.addEventListener('input',updateJourney);
   consumption.addEventListener('input',updateJourney);
-  const rebuild=()=>{
+  const saveProductionDraft=()=>{
+    try{
+      sessionStorage.setItem('doughflow-production-form-draft',JSON.stringify({
+        sackCount:document.getElementById('sackCount')?.value||'0',
+        pieces:[...document.querySelectorAll('[data-pieces]')].map(x=>x.value),
+        consumption:[...document.querySelectorAll('.actual-consumption')].map(x=>({code:x.dataset.code,value:x.value}))
+      }));
+    }catch{}
+  };
+  const rebuild=(restoreDraft=null)=>{
     const m=normalizeSackCount(document.getElementById('sackCount').value); document.getElementById('sackCount').value=m; const bs=batchesFor(m); document.getElementById('sackTotal').textContent=m;
     editor.innerHTML=`<h3>Batches</h3>${bs.map((b,i)=>`<div class="batch-row"><div class="batch-index">#${i+1}</div><div class="batch-kind">${b.sack===1?'1.0':'0.5'} sack</div><input type="number" min="0" step="1" data-pieces="${i}" placeholder="Actual pieces"></div>`).join('')}`;
     consumption.innerHTML=(recipe?.items||[]).map(it=>{const expected=Number(it.qty||0)*m;return `<div class="field-row"><div class="field"><label>${esc(it.name)} expected (${esc(it.unit)})</label><input class="expected-consumption" data-code="${esc(it.code)}" value="${expected}" disabled></div><div class="field"><label>Actual (${esc(it.unit)})</label><input class="actual-consumption" data-code="${esc(it.code)}" type="number" min="0" step="0.001" value="${expected}"></div></div>`}).join('');
+    if(restoreDraft){
+      [...editor.querySelectorAll('[data-pieces]')].forEach((el,i)=>{if(restoreDraft.pieces?.[i]!==undefined)el.value=restoreDraft.pieces[i];});
+      (restoreDraft.consumption||[]).forEach(item=>{
+        const el=[...consumption.querySelectorAll('.actual-consumption')].find(x=>x.dataset.code===item.code);
+        if(el&&item.value!==undefined)el.value=item.value;
+      });
+    }
     updateJourney();
   };
   const syncSackChoices=()=>{
@@ -1285,21 +1303,27 @@ function renderProduction(p){
     document.querySelectorAll('.sack-choice').forEach(y=>y.classList.toggle('active',Number(y.dataset.sack)===Math.floor(total)));
     document.querySelector('[data-half]')?.classList.toggle('active',total%1===0.5);
   };
-  rebuild();
+  if(savedProductionDraft)document.getElementById('sackCount').value=normalizeSackCount(savedProductionDraft.sackCount);
+  rebuild(savedProductionDraft);
   syncSackChoices();
+  saveProductionDraft();
+  editor.addEventListener('input',saveProductionDraft);
+  consumption.addEventListener('input',saveProductionDraft);
   document.getElementById('sackCount').addEventListener('input',()=>{
     document.getElementById('sackCount').value=normalizeSackCount(document.getElementById('sackCount').value);
     rebuild();
     syncSackChoices();
+    saveProductionDraft();
   });
   document.querySelectorAll('.sack-choice').forEach(x=>x.addEventListener('click',()=>{
     const current=normalizeSackCount(document.getElementById('sackCount').value);
     document.getElementById('sackCount').value=x.dataset.sack ? Number(x.dataset.sack) : Math.min(9.5,Math.round((current+0.5)*2)/2);
     rebuild();
     syncSackChoices();
+    saveProductionDraft();
   }));
-  document.getElementById('resetSack').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();syncSackChoices();});
-  document.getElementById('clearProduction').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();syncSackChoices();});
+  document.getElementById('resetSack').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();syncSackChoices();saveProductionDraft();});
+  document.getElementById('clearProduction').addEventListener('click',()=>{document.getElementById('sackCount').value=0;rebuild();syncSackChoices();saveProductionDraft();});
   document.getElementById('saveProduction').addEventListener('click',async()=>{
     const count=normalizeSackCount(document.getElementById('sackCount').value); if(!(count>=0.5&&count<=9.5)){showToast(t('Sack count must be between 0.5 and 9.5.',lang),'error');return;}
     if(!recipe?.items?.length){showToast(t('No active recipe found.',lang),'error');return;}
@@ -1319,6 +1343,7 @@ function renderProduction(p){
           return;
         }
       }
+      try{sessionStorage.removeItem('doughflow-production-form-draft');}catch{}
       const batches=batchesFor(count).map((b,i)=>({...b,pieces:pieces[i]}));
       const now=new Date(); const run={id:uid(),date:today(),timeLabel:now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),createdBy:currentUser.name,mishokCount:count,batches,recipeVersion:db.recipe.version,consumption:consumptionItems.map(x=>({code:x.code,actual:Number(x.actual)}))};
       db.productions.push(run); applyProductionConsumption(count,run.id,run.consumption); saveDemo(); showToast(t('Saved',lang)+' '+count+' '+formatSackUnit(count,lang)+'.','success'); render();
