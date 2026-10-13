@@ -524,7 +524,7 @@ async function refreshLiveState(){
     liveState.syncError=friendlyError(error);
   }
 }
-async function render(){
+async async function render(){
   document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard');
   document.body.dataset.route=currentUser?route:'login';
   if(!currentUser){
@@ -1264,15 +1264,46 @@ function openStockModal(){
 }
 function closeModal(){modalRoot.innerHTML='';}
 
-function renderReports(p){
+async function renderReports(p){
   const runs=isDemo?db.productions:liveState.productions;
   const summary=!isDemo?liveState.summaryAll:null;
   const total=summary?Number(summary.total_sacks):runs.reduce((a,b)=>a+Number(isDemo?b.mishokCount:b.mishok_count),0);
   const pieces=summary?Number(summary.total_pieces):runs.reduce((a,b)=>a+(isDemo?b.batches:(b.production_batches||[])).reduce((s,z)=>s+Number(z.pieces||0),0),0);
   const avg=total?pieces/total:0;
-  p.innerHTML=`<div class="page-head"><div><h1>Reports</h1><p>Operational summary from saved production.</p></div></div><div class="grid grid-3"><div class="card"><div class="kpi-label">All-time sacks</div><div class="kpi">${fmt(total)}</div></div><div class="card"><div class="kpi-label">All-time pieces</div><div class="kpi">${fmt(pieces)}</div></div><div class="card"><div class="kpi-label">Pieces / sack</div><div class="kpi">${fmt(avg)}</div></div></div><div style="height:16px"></div><div class="card"><h2>Production history</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Pieces</th><th>Worker</th></tr></thead><tbody>${runs.length?runs.map(r=>`<tr><td>${esc(isDemo?r.date:r.production_date)}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt((isDemo?r.batches:r.production_batches||[]).reduce((a,b)=>a+Number(b.pieces||0),0))}</td><td>${esc(isDemo?r.createdBy:r.created_by===currentUser.id?currentUser.name:'User')}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No production yet.</td></tr>'}</tbody></table></div></div>`;
+  let weightRows=[];
+  let weightError='';
+  if(!isDemo){
+    const {data,error}=await supabase.from('bread_weight_entries')
+      .select('record_date,sample_no,weight_g')
+      .gte('record_date','2026-09-26').lte('record_date','2026-10-12')
+      .order('record_date',{ascending:true}).order('sample_no',{ascending:true});
+    if(error) weightError=friendlyError(error);
+    else weightRows=data||[];
+  }
+  const byDate=new Map();
+  for(const row of weightRows){
+    const key=String(row.record_date);
+    if(!byDate.has(key))byDate.set(key,[]);
+    byDate.get(key).push({sample:Number(row.sample_no),weight:Number(row.weight_g)});
+  }
+  const weightCount=weightRows.length;
+  const weightAverage=weightCount?weightRows.reduce((sum,row)=>sum+Number(row.weight_g),0)/weightCount:0;
+  const dates=[...byDate.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
+  const weightTable=weightError
+    ? "<div class='notice'>Unable to load notebook weight records: "+esc(weightError)+"</div>"
+    : dates.length
+      ? "<div class='table-wrap'><table><thead><tr><th>Date</th><th>Recorded weights</th><th>Samples</th><th>Average</th><th>Range</th></tr></thead><tbody>"+dates.map(([date,items])=>{
+          const vals=items.map(x=>x.weight);
+          const mean=vals.reduce((sum,n)=>sum+n,0)/vals.length;
+          const detail=items.map(x=>String(x.sample).padStart(2,'0')+" · "+fmt(x.weight)+" g").join(" &nbsp; ");
+          return "<tr><td>"+esc(date)+"</td><td>"+detail+"</td><td>"+items.length+"</td><td><b>"+fmt(mean)+" g</b></td><td>"+fmt(Math.min(...vals))+"–"+fmt(Math.max(...vals))+" g</td></tr>";
+        }).join("")+"</tbody></table></div>"
+      : "<div class='empty'>No notebook weights found for 26 Sep–12 Oct 2026.</div>";
+  p.innerHTML=`<div class="page-head"><div><h1>Reports</h1><p>Production history and notebook leposhka weight checks · 26 Sep–12 Oct 2026.</p></div></div>
+    <div class="grid grid-3"><div class="card"><div class="kpi-label">All-time sacks</div><div class="kpi">${fmt(total)}</div></div><div class="card"><div class="kpi-label">All-time pieces</div><div class="kpi">${fmt(pieces)}</div></div><div class="card"><div class="kpi-label">Pieces / sack</div><div class="kpi">${fmt(avg)}</div></div></div>
+    <div style="height:16px"></div><div class="card"><h2>Notebook weight report</h2><p>Recorded samples: <b>${fmt(weightCount)}</b> · Overall average: <b>${fmt(weightAverage)} g</b> · Period: 26 Sep–12 Oct 2026</p><p class="small">The unusual low readings 127 g (27 Sep) and 184 g (6 Oct) are preserved exactly as written in the notebook.</p>${weightTable}</div>
+    <div style="height:16px"></div><div class="card"><h2>Production history</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Pieces</th><th>Worker</th></tr></thead><tbody>${runs.length?runs.map(r=>`<tr><td>${esc(isDemo?r.date:r.production_date)}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt((isDemo?r.batches:r.production_batches||[]).reduce((a,b)=>a+Number(b.pieces||0),0))}</td><td>${esc(isDemo?r.createdBy:r.created_by===currentUser.id?currentUser.name:'User')}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No production saved yet. Notebook weight checks are quality samples and do not themselves represent sacks produced.</td></tr>'}</tbody></table></div></div>`;
 }
-
 async function renderUsers(p){
   if(currentUser.role!=='admin'){
     p.innerHTML="<div class='card'><h2>"+t('Users',lang)+"</h2><div class='alert error'>"+t('Admin access only.',lang)+"</div></div>";
