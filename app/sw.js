@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v57-20261013-auto-link-report-refresh';
+const CACHE = 'doughflow-v58-20261013-connected-settings-controls';
 
 const CORE_ASSETS = [
   './',
