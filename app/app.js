@@ -44,6 +44,19 @@ const DEFAULT_RECIPE = [
 
 const DEFAULT_APP_SETTINGS={businessName:'DoughFlow',tagline:'Bakery control',accentColor:'#2477ee',defaultLanguage:'en',timezone:'Asia/Bishkek',currency:'KGS',weightUnit:'kg',pieceUnit:'pieces',sackLabel:'sacks',confirmDestructiveActions:true,lowStockAlerts:true,compactStockCards:true,shiftStart:'21:00',shiftEnd:'12:00',adminNotes:'',homeSubtitle:'Let’s make great leposhka today!'};
 let appSettings={...DEFAULT_APP_SETTINGS};
+const DEFAULT_SLIDESHOW = [
+  {file:'01-baker-tandoor-hd-20261012.webp',label:'Baker beside the tandoor'},
+  {file:'02-leposhka-closeup-hd-20261012.avif',label:'Fresh leposhka close-up'},
+  {file:'03-bishkek-context.webp',label:'Bishkek street scene'},
+  {file:'04-bread-delivery-owner.webp',label:'Bread delivery owner'},
+  {file:'05-bread-delivery-worker.webp',label:'Bread delivery worker'},
+  {file:'06-van-bread-stock.webp',label:'Van stocked with leposhka'},
+  {file:'07-bakery-team.webp',label:'Bakery team'},
+  {file:'08-bakery-team-selfie.webp',label:'Bakery team selfie'},
+  {file:'09-team-social.webp',label:'Team social gathering'},
+  {file:'10-oven-production.webp',label:'Bread production'}
+];
+const defaultSlideUrl=index=>'./assets/doughflow-gallery/'+DEFAULT_SLIDESHOW[index].file;
 const APP_SETTINGS_DEMO_KEY='doughflow_settings_demo_v1';
 function applyAppSettings(){
   try{document.documentElement.style.setProperty('--df-accent',/^#[0-9a-fA-F]{6}$/.test(appSettings.accentColor||'')?appSettings.accentColor:DEFAULT_APP_SETTINGS.accentColor);}catch{}
@@ -831,6 +844,10 @@ async function renderSettings(p){
   <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🏢</span><div><h2>Business identity</h2><p>Update the name and tagline shown across the app.</p></div></div>
     <div class="settings-form-grid"><div class="field"><label for="settingBusinessName">Business / workspace name</label><input id="settingBusinessName" maxlength="70" value="${esc(s.businessName)}" required></div><div class="field"><label for="settingTagline">Tagline</label><input id="settingTagline" maxlength="100" value="${esc(s.tagline)}"></div><div class="field"><label for="settingHomeSubtitle">Home screen welcome line</label><input id="settingHomeSubtitle" maxlength="140" value="${esc(s.homeSubtitle||DEFAULT_APP_SETTINGS.homeSubtitle)}"></div></div>
   </section>
+  <section class="settings-section settings-slideshow-section"><div class="settings-section-heading"><span class="settings-section-icon">🖼️</span><div><h2>Home slideshow photos</h2><p>Replace any of the 10 home-screen carousel photos. Images are shared with all users. JPG, PNG, WebP and AVIF · max 8 MB each.</p></div></div>
+    <div class="settings-slideshow-grid">${DEFAULT_SLIDESHOW.map((slide,index)=>{const custom=s.slideshow?.[index]?.url;const url=custom||defaultSlideUrl(index);return '<article class="settings-slide-editor"><div class="settings-slide-preview" style="background-image:url(&quot;'+esc(url)+'&quot;)" id="settingsSlidePreview'+index+'"><span class="settings-slide-number">SLIDE '+String(index+1).padStart(2,'0')+'</span><span class="settings-slide-custom" id="settingsSlideBadge'+index+'">'+(custom?'CUSTOM PHOTO':'DEFAULT PHOTO')+'</span></div><div class="settings-slide-details"><b>'+esc(slide.label)+'</b><label class="settings-upload-button" for="settingsSlideFile'+index+'">↥ Replace photo</label><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" id="settingsSlideFile'+index+'" data-slide-upload="'+index+'" class="settings-slide-file"><button type="button" class="settings-slide-reset" data-slide-reset="'+index+'" '+(custom?'':'disabled')+'>Restore default</button><small id="settingsSlideStatus'+index+'">Use a clear, landscape photo for best results.</small></div></article>';}).join('')}</div>
+    <div class="settings-slide-note"><span>🔒</span><span><b>Admin-controlled shared media</b><small>Uploads go to DoughFlow storage. Only administrators can replace or restore slideshow photos.</small></span></div>
+  </section>
   <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🎨</span><div><h2>Appearance & language</h2><p>Set the workspace accent and default language.</p></div></div>
     <div class="settings-form-grid"><div class="field"><label for="settingAccent">Accent color</label><div class="settings-color-row"><input id="settingAccent" type="color" value="${/^#[0-9a-fA-F]{6}$/.test(s.accentColor||'')?s.accentColor:'#2477ee'}"><span id="settingAccentValue">${esc(s.accentColor)}</span></div></div><div class="field"><label for="settingLanguage">Default language for new sessions</label><select id="settingLanguage"><option value="en" ${s.defaultLanguage==='en'?'selected':''}>English</option><option value="ru" ${s.defaultLanguage==='ru'?'selected':''}>Русский — Russian</option><option value="ky" ${s.defaultLanguage==='ky'?'selected':''}>Кыргызча — Kyrgyz</option></select></div><div class="field"><label for="settingTimezone">Business time zone</label><select id="settingTimezone">${[['Asia/Bishkek','Bishkek (UTC+6)'],['Europe/Helsinki','Helsinki'],['Asia/Karachi','Pakistan'],['UTC','UTC']].map(([v,l])=>'<option value="'+v+'" '+(s.timezone===v?'selected':'')+'>'+l+'</option>').join('')}</select></div><div class="field"><label for="settingCurrency">Currency code</label><select id="settingCurrency">${[['KGS','KGS — Kyrgyz som'],['PKR','PKR — Pakistani rupee'],['EUR','EUR — Euro'],['USD','USD — US dollar']].map(([v,l])=>'<option value="'+v+'" '+(s.currency===v?'selected':'')+'>'+l+'</option>').join('')}</select></div></div>
   </section>
@@ -843,6 +860,41 @@ async function renderSettings(p){
   <section class="settings-section settings-modules"><div class="settings-section-heading"><span class="settings-section-icon">🧩</span><div><h2>Manage every module</h2><p>Open the correct module to edit its actual records, rather than changing a display-only copy.</p></div></div><div class="settings-module-grid">${modules.map(([r,icon,title,desc])=>'<button type="button" class="settings-module-card" data-settings-route="'+r+'"><span class="settings-module-icon">'+uiIcon(icon,22)+'</span><span><b>'+esc(title)+'</b><small>'+esc(desc)+'</small></span><span class="chevron">›</span></button>').join('')}</div></section>
   <section class="settings-section settings-backup"><div class="settings-section-heading"><span class="settings-section-icon">🛡️</span><div><h2>Data safety & backup</h2><p>Download a snapshot of available application data before making major changes. This export does not contain passwords or PINs.</p></div></div><div class="settings-backup-actions"><button type="button" class="btn secondary" id="settingsRefresh">↻ Refresh live data</button><button type="button" class="btn primary" id="settingsExport">↓ Export data backup (.json)</button></div><small class="settings-footnote">Backup export is read-only. Restoring a backup is not enabled here to prevent accidental overwrites of production or inventory history.</small></section>`;
   const original=()=>({...appSettings});
+  const persistSlides=async slides=>{
+    if(isDemo){appSettings={...appSettings,slideshow:slides};localStorage.setItem(APP_SETTINGS_DEMO_KEY,JSON.stringify(appSettings));}
+    else{const {error}=await supabase.from('app_settings').upsert({setting_key:'global',setting_value:{...appSettings,slideshow:slides},updated_by:currentUser.id},{onConflict:'setting_key'});if(error)throw error;appSettings={...appSettings,slideshow:slides};}
+    applyAppSettings();
+  };
+  p.querySelectorAll('[data-slide-upload]').forEach(input=>input.addEventListener('change',async()=>{
+    const index=Number(input.dataset.slideUpload),file=input.files?.[0];if(!file)return;
+    const status=p.querySelector('#settingsSlideStatus'+index),preview=p.querySelector('#settingsSlidePreview'+index),badge=p.querySelector('#settingsSlideBadge'+index);
+    if(!['image/jpeg','image/png','image/webp','image/avif'].includes(file.type)){status.textContent='Choose a JPG, PNG, WebP or AVIF image.';input.value='';return;}
+    if(file.size>8*1024*1024){status.textContent='Image must be 8 MB or smaller.';input.value='';return;}
+    input.disabled=true;status.textContent='Uploading image…';
+    try{
+      let url;
+      if(isDemo){url=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(new Error('Could not read this image.'));reader.readAsDataURL(file);});}
+      else{
+        const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/avif':'avif'})[file.type];
+        const path='home/slide-'+(index+1)+'-'+Date.now()+'.'+ext;
+        const {error}=await supabase.storage.from('doughflow-slideshow').upload(path,file,{cacheControl:'3600',upsert:true,contentType:file.type});
+        if(error)throw error;
+        url=supabase.storage.from('doughflow-slideshow').getPublicUrl(path).data.publicUrl;
+      }
+      const slides=[...(appSettings.slideshow||[])];slides[index]={url,label:DEFAULT_SLIDESHOW[index].label,updatedAt:new Date().toISOString()};
+      await persistSlides(slides);
+      preview.style.backgroundImage='url("'+url.replace(/["\\]/g,'')+'")';badge.textContent='CUSTOM PHOTO';p.querySelector('[data-slide-reset="'+index+'"]').disabled=false;
+      status.textContent='✓ Photo replaced and saved for all users.';showToast('Slideshow photo '+(index+1)+' updated.','success');
+    }catch(error){status.textContent='Upload failed: '+friendlyError(error);showToast('Photo upload failed.','error');}
+    finally{input.disabled=false;input.value='';}
+  }));
+  p.querySelectorAll('[data-slide-reset]').forEach(button=>button.addEventListener('click',async()=>{
+    const index=Number(button.dataset.slideReset);if(button.disabled)return;
+    if(!confirm('Restore the original slideshow photo '+(index+1)+'?'))return;
+    button.disabled=true;const status=p.querySelector('#settingsSlideStatus'+index);
+    try{const slides=[...(appSettings.slideshow||[])];slides[index]=null;while(slides.length&&!slides[slides.length-1])slides.pop();await persistSlides(slides);p.querySelector('#settingsSlidePreview'+index).style.backgroundImage='url("'+defaultSlideUrl(index)+'")';p.querySelector('#settingsSlideBadge'+index).textContent='DEFAULT PHOTO';status.textContent='Original photo restored for all users.';showToast('Default photo restored.','success');}
+    catch(error){status.textContent='Could not restore: '+friendlyError(error);button.disabled=false;}
+  }));
   p.querySelector('#settingAccent')?.addEventListener('input',e=>{p.querySelector('#settingAccentValue').textContent=e.target.value;document.documentElement.style.setProperty('--df-accent',e.target.value);});
   p.querySelectorAll('[data-settings-route]').forEach(b=>b.addEventListener('click',()=>navigateTo(b.dataset.settingsRoute)));
   p.querySelector('#settingsReset')?.addEventListener('click',()=>renderSettings(p));
@@ -850,7 +902,7 @@ async function renderSettings(p){
     const button=p.querySelector('#settingsSave'),status=p.querySelector('#settingsSaveStatus');
     const businessName=p.querySelector('#settingBusinessName').value.trim();
     if(!businessName){status.textContent='Business name is required.';p.querySelector('#settingBusinessName').focus();return;}
-    const next={businessName,tagline:p.querySelector('#settingTagline').value.trim(),homeSubtitle:p.querySelector('#settingHomeSubtitle').value.trim(),accentColor:p.querySelector('#settingAccent').value,defaultLanguage:p.querySelector('#settingLanguage').value,timezone:p.querySelector('#settingTimezone').value,currency:p.querySelector('#settingCurrency').value,weightUnit:p.querySelector('#settingWeightUnit').value,pieceUnit:p.querySelector('#settingPieceUnit').value,sackLabel:p.querySelector('#settingSackLabel').value.trim()||'sacks',shiftStart:p.querySelector('#settingShiftStart').value,shiftEnd:p.querySelector('#settingShiftEnd').value,lowStockAlerts:p.querySelector('#settingLowStock').checked,confirmDestructiveActions:p.querySelector('#settingConfirm').checked,compactStockCards:p.querySelector('#settingCompact').checked,adminNotes:p.querySelector('#settingAdminNotes').value.trim()};
+    const next={businessName,tagline:p.querySelector('#settingTagline').value.trim(),homeSubtitle:p.querySelector('#settingHomeSubtitle').value.trim(),accentColor:p.querySelector('#settingAccent').value,defaultLanguage:p.querySelector('#settingLanguage').value,timezone:p.querySelector('#settingTimezone').value,currency:p.querySelector('#settingCurrency').value,weightUnit:p.querySelector('#settingWeightUnit').value,pieceUnit:p.querySelector('#settingPieceUnit').value,sackLabel:p.querySelector('#settingSackLabel').value.trim()||'sacks',shiftStart:p.querySelector('#settingShiftStart').value,shiftEnd:p.querySelector('#settingShiftEnd').value,lowStockAlerts:p.querySelector('#settingLowStock').checked,confirmDestructiveActions:p.querySelector('#settingConfirm').checked,compactStockCards:p.querySelector('#settingCompact').checked,adminNotes:p.querySelector('#settingAdminNotes').value.trim(),slideshow:appSettings.slideshow||[]};
     button.disabled=true;status.textContent='Saving shared settings…';
     try{
       if(isDemo){appSettings=next;localStorage.setItem(APP_SETTINGS_DEMO_KEY,JSON.stringify(next));}
@@ -913,19 +965,8 @@ function renderDashboard(p){
     const empty=m.inventoryTracked!==false&&m.stock<=0;
     return `<${tag} class="stock-item${canOpen?' stock-open':''}" data-tilt${attrs}><div class="stock-item-icon ${esc(m.code)}">${materialIcon(m.code)}</div><div class="stock-item-copy"><b>${esc(t(m.name,lang))}</b><strong class="${empty?'empty-stock':''}">${esc(view.primary)}${empty?' <em>!</em>':''}</strong><small>${esc(view.secondary)}</small></div><span class="stock-chevron">${uiIcon('chevron',16)}</span></${tag}>`;
   }).join('');
-  const heroImages=[
-    ['01-baker-tandoor-hd-20261012.webp','Baker beside the tandoor'],
-    ['02-leposhka-closeup-hd-20261012.avif','Fresh leposhka close-up'],
-    ['03-bishkek-context.webp','Bishkek street scene'],
-    ['04-bread-delivery-owner.webp','Worker with a van full of leposhka'],
-    ['05-bread-delivery-worker.webp','Bread delivery worker'],
-    ['06-van-bread-stock.webp','Van stocked with leposhka'],
-    ['07-bakery-team.webp','Bakery team together'],
-    ['08-bakery-team-selfie.webp','Bakery team selfie'],
-    ['09-team-social.webp','Team social gathering'],
-    ['10-oven-production.webp','Bread production and stock']
-  ];
-  const heroPhotoMarkup=heroImages.map(([src,label],index)=>'<div class="portal-hero-photo hero-slide'+(index===0?' is-active':'')+'" data-hero-photo="'+index+'" role="img" aria-label="'+label+'" style="background-image:url(./assets/doughflow-gallery/'+src+')"'+(index===0?'':' aria-hidden="true"')+'></div>').join('');
+  const heroImages=DEFAULT_SLIDESHOW.map((slide,index)=>[appSettings.slideshow?.[index]?.url||defaultSlideUrl(index),slide.label]);
+  const heroPhotoMarkup=heroImages.map(([src,label],index)=>'<div class="portal-hero-photo hero-slide'+(index===0?' is-active':'')+'" data-hero-photo="'+index+'" role="img" aria-label="'+esc(label)+'" style="background-image:url(&quot;'+esc(src)+'&quot;)"'+(index===0?'':' aria-hidden="true"')+'></div>').join('');
   const heroDotsMarkup=heroImages.map((_,index)=>'<button type="button" class="hero-slide-dot'+(index===0?' is-active':'')+'" data-hero-slide="'+index+'" aria-label="Show photo '+(index+1)+'" aria-current="'+(index===0?'true':'false')+'"></button>').join('');
   p.innerHTML =
     "<section class='portal-hero' data-hero-carousel aria-label='DoughFlow photo highlights'>"+
