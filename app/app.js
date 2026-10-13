@@ -42,7 +42,7 @@ const DEFAULT_RECIPE = [
   {code:'sugar', name:'Sugar', qty:.5, unit:'kg', note:''}
 ];
 
-const DEFAULT_APP_SETTINGS={businessName:'DoughFlow',tagline:'Bakery control',accentColor:'#2477ee',defaultLanguage:'en',timezone:'Asia/Bishkek',currency:'KGS',weightUnit:'kg',pieceUnit:'pieces',sackLabel:'sacks',confirmDestructiveActions:true,lowStockAlerts:true,compactStockCards:true,shiftStart:'21:00',shiftEnd:'12:00',adminNotes:'',homeSubtitle:'Let’s make great leposhka today!',contentOverrides:{},mediaOverrides:{}};
+const DEFAULT_APP_SETTINGS={businessName:'DoughFlow',tagline:'Bakery control',accentColor:'#2477ee',defaultLanguage:'en',timezone:'Asia/Bishkek',currency:'KGS',weightUnit:'kg',pieceUnit:'pieces',sackLabel:'sacks',confirmDestructiveActions:true,lowStockAlerts:true,compactStockCards:true,homeSubtitle:'Let’s make great leposhka today!',contentOverrides:{},mediaOverrides:{}};
 let appSettings={...DEFAULT_APP_SETTINGS};
 const DEFAULT_SLIDESHOW = [
   {file:'01-baker-tandoor-hd-20261012.webp',label:'Baker beside the tandoor'},
