@@ -506,6 +506,11 @@ function navItems(role){
   base.push(['more',NAV_ICONS.more,'More']);
   return base;
 }
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&currentUser&&route==='reports'){
+    const page=document.getElementById('page');if(page)renderReports(page);
+  }
+});
 async function init(){
   if(configError){
     authError='DoughFlow configuration is missing. Contact the administrator.';
@@ -640,12 +645,19 @@ async function render(){
   document.getElementById('heroLanguageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
 }
 let routeRenderId=0;
+function scrollAppToTop(){
+  try{window.scrollTo({top:0,left:0,behavior:'auto'});}catch{}
+  document.documentElement.scrollTop=0;document.body.scrollTop=0;
+  const main=document.querySelector('.layout>main');if(main)main.scrollTop=0;
+  const page=document.getElementById('page');if(page)page.scrollTop=0;
+}
 async function navigateTo(nextRoute){
   if(!currentUser||!can(currentUser.role,nextRoute)||nextRoute===route)return;
   route=nextRoute;
   const renderId=++routeRenderId;
   document.body.classList.toggle('dashboard-mode',route==='dashboard');
   document.body.dataset.route=route;
+  scrollAppToTop();
   document.querySelectorAll('[data-route]').forEach(button=>{
     const active=button.dataset.route===route;
     button.classList.toggle('active',active);
@@ -656,6 +668,7 @@ async function navigateTo(nextRoute){
   page.innerHTML='<div class="page-loading" role="status"><span class="inline-spinner" aria-hidden="true"></span><span>'+esc(t('Loading…',lang))+'</span></div>';
   await renderPage();
   if(renderId!==routeRenderId||document.body.dataset.route!==route)return;
+  scrollAppToTop();
   applyCurrentLanguage();
   document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
   document.getElementById('heroLanguageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
@@ -933,7 +946,7 @@ async function renderSettings(p){
       };
       let payload;
       if(isDemo){
-        payload={format:'DoughFlow complete operational backup',version:2,exportedAt:new Date().toISOString(),business:appSettings,production:db.productions||[],inventory:db.inventory||{},recipe:db.recipe||{},notebookSacks:[],sales:db.salesRecords||[],dispatches:db.naanDispatches||[],materials:STOCK_MATERIALS.map(m=>({code:m.code,name:m.name,packages:m.packages})),audit:[],notice:'Demo backup; no credentials, PINs, hashes, or authentication tokens included.'};
+        payload={format:'DoughFlow complete operational backup',version:3,exportedAt:new Date().toISOString(),business:appSettings,production:db.productions||[],inventory:db.inventory||{},recipe:db.recipe||{},notebookSacks:[],sales:db.salesRecords||[],dispatches:db.naanDispatches||[],materials:STOCK_MATERIALS.map(m=>({code:m.code,name:m.name,packages:m.packages})),businessAudit:[],inventoryAudit:[],notice:'Demo backup; no credentials, PINs, hashes, or authentication tokens included.'};
       }else{
         const [production,inventoryTransactions,inventoryBalances,recipeVersions,notebookSacks,sales,dispatches,materials,settings,audit]=await Promise.all([
           fetchAll(()=>supabase.from('production_runs').select('id,production_date,created_by,mishok_count,recipe_version_id,status,created_at,production_batches(batch_no,mishok_fraction,pieces),production_materials(material_code,expected_qty,actual_qty,unit)').order('production_date',{ascending:false})),
@@ -947,7 +960,9 @@ async function renderSettings(p){
           fetchAll(()=>supabase.from('app_settings').select('setting_key,setting_value,updated_at,updated_by')),
           fetchAll(()=>supabase.from('business_activity_audit').select('*').order('occurred_at',{ascending:false}))
         ]);
-        payload={format:'DoughFlow complete operational backup',version:2,exportedAt:new Date().toISOString(),business:settings,activeWorkspaceSettings:appSettings,production,inventory:{balances:inventoryBalances,transactions:inventoryTransactions},recipeVersions,notebookSacks,sales,dispatches,materials,audit,notice:'Complete operational backup. Authentication credentials, PINs, PIN hashes and auth tokens are intentionally excluded. Audit records are included for admins.'};
+        const inventoryAuditResult=await supabase.rpc('admin_inventory_audit',{p_from:'2000-01-01',p_to:today()});
+        if(inventoryAuditResult.error)throw inventoryAuditResult.error;
+        payload={format:'DoughFlow complete operational backup',version:3,exportedAt:new Date().toISOString(),business:settings,activeWorkspaceSettings:appSettings,production,inventory:{balances:inventoryBalances,transactions:inventoryTransactions},recipeVersions,notebookSacks,sales,dispatches,materials,businessAudit:audit,inventoryAudit:inventoryAuditResult.data||[],notice:'Complete operational backup. Authentication credentials, PINs, PIN hashes and auth tokens are intentionally excluded. Includes business and inventory audit history.'};
       }
       const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
       link.href=url;link.download='doughflow-complete-backup-'+today()+'.json';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
@@ -1918,7 +1933,7 @@ async function renderReports(p){
   }).join('');
   const monthOptions=allMonthsOptions||'<option value="'+esc(selectedMonth)+'">'+esc(monthLabel(selectedMonth))+'</option>';
   const historyRows=monthDaily.map(day=>"<tr><td>"+esc(day.date)+"</td><td>"+fmt(day.sacks)+"</td><td>"+fmt(day.pieces)+"</td><td>"+(day.source==='production'?"<span class='report-source-pill production'>Production"+(day.runs>1?" · "+day.runs+" runs":'')+"</span>":"<span class='report-source-pill notebook'>Notebook</span>")+"</td></tr>").join('');
-  p.innerHTML=`<div class="page-head report-page-head"><div><div class="eyebrow">PRODUCTION INSIGHTS</div><h1>Reports</h1><p>Daily production inputs and notebook sack records are connected here automatically.</p></div></div>
+  p.innerHTML=`<div class="page-head report-page-head"><div><div class="eyebrow">PRODUCTION INSIGHTS</div><h1>Reports</h1><p>Daily production inputs and notebook sack records are connected here automatically.</p></div><button type="button" class="btn secondary" id="refreshReports">↻ Refresh data</button></div>
   <section class="report-month-toolbar card"><div><span class="report-month-icon">▦</span><div><b>Monthly report</b><small>Updated from saved production and notebook entries</small></div></div><label for="reportMonthSelect">Report month<select id="reportMonthSelect">${monthOptions}</select></label></section>
   <section class="report-today-production card"><div class="report-section-heading"><div><div class="eyebrow">AUTO-LINKED INPUT</div><h2>Today's saved production</h2><p>${esc(formatToday())} · read directly from the Production form</p></div><span class="report-section-count">${fmt(todayProduction.length)} runs</span></div>
     <div class="report-today-stats"><div><small>Sacks</small><strong>${fmt(todayProductionSacks)}</strong></div><div><small>Total pieces</small><strong>${fmt(todayProductionPieces)}</strong></div><div><small>Production runs</small><strong>${fmt(todayProduction.length)}</strong></div></div>
@@ -1939,6 +1954,10 @@ async function renderReports(p){
     <div class="piece-weight-day-list">${cards||"<div class='empty'>No production or notebook entries found for "+esc(monthLabel(selectedMonth))+". Enter production today or choose another month.</div>"}</div>
   </section>
   <section class="card report-production-history"><div class="report-section-heading"><div><div class="eyebrow">DAILY TOTALS</div><h2>Production &amp; notebook history</h2></div><span class="report-section-count">${fmt(monthDaily.length)} days</span></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Total pieces</th><th>Source</th></tr></thead><tbody>${historyRows||"<tr><td colspan='4' class='empty'>No daily entries for this month.</td></tr>"}</tbody></table></div></section>`;
+  p.querySelector('#refreshReports')?.addEventListener('click',event=>{
+    event.currentTarget.disabled=true;event.currentTarget.textContent='↻ Refreshing…';
+    renderReports(p);
+  });
   p.querySelector('#reportMonthSelect')?.addEventListener('change',event=>{
     p.dataset.reportMonth=event.target.value;
     renderReports(p);
