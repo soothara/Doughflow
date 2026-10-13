@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v51-20261013-stock-dashboard-redesign';
+const CACHE = 'doughflow-v52-20261013-admin-settings';
 
 const CORE_ASSETS = [
   './',
