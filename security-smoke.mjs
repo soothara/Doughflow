@@ -71,7 +71,7 @@ assert.match(app, /function uiIcon\(/);
 assert.match(app, /function wireInteractiveCards\(/);
 assert.doesNotMatch(app, /Bakery Simulator|simulatorHTML|renderSimulator|wireSimulatorInteractions|quest-panel|renderQuest|questPlay|questReward/i, "remove the simulator and fake quest game from the app");
 assert.match(app, /data-tilt/);
-assert.match(app, /timeZone:'Asia\/Bishkek'/);
+assert.match(app, /timeZone:\(appSettings\?\.timezone\|\|'Asia\/Bishkek'\)/, "business time zone must come from saved settings with a safe default");
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
 assert.match(worker, /doughflow-v52-20261013-admin-settings/);
