@@ -21,7 +21,9 @@ assert.match(app, /code:'yeast', name:'Yeast', qty:\.055, unit:'kg', note:'Defau
 assert.match(schema, /'yeast',0\.055::numeric,'kg','Default 55 g; operational range 35–55 g\.'/ , "fresh-install schema must seed 55 g yeast");
 const worker = read("./app/sw.js");
 const html = read("./app/index.html");
+const stylesCss = read("./app/styles.css");
 const dashboardCss = read("./app/dashboard.css");
+const interactiveCss = read("./app/interactive.css");
 const mobileCss = read("./app/mobile.css");
 
 // Production must not silently degrade to a local app with hard-coded PINs.
