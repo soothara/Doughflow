@@ -214,6 +214,8 @@ let route='dashboard';
 const app=document.getElementById('app');
 const modalRoot=document.getElementById('modalRoot');
 const toastRoot=document.getElementById('toastRoot');
+// Keep fixed notifications directly under body so transformed app containers cannot clip them.
+if(toastRoot&&toastRoot.parentElement!==document.body)document.body.appendChild(toastRoot);
 
 // Keep mobile bottom-sheet dialogs independently scrollable and prevent the page behind them from moving.
 let modalScrollY=0;
@@ -1086,7 +1088,7 @@ async function renderInventory(p){
     '<div class="history-filter-row"><div class="field"><label for="stockHistoryDate">'+t('Inventory date',lang)+'</label><input id="stockHistoryDate" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="stockEditMaterial">'+t('Material',lang)+'</label><select id="stockEditMaterial">'+options+'</select></div></div>'+
     '<div class="history-target-grid"><div class="field"><label for="stockEditPackage">'+t('Package / container',lang)+'</label><select id="stockEditPackage"></select></div><div class="field"><label for="stockEditPackages">'+t('Full packages',lang)+'</label><input id="stockEditPackages" type="number" min="0" step="1" value="0"></div><div class="field"><label for="stockEditRemainder">'+t('Open remainder',lang)+'</label><div class="unit-input-pair"><input id="stockEditRemainder" type="number" min="0" step="0.001" value="0"><select id="stockEditRemainderUnit" aria-label="'+t('Remainder unit',lang)+'"><option value="kg">kg</option><option value="g">g</option></select></div></div></div>'+
     '<div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>'+t('Target balance on selected date',lang)+'</small><strong id="stockTargetPreview">0 kg</strong></div><div class="historical-before"><small>'+t('Current as of date',lang)+'</small><b id="stockAsOfPreview">—</b></div></div>'+
-    '<div class="field"><label for="stockCorrectionReason">'+t('Reason for correction',lang)+'</label><input id="stockCorrectionReason" maxlength="180" placeholder="'+t('Example: physical count found a different balance',lang)+'"></div>'+
+    '<div class="field"><label for="stockCorrectionReason">'+t('Reason for correction',lang)+' <span aria-hidden="true">*</span></label><input id="stockCorrectionReason" required minlength="3" maxlength="180" aria-describedby="stockCorrectionReasonHelp" placeholder="'+t('Example: physical count found a different balance',lang)+'"><small id="stockCorrectionReasonHelp" class="field-help">Required · at least 3 characters. Example: Physical stock count.</small></div>'+
     '<div class="history-form-footer"><small>🔒 '+t('Admin-only action. Every correction is dated and auditable.',lang)+'</small><button class="btn primary" id="saveStockByDate">✓ '+t('Save dated correction',lang)+'</button></div></section>'+
     '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 '+t('Inventory activity',lang)+'</h2><p id="historyDateCaption"></p></div><button type="button" class="btn secondary" id="refreshHistory">↻ '+t('Refresh',lang)+'</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"><div class="empty">Loading inventory activity…</div></div></section>';
 
@@ -1271,7 +1273,22 @@ async function renderInventory(p){
     if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}
     const count=Number($('stockEditPackages').value||0),raw=Number($('stockEditRemainder').value||0),rem=$('stockEditRemainderUnit').value==='g'?raw/1000:raw;
     const target=count*Number(pkg?.qty||0)+rem,reason=$('stockCorrectionReason').value.trim();
-    if(count<0||rem<0||!Number.isFinite(target)||reason.length<3){showToast(t('Enter a valid quantity and reason.',lang),'error');return;}
+    const reasonField=$('stockCorrectionReason');
+    reasonField.setCustomValidity('');
+    if(count<0||rem<0||!Number.isFinite(target)||!Number.isFinite(count)||!Number.isFinite(rem)){
+      showInventoryNotice('Enter a valid stock quantity. No stock was changed.','error');
+      if(!Number.isFinite(count)||count<0)$('stockEditPackages').focus();else $('stockEditRemainder').focus();
+      return;
+    }
+    if(reason.length<3){
+      showInventoryNotice('Please enter a reason of at least 3 characters, for example: Physical stock count. No stock was changed.','error');
+      reasonField.setCustomValidity('Enter a reason of at least 3 characters.');
+      reasonField.setAttribute('aria-invalid','true');
+      reasonField.focus();
+      return;
+    }
+    reasonField.removeAttribute('aria-invalid');
+    showInventoryNotice('');
     const prev=Number(snapshotMap[m.code]||0);
     if(isDemo && Number(db.inventory[m.code]?.stock||0)+(target-prev)<-0.00005){
       showToast(t('Historical correction would make current inventory negative; reconcile later transactions first.',lang),'error');return;
@@ -1288,7 +1305,7 @@ async function renderInventory(p){
         if(error)throw error;
       }
       $('stockCorrectionReason').value='';await refreshLiveState();await loadDate(date);
-      showToast(t('Stock corrected for selected date.',lang),'success');render();
+      showInventoryNotice('Stock corrected successfully for '+date+'.','success');showToast(t('Stock corrected for selected date.',lang),'success');render();
     }catch(error){showToast(friendlyError(error),'error');}
     finally{button.disabled=false;}
   });
