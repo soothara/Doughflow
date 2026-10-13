@@ -36,11 +36,12 @@ update public.inventory_transactions set movement_type=case
   when direction='in' then 'manual_receipt'
   else 'manual_issue'
 end where movement_type is null;
+alter table public.inventory_transactions drop constraint if exists inventory_transactions_movement_type_chk;
 alter table public.inventory_transactions alter column movement_type set default 'manual_receipt';
 alter table public.inventory_transactions alter column movement_type set not null;
 do $$ begin
   alter table public.inventory_transactions add constraint inventory_transactions_movement_type_chk
-    check(movement_type in ('purchase','customer_return','manual_receipt','manual_issue','waste','supplier_return','adjustment','production'));
+    check(movement_type in ('purchase','customer_return','opening_balance','manual_receipt','manual_issue','waste','supplier_return','adjustment','production'));
 exception when duplicate_object then null; end $$;
 
 create index if not exists inventory_transactions_type_date_idx on public.inventory_transactions(movement_type,effective_date desc);
@@ -55,10 +56,10 @@ begin
   elsif new.reason ilike 'Historical stock correction:%' then
     new.movement_type='adjustment';
   end if;
-  if new.movement_type not in ('purchase','customer_return','manual_receipt','manual_issue','waste','supplier_return','adjustment','production') then
+  if new.movement_type not in ('purchase','customer_return','opening_balance','manual_receipt','manual_issue','waste','supplier_return','adjustment','production') then
     raise exception 'Invalid inventory movement type';
   end if;
-  if new.movement_type in ('purchase','customer_return','manual_receipt') and new.direction<>'in' then
+  if new.movement_type in ('purchase','customer_return','opening_balance','manual_receipt') and new.direction<>'in' then
     raise exception 'This movement type must add stock';
   end if;
   if new.movement_type in ('manual_issue','waste','supplier_return','production') and new.direction<>'out' then
@@ -105,7 +106,7 @@ begin
  if p_effective_date is null or p_effective_date>(now() at time zone 'Asia/Bishkek')::date then raise exception 'Choose today or a past date'; end if;
  if p_direction not in ('in','out') then raise exception 'Invalid stock direction'; end if;
  if p_movement_type not in ('purchase','customer_return','manual_receipt','manual_issue','waste','supplier_return','adjustment') then raise exception 'Invalid manual inventory movement type'; end if;
- if p_movement_type in ('purchase','customer_return','manual_receipt') and p_direction<>'in' then raise exception 'This movement type must add stock'; end if;
+ if p_movement_type in ('purchase','customer_return','opening_balance','manual_receipt') and p_direction<>'in' then raise exception 'This movement type must add stock'; end if;
  if p_movement_type in ('manual_issue','waste','supplier_return') and p_direction<>'out' then raise exception 'This movement type must remove stock'; end if;
  if p_qty_base is null or p_qty_base<=0 then raise exception 'Quantity must be greater than zero'; end if;
  if coalesce(length(trim(p_reason)),0)<3 then raise exception 'Enter a reason of at least 3 characters'; end if;
@@ -148,9 +149,9 @@ begin
  if auth.uid() is null or not public.is_admin() then raise exception 'Not authorized'; end if;
  if p_effective_date is null or p_effective_date>(now() at time zone 'Asia/Bishkek')::date then raise exception 'Choose today or a past date'; end if;
  if p_direction not in ('in','out') then raise exception 'Invalid stock movement'; end if;
- if p_movement_type not in ('purchase','customer_return','manual_receipt','manual_issue','waste','supplier_return','adjustment','production') then raise exception 'Invalid inventory movement type'; end if;
+ if p_movement_type not in ('purchase','customer_return','opening_balance','manual_receipt','manual_issue','waste','supplier_return','adjustment','production') then raise exception 'Invalid inventory movement type'; end if;
  if p_movement_type='production' then raise exception 'Production movements must be edited through production history'; end if;
- if p_movement_type in ('purchase','customer_return','manual_receipt') and p_direction<>'in' then raise exception 'This movement type must add stock'; end if;
+ if p_movement_type in ('purchase','customer_return','opening_balance','manual_receipt') and p_direction<>'in' then raise exception 'This movement type must add stock'; end if;
  if p_movement_type in ('manual_issue','waste','supplier_return') and p_direction<>'out' then raise exception 'This movement type must remove stock'; end if;
  if p_qty_base is null or p_qty_base<=0 then raise exception 'Quantity must be greater than zero'; end if;
  if coalesce(length(trim(p_reason)),0)<3 then raise exception 'Enter a reason of at least 3 characters'; end if;
