@@ -143,8 +143,8 @@ assert.match(app, /dashboard data must never gate sign-in/, "session restore sho
 assert.match(app, /async function navigateTo\(nextRoute\)/, "menu switching should reuse the app shell");
 assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should use fast route switching");
 
-const heroImageSection = app.slice(app.indexOf("const heroImages=["), app.indexOf("const heroPhotoMarkup="));
-assert.equal((heroImageSection.match(/\['/g) || []).length, 10, "hero carousel should contain ten photo slides");
+const heroImageSection = app.slice(app.indexOf("const DEFAULT_SLIDESHOW ="), app.indexOf("const defaultSlideUrl="));
+assert.equal((heroImageSection.match(/\{file:/g) || []).length, 10, "hero carousel should define ten default photo slides");
 assert.ok(heroImageSection.includes("01-baker-tandoor-hd-20261012.webp") && heroImageSection.includes("02-leposhka-closeup-hd-20261012.avif"), "HD hero gallery should use the available high-resolution images");
 assert.match(worker, /doughflow-v54-20261013-slideshow-manager/, "service worker cache version must change when the gallery changes");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache gallery image "+image);
@@ -152,7 +152,7 @@ for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd
 
 assert.ok(app.includes("data-hero-carousel") && app.includes("data-hero-next") && app.includes("data-hero-prev"), "hero photo carousel controls should be interactive");
 assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should rotate every three seconds");
-assert.ok(app.includes("const heroImages=["), "hero must define its selected photo gallery");
+assert.ok(app.includes("const heroImages=DEFAULT_SLIDESHOW.map"), "hero must render its selected photo gallery from saved settings");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(app.includes(image), "selected hero gallery must include "+image);
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected authentic gallery image "+image);
 assert.match(worker, /doughflow-v54-20261013-slideshow-manager/, "service worker cache version must change when gallery assets are replaced");
