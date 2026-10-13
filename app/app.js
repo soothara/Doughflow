@@ -552,8 +552,10 @@ async function init(){
 function refreshVisiblePageData(){
   if(!currentUser)return;
   if(route==='dashboard'){
-    const p=document.getElementById('page');
-    if(p)renderDashboard(p);
+    // Keep the dashboard's interactive production selector mounted during background refreshes.
+    // Re-rendering here resets its local selected-sack state to zero and clears the active button.
+    // Dashboard data can refresh on the next explicit navigation or full page render.
+    return;
   }else if(route==='production'){
     // Do not rerender the production form after a background data refresh.
     // Replacing the page DOM while the operator is selecting sacks or entering pieces
