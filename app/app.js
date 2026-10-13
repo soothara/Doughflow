@@ -450,7 +450,7 @@ function applyCurrentLanguage(){ applyTranslations(document,lang); const sel=doc
 function can(role, section){
   if(section==='more') return true;
   if(role==='admin') return true;
-  if(role==='hamurchi') return ['dashboard','production','recipe'].includes(section);
+  if(role==='hamurchi') return ['dashboard','production','recipe','reports'].includes(section);
   if(role==='naan') return ['dashboard','naan'].includes(section);
   if(role==='sales') return ['dashboard','sales'].includes(section);
   return false;
@@ -459,7 +459,7 @@ function navItems(role){
   const base=[['dashboard',NAV_ICONS.home,'Home']];
   if(role==='admin'||role==='hamurchi') base.push(['production',NAV_ICONS.production,'Production']);
   if(role==='admin') base.push(['inventory',NAV_ICONS.stock,'Stock']);
-  if(role==='admin'||role==='hamurchi') base.push(['recipe',NAV_ICONS.recipe,'Recipe']);
+  if(role==='admin'||role==='hamurchi') base.push(['reports',NAV_ICONS.sales,'Reports']);
   if(role==='naan') base.push(['naan',NAV_ICONS.naan,'Naan']);
   if(role==='sales') base.push(['sales',NAV_ICONS.sales,'Sales']);
   base.push(['more',NAV_ICONS.more,'More']);
@@ -1650,7 +1650,7 @@ async function renderReports(p){
     const {data,error}=await supabase.from('bread_weight_entries')
       .select('record_date,sample_no,weight_g')
       .gte('record_date','2026-09-26').lte('record_date','2026-10-12')
-      .order('record_date',{ascending:true}).order('sample_no',{ascending:true});
+      .order('record_date',{ascending:false}).order('sample_no',{ascending:true});
     if(error) weightError=friendlyError(error);
     else weightRows=data||[];
   }
@@ -1660,23 +1660,34 @@ async function renderReports(p){
     if(!byDate.has(key))byDate.set(key,[]);
     byDate.get(key).push({sample:Number(row.sample_no),weight:Number(row.weight_g)});
   }
-  const weightCount=weightRows.length;
-  const weightAverage=weightCount?weightRows.reduce((sum,row)=>sum+Number(row.weight_g),0)/weightCount:0;
+  const sackCount=weightRows.length;
+  const weightAverage=sackCount?weightRows.reduce((sum,row)=>sum+Number(row.weight_g),0)/sackCount:0;
   const dates=[...byDate.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
-  const weightTable=weightError
-    ? "<div class='notice'>Unable to load notebook weight records: "+esc(weightError)+"</div>"
+  const dailyCards=weightError
+    ? "<div class='notice'>Unable to load notebook entries: "+esc(weightError)+"</div>"
     : dates.length
-      ? "<div class='table-wrap'><table><thead><tr><th>Date</th><th>Recorded weights</th><th>Samples</th><th>Average</th><th>Range</th></tr></thead><tbody>"+dates.map(([date,items])=>{
+      ? "<div class='piece-weight-days'>"+dates.map(([date,items])=>{
           const vals=items.map(x=>x.weight);
           const mean=vals.reduce((sum,n)=>sum+n,0)/vals.length;
-          const detail=items.map(x=>String(x.sample).padStart(2,'0')+" · "+fmt(x.weight)+" g").join(" &nbsp; ");
-          return "<tr><td>"+esc(date)+"</td><td>"+detail+"</td><td>"+items.length+"</td><td><b>"+fmt(mean)+" g</b></td><td>"+fmt(Math.min(...vals))+"–"+fmt(Math.max(...vals))+" g</td></tr>";
-        }).join("")+"</tbody></table></div>"
-      : "<div class='empty'>No notebook weights found for 26 Sep–12 Oct 2026.</div>";
-  p.innerHTML=`<div class="page-head"><div><h1>Reports</h1><p>Production history and notebook leposhka weight checks · 26 Sep–12 Oct 2026.</p></div></div>
-    <div class="grid grid-3"><div class="card"><div class="kpi-label">All-time sacks</div><div class="kpi">${fmt(total)}</div></div><div class="card"><div class="kpi-label">All-time pieces</div><div class="kpi">${fmt(pieces)}</div></div><div class="card"><div class="kpi-label">Pieces / sack</div><div class="kpi">${fmt(avg)}</div></div></div>
-    <div style="height:16px"></div><div class="card"><h2>Notebook weight report</h2><p>Recorded samples: <b>${fmt(weightCount)}</b> · Overall average: <b>${fmt(weightAverage)} g</b> · Period: 26 Sep–12 Oct 2026</p><p class="small">The unusual low readings 127 g (27 Sep) and 184 g (6 Oct) are preserved exactly as written in the notebook.</p>${weightTable}</div>
-    <div style="height:16px"></div><div class="card"><h2>Production history</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Pieces</th><th>Worker</th></tr></thead><tbody>${runs.length?runs.map(r=>`<tr><td>${esc(isDemo?r.date:r.production_date)}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt((isDemo?r.batches:r.production_batches||[]).reduce((a,b)=>a+Number(b.pieces||0),0))}</td><td>${esc(isDemo?r.createdBy:r.created_by===currentUser.id?currentUser.name:'User')}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No production saved yet. Notebook weight checks are quality samples and do not themselves represent sacks produced.</td></tr>'}</tbody></table></div></div>`;
+          const low=Math.min(...vals),high=Math.max(...vals);
+          const detail=items.map(x=>"<span class='piece-weight-chip'><small>Piece "+String(x.sample).padStart(2,'0')+"</small><b>"+fmt(x.weight)+" g</b></span>").join("");
+          const displayDate=new Date(date+"T12:00:00").toLocaleDateString(lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-GB',{day:'numeric',month:'short',year:'numeric'});
+          return "<article class='piece-weight-day'><div class='piece-weight-day-head'><div><span class='piece-weight-date'>"+esc(displayDate)+"</span><span class='piece-weight-day-sub'>Notebook check</span></div><span class='piece-weight-sack-count'><b>"+items.length+"</b> sacks</span></div><div class='piece-weight-chips'>"+detail+"</div><div class='piece-weight-stats'><span><small>Avg. piece</small><b>"+fmt(mean)+" g</b></span><span><small>Lightest</small><b>"+fmt(low)+" g</b></span><span><small>Heaviest</small><b>"+fmt(high)+" g</b></span></div></article>";
+        }).join("")+"</div>"
+      : "<div class='empty'>No notebook entries found for 26 Sep–12 Oct 2026.</div>";
+  p.innerHTML=`<div class="page-head report-page-head"><div><div class="eyebrow">Production insights</div><h1>Reports</h1><p>Production totals and notebook quality checks.</p></div></div>
+    <section class="report-production-summary">
+      <article class="report-stat-card"><span class="report-stat-icon">▤</span><small>All-time sacks</small><strong>${fmt(total)}</strong></article>
+      <article class="report-stat-card"><span class="report-stat-icon">◉</span><small>All-time pieces</small><strong>${fmt(pieces)}</strong></article>
+      <article class="report-stat-card"><span class="report-stat-icon">↗</span><small>Pieces per sack</small><strong>${fmt(avg)}</strong></article>
+    </section>
+    <section class="piece-weight-report card">
+      <div class="piece-weight-report-title"><div><div class="eyebrow">Quality control</div><h2>Notebook sack checks</h2><p>Each number below is a <b>piece weight</b>. The count beside each date is the number of <b>sacks checked</b>.</p></div><span class="piece-weight-period">26 Sep – 12 Oct</span></div>
+      <div class="piece-weight-overview"><div><small>Sacks checked</small><strong>${fmt(sackCount)}</strong></div><div><small>Average piece weight</small><strong>${fmt(weightAverage)} <i>g</i></strong></div><div><small>Days recorded</small><strong>${fmt(dates.length)}</strong></div></div>
+      <div class="piece-weight-note"><span>ⓘ</span><p>The notebook readings <b>127 g</b> (27 Sep) and <b>184 g</b> (6 Oct) are kept exactly as written.</p></div>
+      <div class="piece-weight-day-list">${dailyCards}</div>
+    </section>
+    <section class="card report-production-history"><div class="report-section-heading"><div><div class="eyebrow">Operations</div><h2>Production history</h2></div><span class="report-section-count">${runs.length} records</span></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Pieces</th><th>Worker</th></tr></thead><tbody>${runs.length?runs.map(r=>`<tr><td>${esc(isDemo?r.date:r.production_date)}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt((isDemo?r.batches:r.production_batches||[]).reduce((a,b)=>a+Number(b.pieces||0),0))}</td><td>${esc(isDemo?r.createdBy:r.created_by===currentUser.id?currentUser.name:'User')}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No production saved yet. Notebook checks are quality samples, not production entries.</td></tr>'}</tbody></table></div></section>`;
 }
 async function renderUsers(p){
   if(currentUser.role!=='admin'){
