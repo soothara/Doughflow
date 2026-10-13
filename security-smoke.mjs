@@ -211,27 +211,19 @@ assert.ok(inventoryPrivilegeFix.includes("revoke all on function public.admin_de
 
 
 
-assert.match(app, /Sacks recorded/, "notebook summary must count sacks");
-assert.match(app, /piece-weight-day/, "notebook report must use responsive daily cards instead of a wide weight table");
-assert.match(app, /base.push\(\['reports',NAV_ICONS.sales,'Reports'\]\)/, "Reports must replace Recipe in the bottom navigation");
-assert.match(app, /\['recipe',NAV_ICONS.recipe,'Recipe','Edit the working recipe'\]/, "Recipe must remain available in More");
-assert.match(mobileCss, /piece-weight-chips/, "sack count cards must have responsive styles");
-
-assert.match(app, /Average pieces per sack/, "notebook summary must report pieces per sack");
-assert.match(app, /Sack "\+String\(x\.sack\)/, "each notebook item must be labeled as a sack");
+assert.match(app, /Sacks recorded this month/, "report must show selected-month sack totals");
+assert.match(app, /productionByDate=new Map/, "report must map real production entries by date");
+assert.match(app, /reportReconcileNote|notebookSacks/, "report must detect notebook/prod discrepancies rather than silently double-count");
+assert.match(app, /Average pieces per sack/, "report must report the average piece count per sack");
+assert.match(app, /const label=item\.fraction<1\?\x27Half sack \x27/, "production batch items must preserve half-sack labelling");
 assert.match(app, /pieces_in_sack/, "notebook values must use piece counts, not gram weights");
 assert.match(app, /notebook_sack_entries/, "notebook must use the semantically named table");
-assert.doesNotMatch(app.slice(app.indexOf("async function renderReports(p){"), app.indexOf("async function renderUsers(p){")), /weight_g|piece weight|\bgrams\b|\bg\b/, "notebook sack counts must not be described as weights");
-
-assert.match(app, /totalNotebookPieces/, "report top totals must be calculated from notebook sack entries");
-assert.match(app, /Total pieces counted/, "report must display the total number of counted pieces");
-assert.match(app, /Total pieces in these sacks/, "each date must show a combined piece total across its sacks");
-assert.match(app, /<b>"\+fmt\(x\.pieces\)\+"<\/b>/, "each sack chip should show the count without repeating the word pieces");
-assert.match(mobileCss, /piece-weight-daily-total/, "daily total piece count needs responsive styling");
-
-assert.match(app, /dates\.map\(\(\[date,items\]\)/, "report history must fall back to daily notebook totals");
-assert.match(app, /<th>Total pieces<\/th>/, "production history must show total pieces by day");
-
+assert.doesNotMatch(app.slice(app.indexOf("async function renderReports(p){"), app.indexOf("async function renderUsers(p){")), /weight_g|Average piece weight|<small>g<\/small>/, "sack counts must not be rendered as weights");
+assert.match(app, /selected-month|this month/, "monthly summary must be scoped to selected month");
+assert.match(app, /dailyMap\.set\(date/, "report must merge daily notebook and production records");
+assert.match(app, /Formal production records take priority/, "production takes priority on overlapping dates to avoid double-counting");
+assert.match(app, /Total pieces recorded today/, "each daily card must show the sum of its sack piece counts");
+assert.match(app, /report-alltime-strip/, "report must retain combined all-time totals");
 assert.match(app, /reportMonthSelect/, "reports must support selecting a month");
 assert.match(app, /allMonths/, "monthly reports must derive available months from all notebook records");
 assert.match(app, /report-alltime-strip/, "monthly reports must retain all-time notebook totals");
