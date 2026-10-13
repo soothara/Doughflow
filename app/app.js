@@ -1402,16 +1402,22 @@ async function renderInventory(p){
 function openInventoryTransactionModal(row,onSaved=()=>{}){
   if(currentUser?.role!=='admin'){showToast(t('Admin access only.',lang),'error');return;}
   const originalMaterial=STOCK_MATERIALS.find(m=>m.code===row.material_code)||STOCK_MATERIALS[0];
-  modalRoot.innerHTML=`<div class="modal-backdrop show"><section class="modal inventory-edit-modal" role="dialog" aria-modal="true" aria-labelledby="editStockTitle"><div class="modal-head"><div><div class="eyebrow">Admin inventory controls</div><h2 id="editStockTitle">Edit historical stock</h2></div><button type="button" id="closeModal" aria-label="Close">×</button></div>
-    <p class="small">Changes recalculate inventory from the selected date. Original values are retained in the audit log.</p>
-    <div class="field"><label for="editStockMaterial">Material</label><select id="editStockMaterial">${STOCK_MATERIALS.map(m=>'<option value="'+m.code+'" '+(m.code===originalMaterial.code?'selected':'')+'>'+esc(t(m.name,lang))+'</option>').join('')}</select></div>
-    <div class="field"><label for="editStockDirection">Movement</label><select id="editStockDirection">${['in','out'].map(d=>'<option value="'+d+'" '+(d===row.direction?'selected':'')+'>'+(d==='in'?'Stock in':'Stock out')+'</option>').join('')}</select></div>
-    <div class="field"><label for="editStockDate">Effective date</label><input id="editStockDate" type="date" max="${today()}" value="${esc(String(row.effective_date||today()).slice(0,10))}"></div>
-    <div class="field"><label for="editStockPackage">Package / container</label><select id="editStockPackage"></select></div>
-    <div class="field"><label for="editStockCount">Full packages</label><input id="editStockCount" type="number" min="0" step="1" value="0"></div>
+  const currentType=row.movement_type||((row.reason||'').toLowerCase().includes('historical stock correction')?'adjustment':row.direction==='out'?'manual_issue':'manual_receipt');
+  const editableTypes=INVENTORY_MOVEMENT_TYPES.filter(x=>x.value!=='production');
+  modalRoot.innerHTML=`<div class="modal-backdrop show"><section class="modal inventory-edit-modal" role="dialog" aria-modal="true" aria-labelledby="editStockTitle">
+    <div class="modal-head"><div><div class="eyebrow">Admin inventory controls</div><h2 id="editStockTitle">Edit historical movement</h2></div><button type="button" id="closeModal" aria-label="Close">×</button></div>
+    <p class="small">Changing a manual entry recalculates the ledger. The before/after values are saved to the admin audit log. Production-linked entries must be corrected through production history.</p>
+    <div class="field"><label for="editStockMaterial">Material *</label><select id="editStockMaterial">${STOCK_MATERIALS.map(m=>'<option value="'+m.code+'" '+(m.code===originalMaterial.code?'selected':'')+'>'+esc(t(m.name,lang))+'</option>').join('')}</select></div>
+    <div class="field"><label for="editStockMovementType">Movement type *</label><select id="editStockMovementType">${editableTypes.map(x=>'<option value="'+x.value+'" '+(x.value===currentType?'selected':'')+'>'+esc(x.label)+'</option>').join('')}</select></div>
+    <div class="field"><label for="editStockDirection">Direction *</label><select id="editStockDirection"><option value="in" ${row.direction==='in'?'selected':''}>Stock in</option><option value="out" ${row.direction==='out'?'selected':''}>Stock out</option></select></div>
+    <div class="field"><label for="editStockDate">Effective date *</label><input id="editStockDate" type="date" max="${today()}" value="${esc(String(row.effective_date||today()).slice(0,10))}"></div>
+    <div class="field"><label for="editStockPackage">Package / container *</label><select id="editStockPackage"></select></div>
+    <div class="field"><label for="editStockCount">Full packages *</label><input id="editStockCount" type="number" min="0" step="1" value="0"></div>
     <div class="field"><label for="editStockRemainder">Open remainder</label><div class="unit-input-pair"><input id="editStockRemainder" type="number" min="0" step="0.001" value="0"><select id="editStockRemainderUnit"><option value="kg">kg</option><option value="g">g</option></select></div></div>
-    <div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>Quantity that will be posted</small><strong id="editStockPreview">0 kg</strong></div></div>
-    <div class="field"><label for="editStockReason">Reason / audit note</label><input id="editStockReason" maxlength="180" value="${esc(row.reason||'')}" placeholder="Why is this historical entry changing?"></div>
+    <div class="field"><label for="editStockSupplier">Supplier / recipient</label><input id="editStockSupplier" maxlength="120" value="${esc(row.supplier_name||'')}" placeholder="Supplier, customer or department"></div>
+    <div class="field"><label for="editStockReference">Invoice / delivery reference</label><input id="editStockReference" maxlength="100" value="${esc(row.reference_code||'')}" placeholder="Invoice or delivery reference"></div>
+    <div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>Quantity after edit</small><strong id="editStockPreview">0 kg</strong></div></div>
+    <div class="field"><label for="editStockReason">Reason / audit note *</label><input id="editStockReason" required minlength="3" maxlength="180" value="${esc(row.reason||'')}" placeholder="Why is this entry changing?"></div>
     <div id="editStockError" class="inventory-database-notice error" role="alert" hidden></div>
     <div class="modal-footer"><button type="button" class="btn secondary" id="cancelModal">Cancel</button><button type="button" class="btn primary" id="saveStockEdit">Save changes</button></div>
   </section></div>`;
@@ -1419,7 +1425,18 @@ function openInventoryTransactionModal(row,onSaved=()=>{}){
   const getMaterial=()=>STOCK_MATERIALS.find(m=>m.code===$('editStockMaterial').value)||STOCK_MATERIALS[0];
   const getPackage=()=>{const m=getMaterial();return m.packages[Number($('editStockPackage').value)]||m.packages[0];};
   const showError=message=>{const el=$('editStockError');el.hidden=!message;el.textContent=message||'';};
-  const preview=()=>{const pkg=getPackage(),count=Math.max(0,Number($('editStockCount').value)||0),raw=Math.max(0,Number($('editStockRemainder').value)||0),rem=$('editStockRemainderUnit').value==='g'?raw/1000:raw,qty=count*Number(pkg?.qty||0)+rem;$('editStockCount').step=pkg?.kind==='sack'?'0.5':'1';$('editStockPreview').textContent=stockBreakdown(getMaterial(),qty,lang).primary+' · '+formatInventoryNumber(qty,lang)+' kg';};
+  const syncDirection=()=>{
+    const movement=$('editStockMovementType').value,fixed=movementDirection(movement);
+    const direction=$('editStockDirection');
+    if(movement==='adjustment'){direction.disabled=false;}
+    else{direction.value=fixed;direction.disabled=true;}
+  };
+  const preview=()=>{
+    const pkg=getPackage(),count=Math.max(0,Number($('editStockCount').value)||0),raw=Math.max(0,Number($('editStockRemainder').value)||0);
+    const rem=$('editStockRemainderUnit').value==='g'?raw/1000:raw,qty=count*Number(pkg?.qty||0)+rem;
+    $('editStockCount').step=pkg?.kind==='sack'?'0.5':'1';
+    $('editStockPreview').textContent=stockBreakdown(getMaterial(),qty,lang).primary+' · '+formatInventoryNumber(qty,lang)+' kg';
+  };
   const setPackageOptions=()=>{
     const m=getMaterial(),quantity=Number(row.qty_base)||0;
     $('editStockPackage').innerHTML=m.packages.filter(x=>x.kind!=='recipe').map(x=>'<option value="'+m.packages.indexOf(x)+'">'+esc(packageUnit(m,x,lang))+'</option>').join('');
@@ -1434,19 +1451,40 @@ function openInventoryTransactionModal(row,onSaved=()=>{}){
   };
   $('editStockMaterial').addEventListener('change',setPackageOptions);
   $('editStockPackage').addEventListener('change',setPackageOptions);
+  $('editStockMovementType').addEventListener('change',()=>{syncDirection();});
   $('editStockCount').addEventListener('input',preview);$('editStockRemainder').addEventListener('input',preview);
-  $('editStockRemainderUnit').addEventListener('change',()=>{const input=$('editStockRemainder'),old=input.dataset.unit||'kg',next=input.parentElement.querySelector('select').value;if(old!==next)input.value=Number((Number(input.value||0)*(old==='g'?0.001:1000)).toFixed(3));input.dataset.unit=next;preview();});
-  $('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);setPackageOptions();
+  $('editStockRemainderUnit').addEventListener('change',()=>{
+    const input=$('editStockRemainder'),old=input.dataset.unit||'kg',next=$('editStockRemainderUnit').value;
+    if(old!==next)input.value=Number((Number(input.value||0)*(old==='g'?0.001:1000)).toFixed(3));
+    input.dataset.unit=next;preview();
+  });
+  $('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);
+  syncDirection();setPackageOptions();
   $('saveStockEdit').addEventListener('click',async()=>{
-    const m=getMaterial(),pkg=getPackage(),count=Number($('editStockCount').value||0),raw=Number($('editStockRemainder').value||0),rem=$('editStockRemainderUnit').value==='g'?raw/1000:raw,qty=count*Number(pkg?.qty||0)+rem,date=$('editStockDate').value,reason=$('editStockReason').value.trim();
+    const m=getMaterial(),pkg=getPackage(),count=Number($('editStockCount').value||0),raw=Number($('editStockRemainder').value||0),
+      rem=$('editStockRemainderUnit').value==='g'?raw/1000:raw,qty=count*Number(pkg?.qty||0)+rem,
+      date=$('editStockDate').value,reason=$('editStockReason').value.trim(),movement=$('editStockMovementType').value,dir=$('editStockDirection').value;
     if(!date||date>today()){showError('Choose today or a past date.');return;}
-    if(count<0||rem<0||!Number.isFinite(qty)||qty<=0){showError('Quantity must be greater than zero.');return;}
-    if(reason.length<3){showError('Enter a reason of at least 3 characters.');return;}
+    if(count<0||rem<0||!Number.isFinite(qty)||qty<=0||(pkg?.kind==='sack'&&Math.abs(count*2-Math.round(count*2))>0.000001)||(pkg?.kind!=='sack'&&Math.abs(count-Math.round(count))>0.000001)){showError('Enter a valid package quantity. Sack quantities may use half-sacks.');return;}
+    if(reason.length<3){showError('Enter a reason of at least 3 characters.');$('editStockReason').focus();return;}
+    if(movement!=='adjustment'&&dir!==movementDirection(movement)){showError('Movement type and direction do not match.');return;}
     const button=$('saveStockEdit');button.disabled=true;showError('');
     try{
-      if(isDemo){const inv=db.inventory[row.material_code],entry=inv.tx.find(x=>String(x.id)===String(row.transaction_id||row.id));if(!entry)throw new Error('Inventory transaction not found');entry.dir=$('editStockDirection').value;entry.qty=qty;entry.effectiveDate=date;entry.reason=reason;entry.packageLabel=pkg.label;entry.packages=count;inv.stock=inv.tx.reduce((sum,x)=>sum+(x.dir==='out'?-Number(x.qty||0):Number(x.qty||0)),0);saveDemo();}
-      else{const {error}=await supabase.rpc('admin_update_inventory_transaction',{p_transaction_id:row.transaction_id||row.id,p_material_code:m.code,p_direction:$('editStockDirection').value,p_qty_base:Number(qty.toFixed(4)),p_effective_date:date,p_reason:reason,p_package_count:count||null,p_package_label:pkg.label});if(error)throw error;}
-      closeModal();showToast('Historical stock entry updated. Audit record retained.','success');await onSaved();
+      if(isDemo){
+        const inv=db.inventory[row.material_code],entry=inv.tx.find(x=>String(x.id)===String(row.transaction_id||row.id));
+        if(!entry)throw new Error('Inventory transaction not found');
+        entry.dir=dir;entry.qty=qty;entry.effectiveDate=date;entry.reason=reason;entry.packageLabel=pkg.label;entry.packages=count;
+        entry.movementType=movement;entry.supplierName=$('editStockSupplier').value.trim();entry.referenceCode=$('editStockReference').value.trim();
+        inv.stock=inv.tx.reduce((sum,x)=>sum+(x.dir==='out'?-Number(x.qty||0):Number(x.qty||0)),0);saveDemo();
+      }else{
+        const {error}=await supabase.rpc('admin_update_inventory_transaction',{
+          p_transaction_id:row.transaction_id||row.id,p_material_code:m.code,p_direction:dir,p_qty_base:Number(qty.toFixed(4)),
+          p_effective_date:date,p_reason:reason,p_package_count:count||null,p_package_label:pkg.label,
+          p_movement_type:movement,p_supplier_name:$('editStockSupplier').value.trim()||null,p_reference_code:$('editStockReference').value.trim()||null
+        });
+        if(error)throw error;
+      }
+      closeModal();showToast('Historical stock entry updated. Audit record retained.');await onSaved();
     }catch(error){showError(friendlyError(error));button.disabled=false;}
   });
 }
