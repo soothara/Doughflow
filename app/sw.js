@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v67-20261013-button-submit-fix';
+const CACHE = 'doughflow-v68-20261013-dashboard-selector-persistence';
 
 const CORE_ASSETS = [
   './',
