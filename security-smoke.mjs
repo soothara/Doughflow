@@ -9,6 +9,10 @@ const migration = read("./db/security_fixes_2026_10_11.sql");
 const inventoryFix = read("./db/fix_admin_inventory_snapshot_2026_10_11.sql");
 const pinOnlyMigration = read("./db/pin_only_login_2026_10_11.sql");
 const schema = read("./db/schema.sql");
+
+// Recipe default must remain aligned in live UI defaults and fresh-install schema.
+assert.match(app, /code:'yeast', name:'Yeast', qty:\.055, unit:'kg', note:'Default 55 g; operational range 35–55 g'/, "UI default yeast must be 55 g per mishok");
+assert.match(schema, /'yeast',0\.055::numeric,'kg','Default 55 g; operational range 35–55 g\.'/ , "fresh-install schema must seed 55 g yeast");
 const worker = read("./app/sw.js");
 const html = read("./app/index.html");
 const dashboardCss = read("./app/dashboard.css");
