@@ -7,6 +7,9 @@ const config = read("./app/config.js");
 const edge = read("./supabase/functions/pin-login/index.ts");
 const migration = read("./db/security_fixes_2026_10_11.sql");
 const inventoryFix = read("./db/fix_admin_inventory_snapshot_2026_10_11.sql");
+const inventoryEnvironment = read("./db/inventory_environment_2026_10_13.sql");
+const inventoryCorrectionAudit = read("./db/inventory_correction_audit_2026_10_13.sql");
+const inventoryPrivilegeFix = read("./db/revoke_anon_inventory_admin_rpcs_20261013.sql");
 const pinOnlyMigration = read("./db/pin_only_login_2026_10_11.sql");
 const schema = read("./db/schema.sql");
 
@@ -192,4 +195,18 @@ assert.match(app, /supplier_name/, "inventory records must support supplier/reci
 assert.match(app, /reference_code/, "inventory records must support delivery/invoice references");
 assert.match(app, /Export CSV/, "admin inventory activity must be exportable");
 assert.match(app, /stockOut/, "inventory screen must provide a stock-out / waste action");
+
+assert.match(app, /value:'opening_balance'/, "admin must be able to set initial opening balances");
+assert.match(app, /stockRemainderUnit/, "manual movements must support partial/open package quantities");
+assert.match(app, /data-inventory-edit/, "manual inventory rows must expose an edit action");
+assert.match(app, /data-inventory-delete/, "manual inventory rows must expose a remove action");
+assert.match(inventoryEnvironment, /'opening_balance'/, "database movement type must permit opening balances");
+assert.match(inventoryEnvironment, /admin_record_inventory_movement/, "database must validate and record manual movements server-side");
+assert.match(inventoryEnvironment, /admin_inventory_activity/, "database must expose the admin-filtered inventory ledger");
+assert.match(inventoryEnvironment, /admin_inventory_audit/, "database must expose the read-only admin audit log");
+assert.match(inventoryCorrectionAudit, /inventory_transaction_audit/, "date-wise stock corrections must be audited");
+assert.match(inventoryPrivilegeFix, /revoke all on function public\\.admin_record_inventory_movement\\([^;]+ from anon, public/i, "anonymous role must not directly execute inventory mutation RPCs");
+assert.match(inventoryPrivilegeFix, /revoke all on function public\\.admin_update_inventory_transaction\\([^;]+ from anon, public/i, "anonymous role must not directly execute inventory edit RPCs");
+assert.match(inventoryPrivilegeFix, /revoke all on function public\\.admin_delete_inventory_transaction\\([^;]+ from anon, public/i, "anonymous role must not directly execute inventory delete RPCs");
+
 
