@@ -211,14 +211,12 @@ assert.ok(inventoryPrivilegeFix.includes("revoke all on function public.admin_de
 
 
 
-assert.match(app, /piece weight/i, "notebook readings must be described as piece weights");
-assert.match(app, /Sacks checked/, "notebook sample counts must be described as sacks checked");
+assert.match(app, /Sacks recorded/, "notebook summary must count sacks");
 assert.match(app, /piece-weight-day/, "notebook report must use responsive daily cards instead of a wide weight table");
 assert.match(app, /base.push\(\['reports',NAV_ICONS.sales,'Reports'\]\)/, "Reports must replace Recipe in the bottom navigation");
 assert.match(app, /\['recipe',NAV_ICONS.recipe,'Recipe','Edit the working recipe'\]/, "Recipe must remain available in More");
-assert.match(mobileCss, /piece-weight-chips/, "piece weight report chips must have responsive styles");
+assert.match(mobileCss, /piece-weight-chips/, "sack count cards must have responsive styles");
 
-assert.match(app, /Sacks recorded/, "notebook summary must count sacks");
 assert.match(app, /Average pieces per sack/, "notebook summary must report pieces per sack");
 assert.match(app, /Sack "\+String\(x\.sack\)/, "each notebook item must be labeled as a sack");
 assert.match(app, /pieces_in_sack/, "notebook values must use piece counts, not gram weights");
