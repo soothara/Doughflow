@@ -42,7 +42,7 @@ const DEFAULT_RECIPE = [
   {code:'sugar', name:'Sugar', qty:.5, unit:'kg', note:''}
 ];
 
-const DEFAULT_APP_SETTINGS={businessName:'DoughFlow',tagline:'Bakery control',accentColor:'#2477ee',defaultLanguage:'en',timezone:'Asia/Bishkek',currency:'KGS',weightUnit:'kg',pieceUnit:'pieces',sackLabel:'sacks',confirmDestructiveActions:true,lowStockAlerts:true,compactStockCards:true,shiftStart:'21:00',shiftEnd:'12:00',adminNotes:'',homeSubtitle:'Let’s make great leposhka today!',contentOverrides:{}};
+const DEFAULT_APP_SETTINGS={businessName:'DoughFlow',tagline:'Bakery control',accentColor:'#2477ee',defaultLanguage:'en',timezone:'Asia/Bishkek',currency:'KGS',weightUnit:'kg',pieceUnit:'pieces',sackLabel:'sacks',confirmDestructiveActions:true,lowStockAlerts:true,compactStockCards:true,shiftStart:'21:00',shiftEnd:'12:00',adminNotes:'',homeSubtitle:'Let’s make great leposhka today!',contentOverrides:{},mediaOverrides:{}};
 let appSettings={...DEFAULT_APP_SETTINGS};
 const DEFAULT_SLIDESHOW = [
   {file:'01-baker-tandoor-hd-20261012.webp',label:'Baker beside the tandoor'},
@@ -61,6 +61,12 @@ const APP_SETTINGS_DEMO_KEY='doughflow_settings_demo_v1';
 function siteText(key,fallback){const value=appSettings?.contentOverrides?.[key];return typeof value==='string'&&value.trim()?value.trim():fallback;}
 function applyAppSettings(){
   try{document.documentElement.style.setProperty('--df-accent',/^#[0-9a-fA-F]{6}$/.test(appSettings.accentColor||'')?appSettings.accentColor:DEFAULT_APP_SETTINGS.accentColor);}catch{}
+  const media=appSettings.mediaOverrides||{};
+  [['mountainBackdrop','--df-mountain-image'],['breadBackdrop','--df-bread-image'],['loginBackdrop','--df-login-image']].forEach(([key,variable])=>{
+    const value=typeof media[key]==='string'?media[key].trim():'';
+    if(value&&(/^(https?:|data:image\/)/i).test(value))document.documentElement.style.setProperty(variable,'url("'+value.replace(/["\\\n\r]/g,'')+'")');
+    else document.documentElement.style.removeProperty(variable);
+  });
   const name=String(appSettings.businessName||'DoughFlow').trim()||'DoughFlow';
   document.querySelectorAll('.brand-copy strong,.hero-brand b,.login-brand-row strong,[data-app-business-name]').forEach(el=>{el.textContent=name;});
   document.body.dataset.lowStockAlerts=appSettings.lowStockAlerts?'true':'false';
@@ -880,6 +886,11 @@ async function renderSettings(p){
     <div class="settings-slideshow-grid">${DEFAULT_SLIDESHOW.map((slide,index)=>{const custom=s.slideshow?.[index]?.url;const url=custom||defaultSlideUrl(index);return '<article class="settings-slide-editor"><div class="settings-slide-preview" style="background-image:url(&quot;'+esc(url)+'&quot;)" id="settingsSlidePreview'+index+'"><span class="settings-slide-number">SLIDE '+String(index+1).padStart(2,'0')+'</span><span class="settings-slide-custom" id="settingsSlideBadge'+index+'">'+(custom?'CUSTOM PHOTO':'DEFAULT PHOTO')+'</span></div><div class="settings-slide-details"><b>'+esc(slide.label)+'</b><label class="settings-upload-button" for="settingsSlideFile'+index+'">↥ Replace photo</label><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" id="settingsSlideFile'+index+'" data-slide-upload="'+index+'" class="settings-slide-file"><button type="button" class="settings-slide-reset" data-slide-reset="'+index+'" '+(custom?'':'disabled')+'>Restore default</button><small id="settingsSlideStatus'+index+'">Use a clear, landscape photo for best results.</small></div></article>';}).join('')}</div>
     <div class="settings-slide-note"><span>🔒</span><span><b>Admin-controlled shared media</b><small>Uploads go to DoughFlow storage. Only administrators can replace or restore slideshow photos.</small></span></div>
   </section>
+  <section class="settings-section settings-page-media-editor"><div class="settings-section-heading"><span class="settings-section-icon">🖼️</span><div><h2>Other page background photos</h2><p>Replace the mountain, bakery and PIN-screen backgrounds. These shared images are separate from the 10-photo home slideshow.</p></div></div>
+    <div class="settings-page-media-grid">
+      ${[['mountainBackdrop','Mountain / workspace background','Mountain scene used behind selected panels'],['breadBackdrop','Bakery / bread background','Bread imagery used on production and bakery panels'],['loginBackdrop','PIN login background','Background shown on the PIN login screen']].map(([key,label,desc])=>{const url=s.mediaOverrides?.[key]||'';return '<article class="settings-slide-editor"><div class="settings-slide-preview" style="background-image:'+ (url?'url(&quot;'+esc(url)+'&quot;)':'linear-gradient(135deg,#172c43,#54738b)')+'" id="settingsMediaPreview'+key+'"><span class="settings-slide-number">PAGE PHOTO</span><span class="settings-slide-custom" id="settingsMediaBadge'+key+'">'+(url?'CUSTOM PHOTO':'DEFAULT PHOTO')+'</span></div><div class="settings-slide-details"><b>'+esc(label)+'</b><small>'+esc(desc)+'</small><label class="settings-upload-button" for="settingsMediaFile'+key+'">↥ Replace photo</label><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" id="settingsMediaFile'+key+'" data-page-media-upload="'+key+'" class="settings-slide-file"><button type="button" class="settings-slide-reset" data-page-media-reset="'+key+'" '+(url?'':'disabled')+'>Restore default</button><small id="settingsMediaStatus'+key+'">JPG, PNG, WebP or AVIF · max 8 MB.</small></div></article>';}).join('')}
+    </div>
+  </section>
   <section class="settings-section settings-content-editor"><div class="settings-section-heading"><span class="settings-section-icon">✍️</span><div><h2>Page text editor</h2><p>Customize key headings and descriptions across the workspace. Leave a field blank to use the built-in translated text.</p></div></div>
     <div class="settings-form-grid">
       <div class="field"><label for="settingTextProductionTitle">Production title</label><input id="settingTextProductionTitle" maxlength="80" value="${esc(s.contentOverrides?.productionTitle||'')}" placeholder="New Production"></div>
@@ -913,6 +924,33 @@ async function renderSettings(p){
     else{const {error}=await supabase.from('app_settings').upsert({setting_key:'global',setting_value:{...appSettings,slideshow:slides},updated_by:currentUser.id},{onConflict:'setting_key'});if(error)throw error;appSettings={...appSettings,slideshow:slides};}
     applyAppSettings();
   };
+  const persistMediaOverrides=async mediaOverrides=>{
+    if(isDemo){appSettings={...appSettings,mediaOverrides};localStorage.setItem(APP_SETTINGS_DEMO_KEY,JSON.stringify(appSettings));}
+    else{const {error}=await supabase.from('app_settings').upsert({setting_key:'global',setting_value:{...appSettings,mediaOverrides},updated_by:currentUser.id},{onConflict:'setting_key'});if(error)throw error;appSettings={...appSettings,mediaOverrides};}
+    applyAppSettings();
+  };
+  p.querySelectorAll('[data-page-media-upload]').forEach(input=>input.addEventListener('change',async()=>{
+    const key=input.dataset.pageMediaUpload,file=input.files?.[0];if(!file)return;
+    const status=p.querySelector('#settingsMediaStatus'+key),preview=p.querySelector('#settingsMediaPreview'+key),badge=p.querySelector('#settingsMediaBadge'+key);
+    if(!['image/jpeg','image/png','image/webp','image/avif'].includes(file.type)){status.textContent='Choose a JPG, PNG, WebP or AVIF image.';input.value='';return;}
+    if(file.size>8*1024*1024){status.textContent='Image must be 8 MB or smaller.';input.value='';return;}
+    input.disabled=true;status.textContent='Uploading image…';
+    try{
+      let url;
+      if(isDemo){url=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(new Error('Could not read this image.'));reader.readAsDataURL(file);});}
+      else{const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/avif':'avif'})[file.type];const path='page/'+key+'-'+Date.now()+'.'+ext;const {error}=await supabase.storage.from('doughflow-slideshow').upload(path,file,{cacheControl:'3600',upsert:true,contentType:file.type});if(error)throw error;url=supabase.storage.from('doughflow-slideshow').getPublicUrl(path).data.publicUrl;}
+      const mediaOverrides={...(appSettings.mediaOverrides||{}),[key]:url};await persistMediaOverrides(mediaOverrides);
+      preview.style.backgroundImage='url("'+url.replace(/["\\]/g,'')+'")';badge.textContent='CUSTOM PHOTO';p.querySelector('[data-page-media-reset="'+key+'"]').disabled=false;status.textContent='✓ Photo replaced and saved for all users.';showToast('Page background photo updated.','success');
+    }catch(error){status.textContent='Upload failed: '+friendlyError(error);showToast('Photo upload failed.','error');}
+    finally{input.disabled=false;input.value='';}
+  }));
+  p.querySelectorAll('[data-page-media-reset]').forEach(button=>button.addEventListener('click',async()=>{
+    const key=button.dataset.pageMediaReset;if(button.disabled)return;
+    if(appSettings.confirmDestructiveActions&&!confirm('Restore the default '+key+' photo?'))return;
+    button.disabled=true;const status=p.querySelector('#settingsMediaStatus'+key);
+    try{const mediaOverrides={...(appSettings.mediaOverrides||{})};delete mediaOverrides[key];await persistMediaOverrides(mediaOverrides);p.querySelector('#settingsMediaPreview'+key).style.backgroundImage='';p.querySelector('#settingsMediaBadge'+key).textContent='DEFAULT PHOTO';status.textContent='Default photo restored for all users.';showToast('Default background restored.','success');}
+    catch(error){status.textContent='Could not restore: '+friendlyError(error);button.disabled=false;}
+  }));
   p.querySelectorAll('[data-slide-upload]').forEach(input=>input.addEventListener('change',async()=>{
     const index=Number(input.dataset.slideUpload),file=input.files?.[0];if(!file)return;
     const status=p.querySelector('#settingsSlideStatus'+index),preview=p.querySelector('#settingsSlidePreview'+index),badge=p.querySelector('#settingsSlideBadge'+index);
@@ -950,7 +988,7 @@ async function renderSettings(p){
     const button=p.querySelector('#settingsSave'),status=p.querySelector('#settingsSaveStatus');
     const businessName=p.querySelector('#settingBusinessName').value.trim();
     if(!businessName){status.textContent='Business name is required.';p.querySelector('#settingBusinessName').focus();return;}
-    const next={businessName,tagline:p.querySelector('#settingTagline').value.trim(),homeSubtitle:p.querySelector('#settingHomeSubtitle').value.trim(),accentColor:p.querySelector('#settingAccent').value,defaultLanguage:p.querySelector('#settingLanguage').value,timezone:p.querySelector('#settingTimezone').value,currency:p.querySelector('#settingCurrency').value,weightUnit:p.querySelector('#settingWeightUnit').value,pieceUnit:p.querySelector('#settingPieceUnit').value,sackLabel:p.querySelector('#settingSackLabel').value.trim()||'sacks',shiftStart:p.querySelector('#settingShiftStart').value,shiftEnd:p.querySelector('#settingShiftEnd').value,lowStockAlerts:p.querySelector('#settingLowStock').checked,confirmDestructiveActions:p.querySelector('#settingConfirm').checked,compactStockCards:p.querySelector('#settingCompact').checked,adminNotes:p.querySelector('#settingAdminNotes').value.trim(),slideshow:appSettings.slideshow||[],contentOverrides:{productionTitle:p.querySelector('#settingTextProductionTitle').value.trim(),productionSubtitle:p.querySelector('#settingTextProductionSubtitle').value.trim(),inventoryTitle:p.querySelector('#settingTextInventoryTitle').value.trim(),inventorySubtitle:p.querySelector('#settingTextInventorySubtitle').value.trim(),recipeTitle:p.querySelector('#settingTextRecipeTitle').value.trim(),recipeSubtitle:p.querySelector('#settingTextRecipeSubtitle').value.trim(),reportsTitle:p.querySelector('#settingTextReportsTitle').value.trim(),reportsSubtitle:p.querySelector('#settingTextReportsSubtitle').value.trim(),salesTitle:p.querySelector('#settingTextSalesTitle').value.trim(),salesSubtitle:p.querySelector('#settingTextSalesSubtitle').value.trim(),naanTitle:p.querySelector('#settingTextNaanTitle').value.trim(),naanSubtitle:p.querySelector('#settingTextNaanSubtitle').value.trim()}};
+    const next={businessName,tagline:p.querySelector('#settingTagline').value.trim(),homeSubtitle:p.querySelector('#settingHomeSubtitle').value.trim(),accentColor:p.querySelector('#settingAccent').value,defaultLanguage:p.querySelector('#settingLanguage').value,timezone:p.querySelector('#settingTimezone').value,currency:p.querySelector('#settingCurrency').value,weightUnit:p.querySelector('#settingWeightUnit').value,pieceUnit:p.querySelector('#settingPieceUnit').value,sackLabel:p.querySelector('#settingSackLabel').value.trim()||'sacks',shiftStart:p.querySelector('#settingShiftStart').value,shiftEnd:p.querySelector('#settingShiftEnd').value,lowStockAlerts:p.querySelector('#settingLowStock').checked,confirmDestructiveActions:p.querySelector('#settingConfirm').checked,compactStockCards:p.querySelector('#settingCompact').checked,adminNotes:p.querySelector('#settingAdminNotes').value.trim(),slideshow:appSettings.slideshow||[],mediaOverrides:appSettings.mediaOverrides||{},contentOverrides:{productionTitle:p.querySelector('#settingTextProductionTitle').value.trim(),productionSubtitle:p.querySelector('#settingTextProductionSubtitle').value.trim(),inventoryTitle:p.querySelector('#settingTextInventoryTitle').value.trim(),inventorySubtitle:p.querySelector('#settingTextInventorySubtitle').value.trim(),recipeTitle:p.querySelector('#settingTextRecipeTitle').value.trim(),recipeSubtitle:p.querySelector('#settingTextRecipeSubtitle').value.trim(),reportsTitle:p.querySelector('#settingTextReportsTitle').value.trim(),reportsSubtitle:p.querySelector('#settingTextReportsSubtitle').value.trim(),salesTitle:p.querySelector('#settingTextSalesTitle').value.trim(),salesSubtitle:p.querySelector('#settingTextSalesSubtitle').value.trim(),naanTitle:p.querySelector('#settingTextNaanTitle').value.trim(),naanSubtitle:p.querySelector('#settingTextNaanSubtitle').value.trim()}};
     button.disabled=true;status.textContent='Saving shared settings…';
     try{
       if(isDemo){appSettings=next;localStorage.setItem(APP_SETTINGS_DEMO_KEY,JSON.stringify(next));}
