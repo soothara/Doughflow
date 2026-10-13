@@ -921,9 +921,38 @@ async function renderSettings(p){
     const button=p.querySelector('#settingsExport');button.disabled=true;
     try{
       if(!isDemo)await refreshLiveState();
-      const payload={format:'DoughFlow backup',version:1,exportedAt:new Date().toISOString(),business:appSettings,production:isDemo?db.productions:liveState.productions,inventory:isDemo?db.inventory:liveState.inventory,recipe:isDemo?db.recipe:liveState.recipe,notebookSacks:isDemo?[]:(await supabase.from('notebook_sack_entries').select('record_date,sack_no,pieces_in_sack').order('record_date').order('sack_no')).data||[],materials:isDemo?STOCK_MATERIALS:liveState.materials,notice:'Export contains operational data only. It excludes credentials, PIN hashes, and authentication tokens.'};
-      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='doughflow-backup-'+today()+'.json';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);showToast('Backup downloaded.','success');
-    }catch(error){showToast('Backup failed: '+friendlyError(error),'error');}
+      const fetchAll=async buildQuery=>{
+        const result=[];const batchSize=1000;
+        for(let offset=0;offset<100000;offset+=batchSize){
+          const {data,error}=await buildQuery().range(offset,offset+batchSize-1);
+          if(error)throw error;
+          result.push(...(data||[]));
+          if(!data||data.length<batchSize)return result;
+        }
+        throw new Error('Backup stopped at the 100,000-row safety limit. Export smaller periods separately.');
+      };
+      let payload;
+      if(isDemo){
+        payload={format:'DoughFlow complete operational backup',version:2,exportedAt:new Date().toISOString(),business:appSettings,production:db.productions||[],inventory:db.inventory||{},recipe:db.recipe||{},notebookSacks:[],sales:db.salesRecords||[],dispatches:db.naanDispatches||[],materials:STOCK_MATERIALS.map(m=>({code:m.code,name:m.name,packages:m.packages})),audit:[],notice:'Demo backup; no credentials, PINs, hashes, or authentication tokens included.'};
+      }else{
+        const [production,inventoryTransactions,inventoryBalances,recipeVersions,notebookSacks,sales,dispatches,materials,settings,audit]=await Promise.all([
+          fetchAll(()=>supabase.from('production_runs').select('id,production_date,created_by,mishok_count,recipe_version_id,status,created_at,production_batches(batch_no,mishok_fraction,pieces),production_materials(material_code,expected_qty,actual_qty,unit)').order('production_date',{ascending:false})),
+          fetchAll(()=>supabase.from('inventory_transactions').select('*').order('effective_date',{ascending:false}).order('created_at',{ascending:false})),
+          fetchAll(()=>supabase.from('inventory_balances').select('*')),
+          fetchAll(()=>supabase.from('recipe_versions').select('id,version_number,note,active,created_at,recipe_items(id,material_code,qty_per_mishok,unit,note,sort_order)').order('version_number',{ascending:false})),
+          fetchAll(()=>supabase.from('notebook_sack_entries').select('record_date,sack_no,pieces_in_sack').order('record_date',{ascending:false}).order('sack_no',{ascending:true})),
+          fetchAll(()=>supabase.from('sales_records').select('*').order('sale_date',{ascending:false})),
+          fetchAll(()=>supabase.from('naan_dispatches').select('*').order('dispatch_date',{ascending:false})),
+          fetchAll(()=>supabase.from('materials').select('*').order('code')),
+          fetchAll(()=>supabase.from('app_settings').select('setting_key,setting_value,updated_at,updated_by')),
+          fetchAll(()=>supabase.from('business_activity_audit').select('*').order('occurred_at',{ascending:false}))
+        ]);
+        payload={format:'DoughFlow complete operational backup',version:2,exportedAt:new Date().toISOString(),business:settings,activeWorkspaceSettings:appSettings,production,inventory:{balances:inventoryBalances,transactions:inventoryTransactions},recipeVersions,notebookSacks,sales,dispatches,materials,audit,notice:'Complete operational backup. Authentication credentials, PINs, PIN hashes and auth tokens are intentionally excluded. Audit records are included for admins.'};
+      }
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
+      link.href=url;link.download='doughflow-complete-backup-'+today()+'.json';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+      showToast('Complete operational backup downloaded.','success');
+    }catch(error){showToast('Backup failed — no partial file was exported: '+friendlyError(error),'error');}
     finally{button.disabled=false;}
   });
   p.querySelector('#settingsRefresh')?.addEventListener('click',async()=>{const b=p.querySelector('#settingsRefresh');b.disabled=true;try{if(!isDemo)await refreshLiveState();showToast('Live data refreshed.','success');}catch(error){showToast(friendlyError(error),'error');}finally{b.disabled=false;}});
