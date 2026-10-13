@@ -29,6 +29,7 @@ const INVENTORY_MOVEMENT_TYPES=[
 ];
 const movementTypeLabel=type=>INVENTORY_MOVEMENT_TYPES.find(x=>x.value===type)?.label||'Manual movement';
 const movementDirection=type=>INVENTORY_MOVEMENT_TYPES.find(x=>x.value===type)?.direction||'in';
+const daysAgoDate=days=>{const d=new Date(today()+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-Number(days||0));return d.toISOString().slice(0,10);};
 
 
 const DEFAULT_RECIPE = [
@@ -1103,8 +1104,45 @@ async function renderInventory(p){
     '<div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>'+t('Target balance on selected date',lang)+'</small><strong id="stockTargetPreview">0 kg</strong></div><div class="historical-before"><small>'+t('Current as of date',lang)+'</small><b id="stockAsOfPreview">—</b></div></div>'+
     '<div class="field"><label for="stockCorrectionReason">'+t('Reason for correction',lang)+' <span aria-hidden="true">*</span></label><input id="stockCorrectionReason" required minlength="3" maxlength="180" aria-describedby="stockCorrectionReasonHelp" placeholder="'+t('Example: physical count found a different balance',lang)+'"><small id="stockCorrectionReasonHelp" class="field-help">Required · at least 3 characters. Example: Physical stock count.</small></div>'+
     '<div class="history-form-footer"><small>🔒 '+t('Admin-only action. Every correction is dated and auditable.',lang)+'</small><button class="btn primary" id="saveStockByDate">✓ '+t('Save dated correction',lang)+'</button></div></section>'+
-    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 Inventory movement ledger</h2><p id="historyDateCaption"></p></div><div class="inventory-page-actions"><button type="button" class="btn secondary" id="exportHistoryCsv">Export CSV</button><button type="button" class="btn secondary" id="viewAuditLog">Audit log</button><button type="button" class="btn secondary" id="refreshHistory">↻ Refresh</button></div></div><div class="history-filters"><div class="field"><label for="historyFrom">From</label><input id="historyFrom" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="historyTo">To</label><input id="historyTo" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="historyMaterialFilter">Material</label><select id="historyMaterialFilter"><option value="">All materials</option>'+options+'</select></div><div class="field"><label for="historyTypeFilter">Movement type</label><select id="historyTypeFilter"><option value="">All movements</option>'+INVENTORY_MOVEMENT_TYPES.filter(x=>x.value!=='production').map(x=>'<option value="'+x.value+'">'+esc(x.label)+'</option>').join('')+'</select></div><div class="field"><label for="historySearch">Search note / supplier / ref</label><input id="historySearch" type="search" placeholder="Search inventory history"></div><button type="button" class="btn primary" id="applyHistoryFilters">Apply filters</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"><div class="empty">Loading inventory activity…</div></div></section>';
+    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 Inventory movement ledger</h2><p id="historyDateCaption"></p></div><div class="inventory-page-actions"><button type="button" class="btn secondary" id="exportHistoryCsv">Export CSV</button><button type="button" class="btn secondary" id="viewAuditLog">Audit log</button><button type="button" class="btn secondary" id="refreshHistory">↻ Refresh</button></div></div><div class="history-filters"><div class="field"><label for="historyFrom">From</label><input id="historyFrom" type="date" max="'+today()+'" value="'+daysAgoDate(6)+'"></div><div class="field"><label for="historyTo">To</label><input id="historyTo" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="historyMaterialFilter">Material</label><select id="historyMaterialFilter"><option value="">All materials</option>'+options+'</select></div><div class="field"><label for="historyTypeFilter">Movement type</label><select id="historyTypeFilter"><option value="">All movements</option>'+INVENTORY_MOVEMENT_TYPES.filter(x=>x.value!=='production').map(x=>'<option value="'+x.value+'">'+esc(x.label)+'</option>').join('')+'</select></div><div class="field"><label for="historySearch">Search note / supplier / ref</label><input id="historySearch" type="search" placeholder="Search inventory history"></div><button type="button" class="btn primary" id="applyHistoryFilters">Apply filters</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"><div class="empty">Loading inventory activity…</div></div></section>';
 
+  let reorderLevels={};
+  const paintReorderLevel=code=>{
+    const material=STOCK_MATERIALS.find(m=>m.code===code);
+    const box=p.querySelector('[data-stock-alert="'+code+'"]');
+    if(!material||!box)return;
+    const min=Number(reorderLevels[code]||0),stock=Number(getStock(code)||0);
+    if(min<=0){box.className='stock-alert-line';box.innerHTML='<span class="stock-alert-status">⚙ Reorder alert not set</span>';return;}
+    const low=stock<=min;
+    box.className='stock-alert-line '+(low?'low':'ok');
+    box.innerHTML='<span class="stock-alert-status">'+(low?'⚠ LOW STOCK':'✓ Stock level OK')+'</span><small>Alert at '+formatInventoryNumber(min,lang)+' kg</small>';
+  };
+  const paintAllReorderLevels=()=>STOCK_MATERIALS.forEach(m=>paintReorderLevel(m.code));
+  const openReorderLevel=code=>{
+    const material=STOCK_MATERIALS.find(m=>m.code===code);if(!material)return;
+    modalRoot.innerHTML=`<div class="modal-backdrop show"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="reorderTitle"><div class="modal-head"><div><div class="eyebrow">Inventory alert</div><h2 id="reorderTitle">Low-stock threshold</h2></div><button id="closeModal" type="button" aria-label="Close">×</button></div><p class="small">${esc(material.name)} uses kg as its inventory base unit. The app flags stock at or below this level.</p><div class="field"><label for="reorderLevelInput">Alert when stock is at or below (kg)</label><input id="reorderLevelInput" type="number" min="0" step="0.001" value="${Number(reorderLevels[code]||0)}"></div><div id="reorderError" class="inventory-database-notice error" hidden></div><div class="modal-footer"><button type="button" class="btn secondary" id="cancelModal">Cancel</button><button type="button" class="btn primary" id="saveReorderLevel">Save alert</button></div></section></div>`;
+    const close=()=>closeModal();
+    document.getElementById('closeModal').addEventListener('click',close);
+    document.getElementById('cancelModal').addEventListener('click',close);
+    document.getElementById('saveReorderLevel').addEventListener('click',async()=>{
+      const input=document.getElementById('reorderLevelInput'),value=Number(input.value),err=document.getElementById('reorderError'),button=document.getElementById('saveReorderLevel');
+      if(!Number.isFinite(value)||value<0){err.hidden=false;err.textContent='Enter a valid non-negative kg quantity.';return;}
+      button.disabled=true;err.hidden=true;
+      try{
+        if(isDemo){db.reorderLevels=db.reorderLevels||{};db.reorderLevels[code]=value;saveDemo();}
+        else{const {error}=await supabase.rpc('admin_set_reorder_level',{p_material_code:code,p_minimum_stock:value});if(error)throw error;}
+        reorderLevels[code]=value;closeModal();paintReorderLevel(code);showToast('Low-stock alert saved.','success');
+      }catch(error){err.hidden=false;err.textContent=friendlyError(error);button.disabled=false;}
+    });
+  };
+  p.querySelectorAll('[data-set-reorder]').forEach(button=>button.addEventListener('click',()=>openReorderLevel(button.dataset.setReorder)));
+  if(isDemo){reorderLevels={...(db.reorderLevels||{})};paintAllReorderLevels();}
+  else{
+    void supabase.from('materials').select('code,minimum_stock').eq('active',true).then(({data,error})=>{
+      if(error||!Array.isArray(data)||document.body.dataset.route!=='inventory')return;
+      reorderLevels=Object.fromEntries(data.map(x=>[x.code,Number(x.minimum_stock)||0]));paintAllReorderLevels();
+    }).catch(()=>{});
+  }
   let snapshotMap={};
   let snapshotLoaded=false;
   let historicalCorrectionRpcReady=true;
@@ -1336,7 +1374,26 @@ async function renderInventory(p){
     input.dataset.unit=next;updatePreview();
   });
   $('stockHistoryDate').addEventListener('change',async()=>{if(await loadDate($('stockHistoryDate').value))setTargetFromSnapshot();});
-  $('refreshHistory').addEventListener('click',()=>loadDate($('stockHistoryDate').value));
+  $('applyHistoryFilters').addEventListener('click',()=>currentActivityKind==='audit'?loadAuditLog():loadActivity());
+  $('refreshHistory').addEventListener('click',()=>currentActivityKind==='audit'?loadAuditLog():loadActivity());
+  $('viewAuditLog').addEventListener('click',async()=>{
+    if(currentActivityKind==='audit'){await loadActivity();$('viewAuditLog').textContent='Audit log';}
+    else{await loadAuditLog();$('viewAuditLog').textContent='Movement ledger';}
+  });
+  $('exportHistoryCsv').addEventListener('click',()=>{
+    if(!currentActivityRows.length){showToast('There are no rows to export.','error');return;}
+    const columns=currentActivityKind==='audit'
+      ? ['occurred_at','action','transaction_id','note','before_record','after_record']
+      : ['effective_date','material_code','material_name','direction','movement_type','qty_base','package_label','supplier_name','reference_code','reason','created_by_name','created_at'];
+    const cell=value=>{
+      let text=value&&typeof value==='object'?JSON.stringify(value):String(value??'');
+      if(/^[=+@\\-]/.test(text))text="'"+text;
+      return '"'+text.replace(/"/g,'""')+'"';
+    };
+    const csv=[columns.join(','),...currentActivityRows.map(row=>columns.map(key=>cell(row[key])).join(','))].join('\\r\\n');
+    const url=URL.createObjectURL(new Blob(['\\ufeff',csv],{type:'text/csv;charset=utf-8;'}));
+    const link=document.createElement('a');link.href=url;link.download=(currentActivityKind==='audit'?'doughflow-inventory-audit':'doughflow-inventory-ledger')+'-'+$('historyFrom').value+'-'+$('historyTo').value+'.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+  });
   $('saveStockByDate').addEventListener('click',async()=>{
     if(!snapshotLoaded||!historicalCorrectionRpcReady){showInventoryNotice('Date corrections are disabled until the inventory database migration is applied successfully. No stock was changed.','warning');return;}
     const date=$('stockHistoryDate').value,m=getMaterial(),pkg=getPackage();
@@ -1379,10 +1436,12 @@ async function renderInventory(p){
     }catch(error){showToast(friendlyError(error),'error');}
     finally{button.disabled=false;}
   });
-  $('stockIn').addEventListener('click',()=>openStockModal());
+  $('stockIn').addEventListener('click',()=>openStockModal('purchase'));
+  $('stockOut').addEventListener('click',()=>openStockModal('manual_issue'));
   updatePackageOptions();
   // Load dated history after the page is visible so slow RPCs never block menu switching.
   void loadDate(today()).then(ok=>{if(ok&&document.body.dataset.route==='inventory'&&$('stockHistoryDate'))setTargetFromSnapshot();});
+  void loadActivity();
   if(!isDemo){
     void supabase.from('inventory_balances').select('*').then(({data,error})=>{
       if(error||!Array.isArray(data)||document.body.dataset.route!=='inventory')return;
@@ -1396,6 +1455,7 @@ async function renderInventory(p){
         if(primary)primary.textContent=breakdown.primary;
         if(secondary)secondary.textContent=breakdown.secondary;
       });
+      paintAllReorderLevels();
     }).catch(()=>{});
   }
 }
