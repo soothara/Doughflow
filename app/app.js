@@ -17,6 +17,19 @@ const MATERIALS = [
   {code:'yeast', name:'Yeast', unit:'kg', decimals:3, packages:[{label:'20 × 500 g box',qty:10,kind:'box'},{label:'500 g packet',qty:.5,kind:'piece'}]}
 ];
 const STOCK_MATERIALS=MATERIALS.filter(m=>m.inventoryTracked!==false);
+const INVENTORY_MOVEMENT_TYPES=[
+  {value:'purchase',label:'Supplier delivery / purchase',direction:'in'},
+  {value:'customer_return',label:'Return from customer',direction:'in'},
+  {value:'manual_receipt',label:'Other stock received',direction:'in'},
+  {value:'manual_issue',label:'Internal use / stock issued',direction:'out'},
+  {value:'waste',label:'Waste / damaged / expired',direction:'out'},
+  {value:'supplier_return',label:'Return to supplier',direction:'out'},
+  {value:'adjustment',label:'Inventory correction',direction:null},
+  {value:'production',label:'Production consumption',direction:'out'}
+];
+const movementTypeLabel=type=>INVENTORY_MOVEMENT_TYPES.find(x=>x.value===type)?.label||'Manual movement';
+const movementDirection=type=>INVENTORY_MOVEMENT_TYPES.find(x=>x.value===type)?.direction||'in';
+
 
 const DEFAULT_RECIPE = [
   {code:'flour', name:'Flour', qty:50, unit:'kg', note:'1 operational sack; actual batch can be 48–52 kg and is still counted as 1 sack'},
@@ -1079,9 +1092,9 @@ async function renderInventory(p){
   if(currentUser.role!=='admin'){p.innerHTML='<div class="card"><h2>'+t('Inventory',lang)+'</h2><div class="alert error">'+t('Admin access only.',lang)+'</div></div>';return;}
   // Keep route navigation independent of the full dashboard sync; refresh stock after first paint.
   const options=STOCK_MATERIALS.map(m=>'<option value="'+m.code+'">'+esc(t(m.name,lang))+'</option>').join('');
-  const cards=STOCK_MATERIALS.map(m=>{const v=stockBreakdown(m,getStock(m.code),lang);return '<div class="card stock-card-premium" data-stock-card="'+m.code+'"><div class="kpi-label">'+esc(t(m.name,lang))+'</div><div class="kpi stock-primary">'+esc(v.primary)+'</div><div class="small stock-secondary">'+esc(v.secondary)+'</div></div>';}).join('');
+  const cards=STOCK_MATERIALS.map(m=>{const v=stockBreakdown(m,getStock(m.code),lang);return '<div class="card stock-card-premium" data-stock-card="'+m.code+'"><div class="kpi-label">'+esc(t(m.name,lang))+'</div><div class="kpi stock-primary">'+esc(v.primary)+'</div><div class="small stock-secondary">'+esc(v.secondary)+'</div><div class="stock-alert-line" data-stock-alert="'+m.code+'"><span class="stock-alert-status">No reorder level set</span></div><button type="button" class="btn secondary stock-reorder-button" data-set-reorder="'+m.code+'">Set low-stock alert</button></div>';}).join('');
   p.innerHTML=
-    '<div class="page-head"><div><div class="eyebrow">'+t('Admin tools',lang)+'</div><h1>'+t('Inventory',lang)+'</h1><p>'+t('Track stock in packages and correct old balances by date.',lang)+'</p></div><button class="btn primary" id="stockIn">＋ '+t('Stock in',lang)+'</button></div>'+
+    '<div class="page-head"><div><div class="eyebrow">'+t('Admin tools',lang)+'</div><h1>'+t('Inventory',lang)+'</h1><p>'+t('Receive, issue, correct and audit every ingredient movement.',lang)+'</p></div><div class="inventory-page-actions"><button class="btn primary" id="stockIn">＋ Receive stock</button><button class="btn secondary" id="stockOut">− Issue / waste</button></div></div>'+
     '<div class="grid grid-3">'+cards+'</div>'+
     '<section class="inventory-workflow-banner"><div class="inventory-workflow-icon">◈</div><div><b>'+t('Inventory control center',lang)+'</b><small>'+t('Choose a date, set the correct physical quantity, and preserve an audit trail.',lang)+'</small></div><span class="inventory-live-pill">'+t('Admin',lang)+' • 🔐</span></section>'+
     '<section class="card historical-editor-card"><div class="history-card-heading"><div><div class="eyebrow">'+t('Audit-safe correction',lang)+'</div><h2>🗓️ '+t('Date-wise inventory editor',lang)+'</h2><p>'+t('Set the correct stock balance as of a past date. The system records a correction instead of deleting history.',lang)+'</p></div></div>'+
@@ -1090,7 +1103,7 @@ async function renderInventory(p){
     '<div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>'+t('Target balance on selected date',lang)+'</small><strong id="stockTargetPreview">0 kg</strong></div><div class="historical-before"><small>'+t('Current as of date',lang)+'</small><b id="stockAsOfPreview">—</b></div></div>'+
     '<div class="field"><label for="stockCorrectionReason">'+t('Reason for correction',lang)+' <span aria-hidden="true">*</span></label><input id="stockCorrectionReason" required minlength="3" maxlength="180" aria-describedby="stockCorrectionReasonHelp" placeholder="'+t('Example: physical count found a different balance',lang)+'"><small id="stockCorrectionReasonHelp" class="field-help">Required · at least 3 characters. Example: Physical stock count.</small></div>'+
     '<div class="history-form-footer"><small>🔒 '+t('Admin-only action. Every correction is dated and auditable.',lang)+'</small><button class="btn primary" id="saveStockByDate">✓ '+t('Save dated correction',lang)+'</button></div></section>'+
-    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 '+t('Inventory activity',lang)+'</h2><p id="historyDateCaption"></p></div><button type="button" class="btn secondary" id="refreshHistory">↻ '+t('Refresh',lang)+'</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"><div class="empty">Loading inventory activity…</div></div></section>';
+    '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 Inventory movement ledger</h2><p id="historyDateCaption"></p></div><div class="inventory-page-actions"><button type="button" class="btn secondary" id="exportHistoryCsv">Export CSV</button><button type="button" class="btn secondary" id="viewAuditLog">Audit log</button><button type="button" class="btn secondary" id="refreshHistory">↻ Refresh</button></div></div><div class="history-filters"><div class="field"><label for="historyFrom">From</label><input id="historyFrom" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="historyTo">To</label><input id="historyTo" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="historyMaterialFilter">Material</label><select id="historyMaterialFilter"><option value="">All materials</option>'+options+'</select></div><div class="field"><label for="historyTypeFilter">Movement type</label><select id="historyTypeFilter"><option value="">All movements</option>'+INVENTORY_MOVEMENT_TYPES.filter(x=>x.value!=='production').map(x=>'<option value="'+x.value+'">'+esc(x.label)+'</option>').join('')+'</select></div><div class="field"><label for="historySearch">Search note / supplier / ref</label><input id="historySearch" type="search" placeholder="Search inventory history"></div><button type="button" class="btn primary" id="applyHistoryFilters">Apply filters</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"><div class="empty">Loading inventory activity…</div></div></section>';
 
   let snapshotMap={};
   let snapshotLoaded=false;
