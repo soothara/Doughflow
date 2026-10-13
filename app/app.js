@@ -913,10 +913,8 @@ async function renderSettings(p){
   <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🎨</span><div><h2>Appearance & language</h2><p>Set the workspace accent and default language.</p></div></div>
     <div class="settings-form-grid"><div class="field"><label for="settingAccent">Accent color</label><div class="settings-color-row"><input id="settingAccent" type="color" value="${/^#[0-9a-fA-F]{6}$/.test(s.accentColor||'')?s.accentColor:'#2477ee'}"><span id="settingAccentValue">${esc(s.accentColor)}</span></div></div><div class="field"><label for="settingLanguage">Default language for new sessions</label><select id="settingLanguage"><option value="en" ${s.defaultLanguage==='en'?'selected':''}>English</option><option value="ru" ${s.defaultLanguage==='ru'?'selected':''}>Русский — Russian</option><option value="ky" ${s.defaultLanguage==='ky'?'selected':''}>Кыргызча — Kyrgyz</option></select></div><div class="field"><label for="settingTimezone">Business time zone (fixed for production dates)</label><select id="settingTimezone" disabled><option value="Asia/Bishkek" selected>Bishkek (UTC+6)</option></select></div><div class="field"><label for="settingCurrency">Currency code</label><select id="settingCurrency">${[['KGS','KGS — Kyrgyz som'],['PKR','PKR — Pakistani rupee'],['EUR','EUR — Euro'],['USD','USD — US dollar']].map(([v,l])=>'<option value="'+v+'" '+(s.currency===v?'selected':'')+'>'+l+'</option>').join('')}</select></div></div>
   </section>
-  <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🧰</span><div><h2>Operations preferences</h2><p>Set working terminology and the shift schedule displayed on Home. Recipe quantities and package sizes stay in their own modules.</p></div></div>
-    <div class="settings-form-grid"><div class="field"><label for="settingWeightUnit">Inventory storage unit (fixed)</label><select id="settingWeightUnit" disabled><option value="kg" selected>Kilograms (kg) — database base unit</option></select></div><div class="field"><label for="settingPieceUnit">Bread count unit (fixed)</label><select id="settingPieceUnit" disabled><option value="pieces" selected>Pieces — actual count</option></select></div><div class="field"><label for="settingSackLabel">Sack terminology</label><input id="settingSackLabel" maxlength="24" value="${esc(s.sackLabel)}"></div><div class="field"><label for="settingShiftStart">Shift start</label><input id="settingShiftStart" type="time" value="${esc(s.shiftStart)}"></div><div class="field"><label for="settingShiftEnd">Shift end</label><input id="settingShiftEnd" type="time" value="${esc(s.shiftEnd)}"></div></div>
+  <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🧰</span><div><h2>Operations preferences</h2><p>Set stock terminology and display preferences. Recipe quantities and package sizes stay in their own modules.</p></div></div><div class="settings-form-grid"><div class="field"><label for="settingWeightUnit">Inventory storage unit (fixed)</label><select id="settingWeightUnit" disabled><option value="kg" selected>Kilograms (kg) — database base unit</option></select></div><div class="field"><label for="settingPieceUnit">Bread count unit (fixed)</label><select id="settingPieceUnit" disabled><option value="pieces" selected>Pieces — actual count</option></select></div><div class="field"><label for="settingSackLabel">Sack terminology</label><input id="settingSackLabel" maxlength="24" value="${esc(s.sackLabel)}"></div></div>
     <div class="settings-toggle-list"><label class="settings-toggle"><span><b>Low-stock alert indicators</b><small>Show inventory reorder status and alerts.</small></span><input id="settingLowStock" type="checkbox" ${s.lowStockAlerts?'checked':''}></label><label class="settings-toggle"><span><b>Confirm destructive actions</b><small>Keep confirmation steps for deleting or replacing records.</small></span><input id="settingConfirm" type="checkbox" ${s.confirmDestructiveActions?'checked':''}></label><label class="settings-toggle"><span><b>Compact inventory cards</b><small>Use a space-saving stock overview on mobile.</small></span><input id="settingCompact" type="checkbox" ${s.compactStockCards?'checked':''}></label></div>
-    <div class="field"><label for="settingAdminNotes">Admin operating notes</label><textarea id="settingAdminNotes" rows="3" maxlength="1500" placeholder="Add internal notes for administrators">${esc(s.adminNotes)}</textarea></div>
   </section>
   <div class="settings-savebar"><span id="settingsSaveStatus">Changes are not saved until you press Save.</span><button type="button" class="btn secondary" id="settingsReset">Reset form</button><button type="button" class="btn primary" id="settingsSave">✓ Save workspace settings</button></div>
   <section class="settings-section settings-modules"><div class="settings-section-heading"><span class="settings-section-icon">🧩</span><div><h2>Manage every module</h2><p>Open the correct module to edit its actual records, rather than changing a display-only copy.</p></div></div><div class="settings-module-grid">${modules.map(([r,icon,title,desc])=>'<button type="button" class="settings-module-card" data-settings-route="'+r+'"><span class="settings-module-icon">'+uiIcon(icon,22)+'</span><span><b>'+esc(title)+'</b><small>'+esc(desc)+'</small></span><span class="chevron">›</span></button>').join('')}</div></section>
@@ -991,7 +989,7 @@ async function renderSettings(p){
     const button=p.querySelector('#settingsSave'),status=p.querySelector('#settingsSaveStatus');
     const businessName=p.querySelector('#settingBusinessName').value.trim();
     if(!businessName){status.textContent='Business name is required.';p.querySelector('#settingBusinessName').focus();return;}
-    const next={businessName,tagline:p.querySelector('#settingTagline').value.trim(),homeSubtitle:p.querySelector('#settingHomeSubtitle').value.trim(),accentColor:p.querySelector('#settingAccent').value,defaultLanguage:p.querySelector('#settingLanguage').value,timezone:p.querySelector('#settingTimezone').value,currency:p.querySelector('#settingCurrency').value,weightUnit:p.querySelector('#settingWeightUnit').value,pieceUnit:p.querySelector('#settingPieceUnit').value,sackLabel:p.querySelector('#settingSackLabel').value.trim()||'sacks',shiftStart:p.querySelector('#settingShiftStart').value,shiftEnd:p.querySelector('#settingShiftEnd').value,lowStockAlerts:p.querySelector('#settingLowStock').checked,confirmDestructiveActions:p.querySelector('#settingConfirm').checked,compactStockCards:p.querySelector('#settingCompact').checked,adminNotes:p.querySelector('#settingAdminNotes').value.trim(),slideshow:appSettings.slideshow||[],mediaOverrides:appSettings.mediaOverrides||{},contentOverrides:{productionTitle:p.querySelector('#settingTextProductionTitle').value.trim(),productionSubtitle:p.querySelector('#settingTextProductionSubtitle').value.trim(),inventoryTitle:p.querySelector('#settingTextInventoryTitle').value.trim(),inventorySubtitle:p.querySelector('#settingTextInventorySubtitle').value.trim(),recipeTitle:p.querySelector('#settingTextRecipeTitle').value.trim(),recipeSubtitle:p.querySelector('#settingTextRecipeSubtitle').value.trim(),reportsTitle:p.querySelector('#settingTextReportsTitle').value.trim(),reportsSubtitle:p.querySelector('#settingTextReportsSubtitle').value.trim(),salesTitle:p.querySelector('#settingTextSalesTitle').value.trim(),salesSubtitle:p.querySelector('#settingTextSalesSubtitle').value.trim(),naanTitle:p.querySelector('#settingTextNaanTitle').value.trim(),naanSubtitle:p.querySelector('#settingTextNaanSubtitle').value.trim()}};
+    const next={businessName,tagline:p.querySelector('#settingTagline').value.trim(),homeSubtitle:p.querySelector('#settingHomeSubtitle').value.trim(),accentColor:p.querySelector('#settingAccent').value,defaultLanguage:p.querySelector('#settingLanguage').value,timezone:p.querySelector('#settingTimezone').value,currency:p.querySelector('#settingCurrency').value,weightUnit:p.querySelector('#settingWeightUnit').value,pieceUnit:p.querySelector('#settingPieceUnit').value,sackLabel:p.querySelector('#settingSackLabel').value.trim()||'sacks',lowStockAlerts:p.querySelector('#settingLowStock').checked,confirmDestructiveActions:p.querySelector('#settingConfirm').checked,compactStockCards:p.querySelector('#settingCompact').checked,slideshow:appSettings.slideshow||[],mediaOverrides:appSettings.mediaOverrides||{},contentOverrides:{productionTitle:p.querySelector('#settingTextProductionTitle').value.trim(),productionSubtitle:p.querySelector('#settingTextProductionSubtitle').value.trim(),inventoryTitle:p.querySelector('#settingTextInventoryTitle').value.trim(),inventorySubtitle:p.querySelector('#settingTextInventorySubtitle').value.trim(),recipeTitle:p.querySelector('#settingTextRecipeTitle').value.trim(),recipeSubtitle:p.querySelector('#settingTextRecipeSubtitle').value.trim(),reportsTitle:p.querySelector('#settingTextReportsTitle').value.trim(),reportsSubtitle:p.querySelector('#settingTextReportsSubtitle').value.trim(),salesTitle:p.querySelector('#settingTextSalesTitle').value.trim(),salesSubtitle:p.querySelector('#settingTextSalesSubtitle').value.trim(),naanTitle:p.querySelector('#settingTextNaanTitle').value.trim(),naanSubtitle:p.querySelector('#settingTextNaanSubtitle').value.trim()}};
     button.disabled=true;status.textContent='Saving shared settings…';
     try{
       if(isDemo){appSettings=next;localStorage.setItem(APP_SETTINGS_DEMO_KEY,JSON.stringify(next));}
@@ -1077,16 +1075,6 @@ function renderDashboard(p){
   const recipe=isDemo?db.recipe:liveState.recipe;
   const recipeVersion=isDemo?db?.recipe?.version:liveState.recipe?.version;
   const firstName=esc(currentUser.name.split(' ')[0]);
-  const shiftStart=String(appSettings.shiftStart||'21:00');
-  const shiftEnd=String(appSettings.shiftEnd||'12:00');
-  const currentLocalTime=new Intl.DateTimeFormat('en-GB',{timeZone:appSettings.timezone||'Asia/Bishkek',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());
-  const shiftNow=Number(currentLocalTime.replace(':',''));
-  const shiftStartNum=Number(shiftStart.replace(':',''));
-  const shiftEndNum=Number(shiftEnd.replace(':',''));
-  const shiftActive=shiftStartNum===shiftEndNum?true:(shiftStartNum<shiftEndNum?shiftNow>=shiftStartNum&&shiftNow<shiftEndNum:shiftNow>=shiftStartNum||shiftNow<shiftEndNum);
-  const shiftStatus=shiftActive?'Shift active':'Outside shift hours';
-  const adminNotes=currentUser.role==='admin'?String(appSettings.adminNotes||'').trim():'';
-  const adminNotesHtml=adminNotes?"<div class='dashboard-admin-notes'><span aria-hidden='true'>▤</span><div><b>Admin notes</b><p>"+esc(adminNotes).replaceAll(String.fromCharCode(13),'').split(String.fromCharCode(10)).join('<br>')+"</p></div></div>":'';
   const syncBanner=!isDemo&&liveState.syncError?"<div class='sync-banner' role='alert'>⚠️ <div><b>"+t('Data sync issue',lang)+"</b><small>"+t('Some data may be temporarily out of date.',lang)+"</small></div></div>":"";
   const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card' data-tilt tabindex='0'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
   const stockCards=stockRows.map(m=>{
@@ -1110,7 +1098,7 @@ function renderDashboard(p){
           "<label class='hero-language'><span>"+languageFlag()+"</span><select id='heroLanguageSelect' aria-label=\""+t('Language',lang)+"\">"+languageOptions(lang)+"</select><b>⌄</b></label>"+
           "<div class='hero-user'><span class='hero-avatar'>"+esc(Array.from(String(currentUser.name||'A').trim())[0]?.toUpperCase()||'A')+"</span><span><b class='no-translate'>"+esc(currentUser.name)+"</b><small>"+roleName(currentUser.role)+"</small></span></div>"+
         "</div>"+
-        "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+esc(appSettings.homeSubtitle||'Let’s make great leposhka today!')+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div><div class='hero-shift-pill'><span aria-hidden='true'>◷</span><span><b>Shift schedule</b><small>"+esc(shiftStart)+"–"+esc(shiftEnd)+" · "+esc(shiftStatus)+"</small></span></div></div>"+adminNotesHtml+
+        "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+esc(appSettings.homeSubtitle||'Let’s make great leposhka today!')+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div></div>
       "</div>"+
       "<div class='hero-slide-controls' aria-label='Photo carousel controls'>"+
         "<button type='button' class='hero-slide-arrow' data-hero-prev aria-label='Previous photo'>‹</button>"+
@@ -1363,7 +1351,6 @@ async function renderInventory(p){
     '<div class="history-filter-row"><div class="field"><label for="stockHistoryDate">'+t('Inventory date',lang)+'</label><input id="stockHistoryDate" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="stockEditMaterial">'+t('Material',lang)+'</label><select id="stockEditMaterial">'+options+'</select></div></div>'+
     '<div class="history-target-grid"><div class="field"><label for="stockEditPackage">'+t('Package / container',lang)+'</label><select id="stockEditPackage"></select></div><div class="field"><label for="stockEditPackages">'+t('Full packages',lang)+'</label><input id="stockEditPackages" type="number" min="0" step="1" value="0"></div><div class="field"><label for="stockEditRemainder">'+t('Open remainder',lang)+'</label><div class="unit-input-pair"><input id="stockEditRemainder" type="number" min="0" step="0.001" value="0"><select id="stockEditRemainderUnit" aria-label="'+t('Remainder unit',lang)+'"><option value="kg">kg</option><option value="g">g</option></select></div></div></div>'+
     '<div class="historical-preview"><span class="history-preview-icon">⚖</span><div><small>'+t('Target balance on selected date',lang)+'</small><strong id="stockTargetPreview">0 kg</strong></div><div class="historical-before"><small>'+t('Current as of date',lang)+'</small><b id="stockAsOfPreview">—</b></div></div>'+
-    '<div class="field"><label for="stockCorrectionReason">'+t('Reason for correction',lang)+' <span aria-hidden="true">*</span></label><input id="stockCorrectionReason" required minlength="3" maxlength="180" aria-describedby="stockCorrectionReasonHelp" placeholder="'+t('Example: physical count found a different balance',lang)+'"><small id="stockCorrectionReasonHelp" class="field-help">Required · at least 3 characters. Example: Physical stock count.</small></div>'+
     '<div class="history-form-footer"><small>🔒 '+t('Admin-only action. Every correction is dated and auditable.',lang)+'</small><button class="btn primary" id="saveStockByDate">✓ '+t('Save dated correction',lang)+'</button></div></section>'+
     '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 Inventory movement ledger</h2><p id="historyDateCaption"></p></div><div class="inventory-page-actions"><button type="button" class="btn secondary" id="exportHistoryCsv">Export CSV</button><button type="button" class="btn secondary" id="viewAuditLog">Audit log</button><button type="button" class="btn secondary" id="refreshHistory">↻ Refresh</button></div></div><div class="history-filters"><div class="field"><label for="historyFrom">From</label><input id="historyFrom" type="date" max="'+today()+'" value="'+daysAgoDate(6)+'"></div><div class="field"><label for="historyTo">To</label><input id="historyTo" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="historyMaterialFilter">Material</label><select id="historyMaterialFilter"><option value="">All materials</option>'+options+'</select></div><div class="field"><label for="historyTypeFilter">Movement type</label><select id="historyTypeFilter"><option value="">All movements</option>'+INVENTORY_MOVEMENT_TYPES.map(x=>'<option value="'+x.value+'">'+esc(x.label)+'</option>').join('')+'</select></div><div class="field"><label for="historySearch">Search note / supplier / ref</label><input id="historySearch" type="search" placeholder="Search inventory history"></div><button type="button" class="btn primary" id="applyHistoryFilters">Apply filters</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"><div class="empty">Loading inventory activity…</div></div></section>';
 
@@ -1662,22 +1649,12 @@ async function renderInventory(p){
     const date=$('stockHistoryDate').value,m=getMaterial(),pkg=getPackage();
     if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}
     const count=Number($('stockEditPackages').value||0),raw=Number($('stockEditRemainder').value||0),rem=$('stockEditRemainderUnit').value==='g'?raw/1000:raw;
-    const target=count*Number(pkg?.qty||0)+rem,reason=$('stockCorrectionReason').value.trim();
-    const reasonField=$('stockCorrectionReason');
-    reasonField.setCustomValidity('');
+    const target=count*Number(pkg?.qty||0)+rem,reason='Admin stock correction';
     if(count<0||rem<0||!Number.isFinite(target)||!Number.isFinite(count)||!Number.isFinite(rem)){
       showInventoryNotice('Enter a valid stock quantity. No stock was changed.','error');
       if(!Number.isFinite(count)||count<0)$('stockEditPackages').focus();else $('stockEditRemainder').focus();
       return;
     }
-    if(reason.length<3){
-      showInventoryNotice('Please enter a reason of at least 3 characters, for example: Physical stock count. No stock was changed.','error');
-      reasonField.setCustomValidity('Enter a reason of at least 3 characters.');
-      reasonField.setAttribute('aria-invalid','true');
-      reasonField.focus();
-      return;
-    }
-    reasonField.removeAttribute('aria-invalid');
     showInventoryNotice('');
     const prev=Number(snapshotMap[m.code]||0);
     if(isDemo && Number(db.inventory[m.code]?.stock||0)+(target-prev)<-0.00005){
@@ -1695,7 +1672,7 @@ async function renderInventory(p){
         const {error}=await supabase.rpc('admin_set_stock_as_of_date',{p_material_code:m.code,p_effective_date:date,p_target_stock:Number(target.toFixed(4)),p_reason:reason});
         if(error)throw error;
       }
-      $('stockCorrectionReason').value='';await refreshLiveState();await loadDate(date);
+      await refreshLiveState();await loadDate(date);
       showInventoryNotice('Stock corrected successfully for '+date+'.','success');showToast(t('Stock corrected for selected date.',lang),'success');render();
     }catch(error){showToast(friendlyError(error),'error');}
     finally{button.disabled=false;}
@@ -1828,7 +1805,6 @@ function openStockModal(presetType='purchase'){
     <div class="field"><label for="stockEffectiveDate">Effective date *</label><input id="stockEffectiveDate" type="date" max="${today()}" value="${today()}"></div>
     <div class="field"><label for="stockSupplier">Supplier / recipient</label><input id="stockSupplier" maxlength="120" placeholder="Supplier, customer or department"></div>
     <div class="field"><label for="stockReference">Invoice / delivery reference</label><input id="stockReference" maxlength="100" placeholder="Invoice number, delivery note or reference"></div>
-    <div class="field"><label for="stockNote">Reason / notes *</label><input id="stockNote" required minlength="3" maxlength="180" placeholder="e.g. Flour delivery, damaged yeast, kitchen use"></div>
     <div id="stockMovementError" class="inventory-database-notice error" role="alert" hidden></div>
     <div class="historical-preview"><span class="history-preview-icon">⇄</span><div><small>Movement preview</small><strong id="stockMovementPreview">Stock in · 50 kg</strong><div id="stockMovementDirection" class="small">Adds to inventory</div></div></div>
     <div class="modal-footer"><button type="button" class="btn secondary" id="cancelModal">Cancel</button><button type="button" class="btn primary" id="saveStock">Save movement</button></div>
@@ -1867,12 +1843,11 @@ function openStockModal(presetType='purchase'){
   updatePackages();
   $('saveStock').addEventListener('click',async()=>{
     const m=material(),p=pkg(),count=Number($('packageCount').value||0),raw=Number($('stockRemainder').value||0),rem=$('stockRemainderUnit').value==='g'?raw/1000:raw,date=$('stockEffectiveDate').value,
-      movement=type(),dir=direction(),reason=$('stockNote').value.trim(),
-      supplier=$('stockSupplier').value.trim(),reference=$('stockReference').value.trim();
+      movement=type(),dir=direction(),reason=movementTypeLabel(movement),
+      supplier=$('stockSupplier')?.value.trim()||'',reference=$('stockReference')?.value.trim()||'';
     const qty=Number(p?.qty||0)*count+rem;
     if(!date||date>today()){showError('Choose today or a past date. No stock was changed.');return;}
     if(count<0||rem<0||!Number.isFinite(qty)||qty<=0||(p?.kind==='sack'&&Math.abs(count*2-Math.round(count*2))>0.000001)||(p?.kind!=='sack'&&Math.abs(count-Math.round(count))>0.000001)){showError('Enter a valid package count and open remainder. Sack counts may use half-sacks.');return;}
-    if(reason.length<3){showError('Enter a reason of at least 3 characters so this movement is traceable.');$('stockNote').focus();return;}
     const save=$('saveStock');save.disabled=true;showError('');
     try{
       if(isDemo){
