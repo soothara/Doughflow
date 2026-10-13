@@ -1062,3 +1062,10 @@ body{min-height:100dvh}
 .avatar{position:relative!important;overflow:hidden}
 .avatar::before,.avatar::after{content:none!important;display:none!important}
 .user-chip .avatar{background-image:none!important}
+
+
+/* Visible inline validation for dated inventory corrections. */
+.field-help{display:block;margin-top:7px;color:var(--muted,#667085);font-size:13px;line-height:1.4}
+#stockCorrectionReason[aria-invalid="true"]{border-color:#dc2626!important;box-shadow:0 0 0 3px rgba(220,38,38,.12)!important}
+#toastRoot{position:fixed!important;left:12px!important;right:12px!important;bottom:calc(112px + env(safe-area-inset-bottom))!important;top:auto!important;transform:none!important;width:auto!important;max-width:520px!important;margin-inline:auto!important;z-index:2147483500!important;box-sizing:border-box!important}
+#toastRoot .toast{width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-wrap:anywhere!important;white-space:normal!important}
