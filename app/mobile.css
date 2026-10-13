@@ -609,3 +609,9 @@ body[data-compact-stock-cards="true"][data-route="inventory"] .stock-card-premiu
 .report-source-pill.notebook{background:#edf3ff;color:#315e9f;border:1px solid #dce8ff}
 .report-reconcile-note{margin-top:10px;padding:10px 11px;border:1px solid #f2dfb5;border-radius:11px;background:#fff9eb;color:#7a5c1d;font-size:10px;line-height:1.5}
 @media(max-width:640px){.report-source-pill{font-size:9px;padding:5px 7px}.report-reconcile-note{font-size:10px}}
+
+/* Put the report refresh action at the top, beside the page title. */
+.report-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.report-page-head>div{min-width:0}
+.report-page-head .btn{flex:none;min-height:42px;white-space:nowrap}
+@media(max-width:640px){.report-page-head{align-items:flex-start;flex-direction:column}.report-page-head .btn{width:100%;min-height:44px}}
