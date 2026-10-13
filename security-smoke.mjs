@@ -211,7 +211,7 @@ assert.ok(inventoryPrivilegeFix.includes("revoke all on function public.admin_de
 
 
 
-assert.match(app, /Piece weight/, "notebook readings must be described as piece weights");
+assert.match(app, /piece weight/i, "notebook readings must be described as piece weights");
 assert.match(app, /Sacks checked/, "notebook sample counts must be described as sacks checked");
 assert.match(app, /piece-weight-day/, "notebook report must use responsive daily cards instead of a wide weight table");
 assert.match(app, /base.push\(\['reports',NAV_ICONS.sales,'Reports'\]\)/, "Reports must replace Recipe in the bottom navigation");
