@@ -218,7 +218,7 @@ body.dashboard-mode{
 .dashboard-mode .panel-photo-strip{height:96px;background:#f4e9da}
 .dashboard-mode .panel-photo{
   left:39%;
-  background-image:url('./assets/bakery.webp');
+  background-image:var(--df-bread-image,url('./assets/bakery.webp'));
   background-position:center 53%;
 }
 .dashboard-mode .panel-photo-shade{background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.98) 36%,rgba(255,255,255,.16) 80%)}
@@ -582,7 +582,7 @@ body.dashboard-mode{
 .dashboard-mode .portal-hero-photo[data-hero-photo="2"]{background-position:center 62%!important}
 .dashboard-mode .portal-hero::after{display:none!important;content:none!important}
 .dashboard-mode .panel-photo{
-  left:30%;right:0;background-image:url('./assets/leposhka-detail.svg');
+  left:30%;right:0;background-image:var(--df-bread-image,url('./assets/leposhka-detail.svg'));
   background-size:cover!important;background-position:center 78%!important;
   background-repeat:no-repeat!important;filter:saturate(1.08) contrast(1.04);
 }
