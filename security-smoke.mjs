@@ -210,3 +210,10 @@ assert.ok(inventoryPrivilegeFix.includes("revoke all on function public.admin_up
 assert.ok(inventoryPrivilegeFix.includes("revoke all on function public.admin_delete_inventory_transaction(uuid,text) from anon, public"), "anonymous role must not directly execute inventory delete RPCs");
 
 
+
+assert.match(app, /Piece weight/, "notebook readings must be described as piece weights");
+assert.match(app, /Sacks checked/, "notebook sample counts must be described as sacks checked");
+assert.match(app, /piece-weight-day/, "notebook report must use responsive daily cards instead of a wide weight table");
+assert.match(app, /base.push\(\['reports',NAV_ICONS.sales,'Reports'\]\)/, "Reports must replace Recipe in the bottom navigation");
+assert.match(app, /\['recipe',NAV_ICONS.recipe,'Recipe','Edit the working recipe'\]/, "Recipe must remain available in More");
+assert.match(mobileCss, /piece-weight-chips/, "piece weight report chips must have responsive styles");
