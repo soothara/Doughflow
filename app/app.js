@@ -1098,7 +1098,7 @@ function renderDashboard(p){
           "<label class='hero-language'><span>"+languageFlag()+"</span><select id='heroLanguageSelect' aria-label=\""+t('Language',lang)+"\">"+languageOptions(lang)+"</select><b>⌄</b></label>"+
           "<div class='hero-user'><span class='hero-avatar'>"+esc(Array.from(String(currentUser.name||'A').trim())[0]?.toUpperCase()||'A')+"</span><span><b class='no-translate'>"+esc(currentUser.name)+"</b><small>"+roleName(currentUser.role)+"</small></span></div>"+
         "</div>"+
-        "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+esc(appSettings.homeSubtitle||'Let’s make great leposhka today!')+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div></div>
+        "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+esc(appSettings.homeSubtitle||'Let’s make great leposhka today!')+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div></div>"+
       "</div>"+
       "<div class='hero-slide-controls' aria-label='Photo carousel controls'>"+
         "<button type='button' class='hero-slide-arrow' data-hero-prev aria-label='Previous photo'>‹</button>"+
