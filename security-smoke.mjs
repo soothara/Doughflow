@@ -205,8 +205,8 @@ assert.match(inventoryEnvironment, /admin_record_inventory_movement/, "database 
 assert.match(inventoryEnvironment, /admin_inventory_activity/, "database must expose the admin-filtered inventory ledger");
 assert.match(inventoryEnvironment, /admin_inventory_audit/, "database must expose the read-only admin audit log");
 assert.match(inventoryCorrectionAudit, /inventory_transaction_audit/, "date-wise stock corrections must be audited");
-assert.match(inventoryPrivilegeFix, /revoke all on function public\\.admin_record_inventory_movement\\([^;]+ from anon, public/i, "anonymous role must not directly execute inventory mutation RPCs");
-assert.match(inventoryPrivilegeFix, /revoke all on function public\\.admin_update_inventory_transaction\\([^;]+ from anon, public/i, "anonymous role must not directly execute inventory edit RPCs");
-assert.match(inventoryPrivilegeFix, /revoke all on function public\\.admin_delete_inventory_transaction\\([^;]+ from anon, public/i, "anonymous role must not directly execute inventory delete RPCs");
+assert.ok(inventoryPrivilegeFix.includes("revoke all on function public.admin_record_inventory_movement(text,text,text,numeric,date,text,numeric,text,text,text) from anon, public"), "anonymous role must not directly execute inventory mutation RPCs");
+assert.ok(inventoryPrivilegeFix.includes("revoke all on function public.admin_update_inventory_transaction(uuid,text,text,numeric,date,text,numeric,text,text,text,text) from anon, public"), "anonymous role must not directly execute inventory edit RPCs");
+assert.ok(inventoryPrivilegeFix.includes("revoke all on function public.admin_delete_inventory_transaction(uuid,text) from anon, public"), "anonymous role must not directly execute inventory delete RPCs");
 
 
