@@ -1452,9 +1452,9 @@ async function renderInventory(p){
         ? '<span class="small">Linked to production</span>'
         : '<div class="inventory-row-actions"><button type="button" class="btn secondary" data-inventory-edit="'+esc(id)+'">Edit</button><button type="button" class="btn danger" data-inventory-delete="'+esc(id)+'">Remove</button></div>';
       const source=[row.supplier_name,row.reference_code?'Ref: '+row.reference_code:''].filter(Boolean).join(' · ');
-      return '<tr><td>'+esc(String(row.effective_date||'').slice(0,10))+'</td><td><b>'+esc(t(row.material_name||m.name,lang))+'</b><small class="table-secondary">'+esc(row.package_label||'')+'</small></td><td><span class="movement-pill '+(inc?'in':'out')+'">'+(inc?'＋ '+t('Stock in',lang):'− '+t('Stock out',lang))+'</span><small class="table-secondary">'+esc(movementTypeLabel(type))+'</small></td><td><b>'+esc(value.primary)+'</b><small class="table-secondary">'+esc(value.secondary)+'</small></td><td><span class="history-reason">'+esc(row.reason||'')+'</span><small class="table-secondary">'+esc(source)+'</small></td><td>'+esc(row.created_by_name||'')+'</td><td>'+actions+'</td></tr>';
+      return '<tr><td>'+esc(String(row.effective_date||'').slice(0,10))+'</td><td><b>'+esc(t(row.material_name||m.name,lang))+'</b><small class="table-secondary">'+esc(row.package_label||'')+'</small></td><td><span class="movement-pill '+(inc?'in':'out')+'">'+(inc?'＋ '+t('Stock in',lang):'− '+t('Stock out',lang))+'</span><small class="table-secondary">'+esc(movementTypeLabel(type))+'</small></td><td><b>'+esc(value.primary)+'</b><small class="table-secondary">'+esc(value.secondary)+'</small></td><td><small class="table-secondary">'+esc(source)+'</small></td><td>'+esc(row.created_by_name||'')+'</td><td>'+actions+'</td></tr>';
     }).join('');
-    $('inventoryHistoryRows').innerHTML='<div class="table-wrap"><table><thead><tr><th>Date</th><th>Material</th><th>Movement</th><th>Quantity</th><th>Reason / source / ref</th><th>Entered by</th><th>Admin actions</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+    $('inventoryHistoryRows').innerHTML='<div class="table-wrap"><table><thead><tr><th>Date</th><th>Material</th><th>Movement</th><th>Quantity</th><th>Source / reference</th><th>Entered by</th><th>Admin actions</th></tr></thead><tbody>'+body+'</tbody></table></div>';
     $('inventoryHistoryRows').querySelectorAll('[data-inventory-edit]').forEach(button=>button.addEventListener('click',()=>{
       const row=currentActivityRows.find(x=>String(x.transaction_id||x.id||'')===button.dataset.inventoryEdit);
       if(row)openInventoryTransactionModal(row,async()=>{await refreshLiveState();await loadDate($('stockHistoryDate').value);await loadActivity();});
@@ -1465,9 +1465,7 @@ async function renderInventory(p){
       const date=String(row.effective_date||'').slice(0,10);
       const label=(row.material_name||row.material_code)+' · '+movementTypeLabel(row.movement_type||'manual_receipt')+' · '+formatInventoryNumber(row.qty_base,lang)+' kg · '+date;
       if(appSettings.confirmDestructiveActions&&!window.confirm('Remove this historical stock entry?\n'+label+'\nThe action will be recorded in the admin audit log.'))return;
-      const reason=window.prompt('Why are you removing this entry?');
-      if(reason===null)return;
-      if(reason.trim().length<3){showToast('Enter a reason of at least 3 characters.','error');return;}
+      const reason='Admin removed historical stock entry';
       button.disabled=true;
       try{
         if(isDemo){
