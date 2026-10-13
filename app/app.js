@@ -1561,6 +1561,7 @@ function openStockModal(presetType='purchase'){
     <div class="field"><label for="stockMovementType">Movement type *</label><select id="stockMovementType">${typeOptions}</select></div>
     <div class="field"><label for="stockMaterial">Material *</label><select id="stockMaterial">${opts}</select></div>
     <div id="packageChooser"></div>
+    <div class="field"><label for="stockRemainder">Open remainder</label><div class="unit-input-pair"><input id="stockRemainder" type="number" min="0" step="0.001" value="0"><select id="stockRemainderUnit" aria-label="Remainder unit"><option value="kg">kg</option><option value="g">g</option></select></div><small class="field-help">Use this for loose or partially opened stock.</small></div>
     <div class="field"><label for="stockEffectiveDate">Effective date *</label><input id="stockEffectiveDate" type="date" max="${today()}" value="${today()}"></div>
     <div class="field"><label for="stockSupplier">Supplier / recipient</label><input id="stockSupplier" maxlength="120" placeholder="Supplier, customer or department"></div>
     <div class="field"><label for="stockReference">Invoice / delivery reference</label><input id="stockReference" maxlength="100" placeholder="Invoice number, delivery note or reference"></div>
@@ -1576,7 +1577,7 @@ function openStockModal(presetType='purchase'){
   const direction=()=>movementDirection(type());
   const showError=message=>{const el=$('stockMovementError');el.hidden=!message;el.textContent=message||'';};
   const updatePreview=()=>{
-    const m=material(),p=pkg(),count=Number($('packageCount').value||0),qty=Number(p?.qty||0)*count,dir=direction();
+    const m=material(),p=pkg(),count=Number($('packageCount').value||0),raw=Number($('stockRemainder').value||0),rem=$('stockRemainderUnit').value==='g'?raw/1000:raw,qty=Number(p?.qty||0)*count+rem,dir=direction();
     $('packageCount').step=p?.kind==='sack'?'0.5':'1';
     $('stockMovementPreview').textContent=(dir==='in'?'Stock in · ':'Stock out · ')+stockBreakdown(m,qty,lang).primary+' · '+formatInventoryNumber(qty,lang)+' kg';
     $('stockMovementDirection').textContent=dir==='in'?'Adds to inventory':'Removes from inventory';
@@ -1587,20 +1588,27 @@ function openStockModal(presetType='purchase'){
     $('packageChooser').innerHTML='<div class="field"><label for="stockPackage">Package / container *</label><select id="stockPackage">'+m.packages.filter(x=>x.kind!=='recipe').map(x=>'<option value="'+m.packages.indexOf(x)+'">'+esc(packageUnit(m,x,lang))+'</option>').join('')+'</select></div><div class="field"><label for="packageCount">Number of packages *</label><input id="packageCount" type="number" min="0.001" step="'+(m.packages[0]?.kind==='sack'?'0.5':'1')+'" value="1"></div><div class="small">Quantity is converted automatically into the inventory base unit (kg).</div>';
     $('stockPackage').addEventListener('change',updatePreview);
     $('packageCount').addEventListener('input',updatePreview);
+    $('stockRemainder').addEventListener('input',updatePreview);
     updatePreview();
   };
   $('stockMovementType').addEventListener('change',updatePreview);
+  $('stockRemainderUnit').dataset.unit='kg';
+  $('stockRemainderUnit').addEventListener('change',()=>{
+    const input=$('stockRemainder'),old=input.dataset.unit||'kg',next=$('stockRemainderUnit').value;
+    if(old!==next)input.value=Number((Number(input.value||0)*(old==='g'?0.001:1000)).toFixed(3));
+    input.dataset.unit=next;updatePreview();
+  });
   $('stockMaterial').addEventListener('change',updatePackages);
   $('closeModal').addEventListener('click',closeModal);
   $('cancelModal').addEventListener('click',closeModal);
   updatePackages();
   $('saveStock').addEventListener('click',async()=>{
-    const m=material(),p=pkg(),count=Number($('packageCount').value||0),date=$('stockEffectiveDate').value,
+    const m=material(),p=pkg(),count=Number($('packageCount').value||0),raw=Number($('stockRemainder').value||0),rem=$('stockRemainderUnit').value==='g'?raw/1000:raw,date=$('stockEffectiveDate').value,
       movement=type(),dir=direction(),reason=$('stockNote').value.trim(),
       supplier=$('stockSupplier').value.trim(),reference=$('stockReference').value.trim();
-    const qty=Number(p?.qty||0)*count;
+    const qty=Number(p?.qty||0)*count+rem;
     if(!date||date>today()){showError('Choose today or a past date. No stock was changed.');return;}
-    if(!(count>0)||!Number.isFinite(qty)||(p?.kind==='sack'&&Math.abs(count*2-Math.round(count*2))>0.000001)||(p?.kind!=='sack'&&Math.abs(count-Math.round(count))>0.000001)){showError('Enter a valid package quantity. Sack quantities may use half-sacks.');return;}
+    if(count<0||rem<0||!Number.isFinite(qty)||qty<=0||(p?.kind==='sack'&&Math.abs(count*2-Math.round(count*2))>0.000001)||(p?.kind!=='sack'&&Math.abs(count-Math.round(count))>0.000001)){showError('Enter a valid package count and open remainder. Sack counts may use half-sacks.');return;}
     if(reason.length<3){showError('Enter a reason of at least 3 characters so this movement is traceable.');$('stockNote').focus();return;}
     const save=$('saveStock');save.disabled=true;showError('');
     try{
@@ -1614,12 +1622,12 @@ function openStockModal(presetType='purchase'){
           if(asOf-qty<-0.00005||current-qty<-0.00005||(minLater!==Infinity&&minLater-qty<-0.00005))throw new Error('Insufficient stock for that date or a later balance.');
         }
         inv.stock+=dir==='in'?qty:-qty;
-        inv.tx.push({id:uid(),dir,qty,packages:count,packageLabel:p.label,reason,effectiveDate:date,at:new Date().toISOString(),by:currentUser.name,movementType:movement,supplierName:supplier,referenceCode:reference});
+        inv.tx.push({id:uid(),dir,qty,packages:count>0?count:null,packageLabel:p.label,reason,effectiveDate:date,at:new Date().toISOString(),by:currentUser.name,movementType:movement,supplierName:supplier,referenceCode:reference});
         saveDemo();
       }else{
         const {error}=await supabase.rpc('admin_record_inventory_movement',{
           p_material_code:m.code,p_direction:dir,p_movement_type:movement,p_qty_base:Number(qty.toFixed(4)),
-          p_effective_date:date,p_reason:reason,p_package_count:count,p_package_label:p.label,
+          p_effective_date:date,p_reason:reason,p_package_count:count>0?count:null,p_package_label:p.label,
           p_supplier_name:supplier||null,p_reference_code:reference||null
         });
         if(error)throw error;
