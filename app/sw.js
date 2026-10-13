@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v62-20261013-content-media-emblem';
+const CACHE = 'doughflow-v63-20261013-admin-page-controls';
 
 const CORE_ASSETS = [
   './',
