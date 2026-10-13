@@ -57,6 +57,11 @@ After the existing schema and hardening migration, run these files in Supabase S
 2. `db/pin_login_2026_10_10.sql` — per-user PIN credentials, username aliases, Admin PIN management, lockout rules, and the initial Admin PIN.
 3. `db/security_fixes_2026_10_11.sql` — server-side production-date/batch/consumption validation, recipe unit validation, and historical balance safety checks.
 4. `db/fix_admin_inventory_snapshot_2026_10_11.sql` — restores the Admin-only inventory history/snapshot RPCs and reloads the Supabase API schema cache. Run this if Stock shows a missing `admin_inventory_snapshot(p_effective_date)` function error; it is safe to rerun and does not rewrite stock transactions.
+5. `db/admin_inventory_transaction_management_2026_10_13.sql` — creates the protected before/after audit trail and admin-only edit/delete operations for manual stock movements.
+6. `db/inventory_environment_2026_10_13.sql` — adds movement categories, supplier/reference metadata, low-stock thresholds, stock-out validation, date-range activity search, CSV export support, and audit-log reads.
+7. `db/inventory_correction_audit_2026_10_13.sql` — records physical stock-count corrections in the same audit log.
+
+The inventory environment migration files are additive; apply them to the same Supabase project configured in `app/config.js`. Back up first and do not run schema files against an unrelated project.
 
 Until that RPC migration has been applied, the new frontend can reconstruct the selected-date balance/activity in **read-only mode** when Admin ledger reads are available. Saving date corrections stays disabled until the server-side correction RPC is confirmed, so it never treats a missing snapshot as zero stock.
 
@@ -83,9 +88,18 @@ Production login intentionally does not fall back to email/password authenticati
 
 Do not run the older `db/pin_inventory_history.sql` stub; it is superseded and kept only to prevent schema confusion.
 
-## 9. Admin inventory corrections
+## 9. Admin inventory operations
 
-Open **Stock → Date-wise inventory editor**, select a material and historical date, enter full physical packages plus any open remainder, and give a reason. Saving creates a dated, auditable correction transaction; it does not delete or rewrite the original inventory entries. Check the “current as of date” preview carefully before saving.
+The Stock area is the admin inventory workbench:
+
+- **Receive stock** records supplier purchases/deliveries, customer returns, or other stock received. It stores the effective date, package count, supplier/recipient, invoice/delivery reference, and reason.
+- **Issue / waste** records internal use, damaged/expired stock, or returns to a supplier. The database rejects an issue that would create a negative stock balance on the selected or a later date.
+- **Date-wise inventory editor** records a physical-count correction for a selected material/date. It creates a dated adjustment, checks later balances, and preserves an audit record rather than rewriting historical transactions.
+- **Inventory movement ledger** filters by date range, material, movement type, and text (reason/supplier/reference). It exports the filtered rows to CSV. Manual movements can be edited or removed from the ledger; the app asks for a deletion reason, preserves before/after audit values, and blocks direct edits/deletions of production-linked ingredient consumption.
+- **Low-stock alerts** let Admin set a per-material threshold in base units (kg). Stock at or below the threshold is flagged on the inventory card.
+- **Audit log** shows before/after values for admin edits, removals, and date-wise corrections.
+
+To fix a mistake, open **Stock**, use the activity date range/search filters to locate the wrong entry, then choose **Edit** or **Remove**. If it is linked to production, correct the source production record instead of deleting the inventory movement directly. For a wrong physical balance rather than a wrong transaction, use the date-wise inventory editor. All quantities are stored in base units; the screen converts packages into kg and supports half-sacks.
 
 ## Demo mode
 Demo mode is opt-in via `demoMode: true` in `app/config.js`. The checked-in production config sets `demoMode: false`; if live Supabase configuration is missing, the app fails closed instead of silently opening a local demo. For local interface testing, explicitly enable demo mode; data stays in that browser. Demo PINs are `askat / 1214`, `hamurchi / 2468`, `naan / 1357`, and `sales / 8642`. These credentials are for isolated local testing only and must never be reused for live accounts.
