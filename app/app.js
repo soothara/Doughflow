@@ -637,6 +637,8 @@ async function refreshLiveState(){
   }
 }
 async function render(){
+  const preserveDashboardScroll=currentUser&&route==='dashboard'&&document.body.dataset.route==='dashboard'
+    ?Math.max(window.scrollY||0,document.documentElement.scrollTop||0,document.body.scrollTop||0):0;
   document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard');
   document.body.dataset.route=currentUser?route:'login';
   if(!currentUser){
@@ -655,6 +657,12 @@ async function render(){
   document.querySelectorAll('[data-route]').forEach(b=>b.addEventListener('click',()=>navigateTo(b.dataset.route)));
   document.getElementById('logout')?.addEventListener('click',logout);
   await renderPage();
+  if(preserveDashboardScroll>0)requestAnimationFrame(()=>{
+    if(!currentUser||route!=='dashboard')return;
+    window.scrollTo({top:preserveDashboardScroll,left:0,behavior:'auto'});
+    document.documentElement.scrollTop=preserveDashboardScroll;
+    document.body.scrollTop=preserveDashboardScroll;
+  });
   applyCurrentLanguage();
   document.getElementById('languageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
   document.getElementById('heroLanguageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
@@ -662,6 +670,10 @@ async function render(){
 let routeRenderId=0;
 // Keep the Home sack selector independent of the dashboard DOM, which can be rebuilt after async data refreshes.
 let dashboardSackSelection=0;
+try{
+  const saved=Number(sessionStorage.getItem('doughflow-dashboard-sack-selection')||0);
+  if(Number.isFinite(saved)&&saved>=0&&saved<=9.5)dashboardSackSelection=Math.round(saved*2)/2;
+}catch{}
 function scrollAppToTop(){
   try{window.scrollTo({top:0,left:0,behavior:'auto'});}catch{}
   document.documentElement.scrollTop=0;document.body.scrollTop=0;
@@ -1149,6 +1161,7 @@ function renderDashboard(p){
   let selected=dashboardSackSelection;
   const sync=()=>{
     dashboardSackSelection=selected;
+    try{sessionStorage.setItem('doughflow-dashboard-sack-selection',String(selected));}catch{}
     const totalEl=document.getElementById('dashboardTotal');
     totalEl.textContent=selected;
     document.querySelectorAll('[data-dashboard-sack]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.dashboardSack)===Math.floor(selected)));
