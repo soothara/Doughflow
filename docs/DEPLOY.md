@@ -92,7 +92,7 @@ Do not run the older `db/pin_inventory_history.sql` stub; it is superseded and k
 
 The Stock area is the admin inventory workbench:
 
-- **Receive stock** records supplier purchases/deliveries, customer returns, or other stock received. It stores the effective date, package count, supplier/recipient, invoice/delivery reference, and reason.
+- **Receive stock** records supplier purchases/deliveries, customer returns, initial opening balances, or other stock received. It stores the effective date, package count, supplier/recipient, invoice/delivery reference, and reason.
 - **Issue / waste** records internal use, damaged/expired stock, or returns to a supplier. The database rejects an issue that would create a negative stock balance on the selected or a later date.
 - **Date-wise inventory editor** records a physical-count correction for a selected material/date. It creates a dated adjustment, checks later balances, and preserves an audit record rather than rewriting historical transactions.
 - **Inventory movement ledger** filters by date range, material, movement type, and text (reason/supplier/reference). It exports the filtered rows to CSV. Manual movements can be edited or removed from the ledger; the app asks for a deletion reason, preserves before/after audit values, and blocks direct edits/deletions of production-linked ingredient consumption.
