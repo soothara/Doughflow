@@ -321,10 +321,10 @@ begin
 end;
 $$;
 
-revoke all on function public.complete_production(date,numeric,uuid,jsonb,jsonb) from public;
+revoke all on function public.complete_production(date,numeric,uuid,jsonb,jsonb) from public, anon;
 grant execute on function public.complete_production(date,numeric,uuid,jsonb,jsonb) to authenticated;
 
-revoke all on function public.create_recipe_version(jsonb,text) from public;
+revoke all on function public.create_recipe_version(jsonb,text) from public, anon;
 grant execute on function public.create_recipe_version(jsonb,text) to authenticated;
 
 -- Defense in depth: unauthenticated clients get no access to app tables.
@@ -390,7 +390,7 @@ begin
 end;
 $$;
 
-revoke all on function public.set_preferred_language(text) from public;
+revoke all on function public.set_preferred_language(text) from public, anon;
 grant execute on function public.set_preferred_language(text) to authenticated;
 
 do $$
