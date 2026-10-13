@@ -217,15 +217,27 @@ const toastRoot=document.getElementById('toastRoot');
 
 // Keep mobile bottom-sheet dialogs independently scrollable and prevent the page behind them from moving.
 let modalScrollY=0;
+let modalBodyStyles=null;
 const syncModalScrollLock=()=>{
   const isOpen=!!modalRoot?.querySelector('.modal-backdrop.show');
   if(isOpen&&!document.documentElement.classList.contains('modal-open')){
     modalScrollY=window.scrollY||window.pageYOffset||0;
+    modalBodyStyles={position:document.body.style.position,top:document.body.style.top,left:document.body.style.left,right:document.body.style.right,width:document.body.style.width,overflow:document.body.style.overflow};
     document.documentElement.classList.add('modal-open');
     document.body.classList.add('modal-open');
+    document.body.style.position='fixed';
+    document.body.style.top='-'+modalScrollY+'px';
+    document.body.style.left='0';
+    document.body.style.right='0';
+    document.body.style.width='100%';
+    document.body.style.overflow='hidden';
   }else if(!isOpen&&document.documentElement.classList.contains('modal-open')){
     document.documentElement.classList.remove('modal-open');
     document.body.classList.remove('modal-open');
+    if(modalBodyStyles){
+      Object.assign(document.body.style,{position:modalBodyStyles.position,top:modalBodyStyles.top,left:modalBodyStyles.left,right:modalBodyStyles.right,width:modalBodyStyles.width,overflow:modalBodyStyles.overflow});
+      modalBodyStyles=null;
+    }
     window.scrollTo(0,modalScrollY);
   }
 };
@@ -1353,7 +1365,7 @@ function openInventoryTransactionModal(row,onSaved=()=>{}){
 }
 function openStockModal(){
   const opts=STOCK_MATERIALS.map(m=>`<option value="${m.code}">${esc(t(m.name,lang))}</option>`).join('');
-  modalRoot.innerHTML=`<div class="modal-backdrop show"><div class="modal"><div class="modal-head"><h2>${t('Receive stock',lang)}</h2><button id="closeModal">×</button></div><div class="field"><label>${t('Material',lang)}</label><select id="stockMaterial">${opts}</select></div><div id="packageChooser"></div><div class="field"><label>${t('Effective date',lang)}</label><input id="stockEffectiveDate" type="date" max="${today()}" value="${today()}"></div><div class="field"><label>${t('Notes',lang)}</label><input id="stockNote" placeholder="${t('Supplier / delivery note',lang)}"></div><div class="modal-footer"><button class="btn secondary" id="cancelModal">${t('Cancel',lang)}</button><button class="btn primary" id="saveStock">${t('Add stock',lang)}</button></div></div></div>`;
+  modalRoot.innerHTML=`<div class="modal-backdrop show"><section class="modal receive-stock-modal" role="dialog" aria-modal="true" aria-labelledby="receiveStockTitle"><div class="modal-head"><h2 id="receiveStockTitle">${t('Receive stock',lang)}</h2><button id="closeModal">×</button></div><div class="field"><label>${t('Material',lang)}</label><select id="stockMaterial">${opts}</select></div><div id="packageChooser"></div><div class="field"><label>${t('Effective date',lang)}</label><input id="stockEffectiveDate" type="date" max="${today()}" value="${today()}"></div><div class="field"><label>${t('Notes',lang)}</label><input id="stockNote" placeholder="${t('Supplier / delivery note',lang)}"></div><div class="modal-footer"><button class="btn secondary" id="cancelModal">${t('Cancel',lang)}</button><button class="btn primary" id="saveStock">${t('Add stock',lang)}</button></div></section></div>`;
   const update=()=>{const m=STOCK_MATERIALS.find(x=>x.code===document.getElementById('stockMaterial').value);document.getElementById('packageChooser').innerHTML=`<div class="field"><label>${t('Package',lang)}</label><select id="stockPackage">${m.packages.map((x,i)=>`<option value="${i}">${esc(packageUnit(m,x,lang))}</option>`).join('')} </select></div><div class="field"><label>${t('Number of packages',lang)}</label><input id="packageCount" type="number" min="0.001" step="1" value="1"></div><div class="small">${t('The system will convert package quantity into the inventory base unit.',lang)}</div>`;};
   update();document.getElementById('stockMaterial').addEventListener('change',update);document.getElementById('closeModal').addEventListener('click',closeModal);document.getElementById('cancelModal').addEventListener('click',closeModal);
   document.getElementById('saveStock').addEventListener('click',async()=>{const code=document.getElementById('stockMaterial').value;const m=STOCK_MATERIALS.find(x=>x.code===code);const pi=Number(document.getElementById('stockPackage').value);const count=Number(document.getElementById('packageCount').value||0);const date=document.getElementById('stockEffectiveDate').value;if(!(count>0)||!Number.isFinite(count))return;if(!date||date>today()){showToast(t('Choose today or a past date',lang),'error');return;}const qty=m.packages[pi].qty*count;const reason=(document.getElementById('stockNote').value||'').trim()||t('Stock received',lang);if(isDemo){const inv=db.inventory[code];inv.stock+=qty;inv.tx.push({id:uid(),dir:'in',qty,packages:count,packageLabel:m.packages[pi].label,reason,effectiveDate:date,at:new Date().toISOString(),by:currentUser.name});saveDemo();closeModal();render();}else{const {error}=await supabase.from('inventory_transactions').insert({material_code:code,direction:'in',qty_base:qty,package_count:count,package_label:m.packages[pi].label,reason,created_by:currentUser.id,effective_date:date});if(error){showToast(friendlyError(error),'error');return;}await refreshLiveState();closeModal();render();}});
