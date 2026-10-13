@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v42-20261013-empty-stock-yeast-grams-admin-stock-control-v2';
+const CACHE = 'doughflow-v43-20261013-toast-position-fix';
 
 const CORE_ASSETS = [
   './',
