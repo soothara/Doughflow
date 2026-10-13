@@ -63,6 +63,7 @@ After the existing schema and hardening migration, run these files in Supabase S
 8. `db/revoke_anon_inventory_admin_rpcs_20261013.sql` — removes direct anonymous execute privileges from admin-only inventory functions; signed-in calls remain restricted by each function's Admin-role check.
 9. `db/share_production_history_with_authenticated_team_2026_10_13.sql` — lets authenticated team members read shared production runs, sack batches, and actual ingredient inputs so Reports and cross-role handoffs include production created by another team member.
 10. `db/shared_production_summary_2026_10_13.sql` — shares aggregate sack/piece/run totals across signed-in roles; ingredient details remain role-restricted.
+11. `db/privilege_hardening_security_definer_2026_10_13.sql` — tightens execution rights for security-definer helpers and admin RPCs; the PIN verifier is restricted to `service_role` for the PIN-login Edge Function.
 
 The inventory environment migration files are additive; apply them to the same Supabase project configured in `app/config.js`. Back up first and do not run schema files against an unrelated project.
 
