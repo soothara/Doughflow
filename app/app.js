@@ -556,7 +556,13 @@ function refreshVisiblePageData(){
     if(p)renderDashboard(p);
   }else if(route==='production'){
     const p=document.getElementById('page');
-    if(p)renderProduction(p);
+    if(p){
+      // Live-state refreshes can finish a few seconds after the operator starts typing.
+      // Preserve the unfinished production draft instead of resetting the sack picker.
+      const draft=captureRouteDraft();
+      renderProduction(p);
+      restoreRouteDraft(draft);
+    }
   }
 }
 
