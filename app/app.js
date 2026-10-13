@@ -2065,17 +2065,19 @@ async function renderNaan(p){
     const canDelete=currentUser.role==='admin'||(currentUser.role==='naan'&&row.created_by===currentUser.id&&status==='prepared');
     const canEdit=currentUser.role==='admin'||(currentUser.role==='naan'&&row.created_by===currentUser.id);
     const statusLabel={prepared:'Prepared',dispatched:'Dispatched',returned:'Returned',cancelled:'Cancelled'}[status]||status;
-    return '<tr><td>'+esc(date)+'</td><td><b>'+esc(row.recipient_name||row.recipientName||'')+'</b><small class="table-secondary">'+esc(row.vehicle_registration||row.vehicleRegistration||'')+(row.driver_name||row.driverName?' · '+esc(row.driver_name||row.driverName):'')+'</small></td><td>'+fmt(row.sack_count||row.sackCount)+'</td><td>'+fmt(row.total_pieces||row.totalPieces)+'</td><td><span class="workflow-status-pill '+status+'">'+statusLabel+'</span></td><td><div class="workflow-row-actions">'+(canEdit?'<button type="button" class="btn secondary" data-dispatch-edit="'+esc(id)+'">Edit</button>':'')+(canDelete?'<button type="button" class="btn danger" data-dispatch-delete="'+esc(id)+'">Delete</button>':'')+'</div></td></tr>';
+    return '<tr><td>'+esc(date)+'</td><td><b>'+esc(row.recipient_name||row.recipientName||'')+'</b><small class="table-secondary">Production '+esc(row.source_production_date||row.sourceProductionDate||date)+' · '+esc(row.vehicle_registration||row.vehicleRegistration||'')+(row.driver_name||row.driverName?' · '+esc(row.driver_name||row.driverName):'')+'</small></td><td>'+fmt(row.sack_count||row.sackCount)+'</td><td>'+fmt(row.total_pieces||row.totalPieces)+'</td><td><span class="workflow-status-pill '+status+'">'+statusLabel+'</span></td><td><div class="workflow-row-actions">'+(canEdit?'<button type="button" class="btn secondary" data-dispatch-edit="'+esc(id)+'">Edit</button>':'')+(canDelete?'<button type="button" class="btn danger" data-dispatch-delete="'+esc(id)+'">Delete</button>':'')+'</div></td></tr>';
   }).join('');
   p.innerHTML='<div class="page-head workflow-page-head"><div><div class="eyebrow">LEPOSHKA FLOW</div><h1>Naan / Leposhka</h1><p>Prepare and track dispatches by date, recipient, sacks and piece count.</p></div><span class="settings-admin-pill">'+(currentUser.role==='admin'?'Admin workspace':'Dispatch workspace')+'</span></div>'+
     '<section class="report-month-toolbar card"><div><span class="report-month-icon">◈</span><div><b>Dispatch report</b><small>Track what is prepared, sent and returned</small></div></div><label for="dispatchMonth">Report month<input id="dispatchMonth" type="month" value="'+esc(month)+'"></label></section>'+
     '<section class="report-production-summary workflow-kpi-grid"><article class="report-stat-card"><span class="report-stat-icon">▤</span><small>Sacks dispatched</small><strong>'+fmt(sacks)+'</strong></article><article class="report-stat-card"><span class="report-stat-icon">◉</span><small>Pieces dispatched</small><strong>'+fmt(piecesOut)+'</strong></article><article class="report-stat-card"><span class="report-stat-icon">…</span><small>Awaiting dispatch</small><strong>'+fmt(pending)+'</strong></article></section>'+
+    '<section class="naan-capacity-card"><div><span class="eyebrow">AVAILABLE PRODUCTION</span><h2 id="dispatchCapacityDate">'+(selectedCapacity?esc(selectedSourceDate):'No completed production found')+'</h2><p id="dispatchCapacityText">'+(selectedCapacity?'Produced '+fmt(selectedCapacity.produced_sacks)+' sacks / '+fmt(selectedCapacity.produced_pieces)+' pieces. Reserved: '+fmt(selectedCapacity.reserved_sacks)+' sacks / '+fmt(selectedCapacity.reserved_pieces)+' pieces.':'Complete a Production entry before preparing a dispatch.')+'</p></div><div class="naan-capacity-number"><small>Pieces left</small><strong id="dispatchCapacityRemaining">'+fmt(selectedCapacity?.remaining_pieces||0)+'</strong></div></section>'+
     (dataError?'<div class="notice warn" role="alert">Could not load dispatches: '+esc(dataError)+'</div>':'')+
     '<section class="card workflow-editor-card"><div class="report-section-heading"><div><div class="eyebrow">DISPATCH ENTRY</div><h2 id="dispatchFormTitle">Prepare a dispatch</h2><p>Use piece counts, not grams. Mark a dispatch as sent only when it has left the bakery.</p></div></div><div id="dispatchFormError" class="alert error" hidden></div><div class="workflow-form-grid" id="dispatchForm">'+
       '<div class="field"><label for="dispatchDate">Dispatch date *</label><input id="dispatchDate" type="date" max="'+today()+'" value="'+defaultDate+'"></div>'+
+      '<div class="field"><label for="dispatchSourceDate">Source production date *</label><select id="dispatchSourceDate" '+(capacities.length?'':'disabled')+'>'+sourceDateOptions+'</select></div>'+
       '<div class="field"><label for="dispatchRecipient">Recipient / customer *</label><input id="dispatchRecipient" maxlength="120" placeholder="Shop, customer or delivery point"></div>'+
       '<div class="field"><label for="dispatchSacks">Sacks (may include 0.5) *</label><input id="dispatchSacks" type="number" min="0.5" step="0.5" value="1"></div>'+
-      '<div class="field"><label for="dispatchPieces">Total pieces in dispatch *</label><input id="dispatchPieces" type="number" min="0" step="1" value="0"></div>'+
+      '<div class="field"><label for="dispatchPieces">Total pieces in dispatch *</label><input id="dispatchPieces" type="number" min="1" step="1" value="'+Math.min(260,Number(selectedCapacity?.remaining_pieces||260))+'"></div>'+
       '<div class="field"><label for="dispatchVehicle">Vehicle registration</label><input id="dispatchVehicle" maxlength="30" placeholder="Optional plate / van ID"></div>'+
       '<div class="field"><label for="dispatchDriver">Driver / responsible person</label><input id="dispatchDriver" maxlength="100" placeholder="Optional name"></div>'+
       '<div class="field"><label for="dispatchStatus">Status</label><select id="dispatchStatus"><option value="prepared">Prepared</option><option value="dispatched">Dispatched</option><option value="returned">Returned</option><option value="cancelled">Cancelled</option></select></div>'+
@@ -2084,16 +2086,35 @@ async function renderNaan(p){
     '<section class="card workflow-history-card"><div class="report-section-heading"><div><div class="eyebrow">DISPATCH HISTORY</div><h2>'+esc(monthLabelForWorkflow(month))+' dispatches</h2></div><div class="workflow-row-actions"><button type="button" class="btn secondary" id="dispatchExport">Export CSV</button><button type="button" class="btn secondary" id="dispatchRefresh">↻ Refresh</button></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Recipient / vehicle</th><th>Sacks</th><th>Pieces</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+(history||'<tr><td colspan="6" class="empty">No dispatches saved for this month.</td></tr>')+'</tbody></table></div></section>';
   let editingId='';
   const el=id=>p.querySelector('#'+id),err=el('dispatchFormError');
+  const updateCapacityPreview=()=>{
+    const source=el('dispatchSourceDate').value,cap=capacities.find(x=>x.production_date===source),old=rows.find(x=>String(x.id)===editingId);
+    let availableSacks=Number(cap?.remaining_sacks||0),availablePieces=Number(cap?.remaining_pieces||0);
+    if(old&&String(old.source_production_date||old.sourceProductionDate||old.dispatch_date)===source&&['prepared','dispatched'].includes(old.status)){
+      availableSacks+=Number((old.sack_count??old.sackCount)||0);availablePieces+=Number((old.total_pieces??old.totalPieces)||0);
+    }
+    el('dispatchCapacityDate').textContent=cap?source:'No completed production found';
+    el('dispatchCapacityText').textContent=cap?'Produced '+fmt(cap.produced_sacks)+' sacks / '+fmt(cap.produced_pieces)+' pieces. Available for this dispatch: '+fmt(availableSacks)+' sacks / '+fmt(availablePieces)+' pieces.':'Complete a Production entry before preparing a dispatch.';
+    el('dispatchCapacityRemaining').textContent=fmt(availablePieces);
+    el('dispatchSave').disabled=!cap;
+  };
+  el('dispatchSourceDate').addEventListener('change',()=>{p.dataset.dispatchSourceDate=el('dispatchSourceDate').value;updateCapacityPreview();});
   el('dispatchMonth').addEventListener('change',()=>{p.dataset.dispatchMonth=el('dispatchMonth').value||today().slice(0,7);renderNaan(p);});
-  const resetForm=()=>{editingId='';el('dispatchDate').value=defaultDate;el('dispatchRecipient').value='';el('dispatchSacks').value='1';el('dispatchPieces').value='0';el('dispatchVehicle').value='';el('dispatchDriver').value='';el('dispatchStatus').value='prepared';el('dispatchNotes').value='';el('dispatchFormTitle').textContent='Prepare a dispatch';el('dispatchSave').textContent='＋ Save dispatch';el('dispatchCancelEdit').hidden=true;err.hidden=true;};
+  const resetForm=()=>{editingId='';el('dispatchDate').value=defaultDate;el('dispatchSourceDate').value=selectedSourceDate;el('dispatchRecipient').value='';el('dispatchSacks').value='1';el('dispatchPieces').value='0';el('dispatchVehicle').value='';el('dispatchDriver').value='';el('dispatchStatus').value='prepared';el('dispatchNotes').value='';el('dispatchFormTitle').textContent='Prepare a dispatch';el('dispatchSave').textContent='＋ Save dispatch';el('dispatchCancelEdit').hidden=true;err.hidden=true;};
   el('dispatchCancelEdit').addEventListener('click',resetForm);
   el('dispatchSave').addEventListener('click',async()=>{
-    const date=el('dispatchDate').value,recipient=el('dispatchRecipient').value.trim(),sacks=Number(el('dispatchSacks').value),pieces=Number(el('dispatchPieces').value),status=el('dispatchStatus').value;
+    const date=el('dispatchDate').value,sourceDate=el('dispatchSourceDate').value,recipient=el('dispatchRecipient').value.trim(),sacks=Number(el('dispatchSacks').value),pieces=Number(el('dispatchPieces').value),status=el('dispatchStatus').value,capacity=capacities.find(x=>x.production_date===sourceDate),old=rows.find(x=>String(x.id)===editingId);
     const fail=message=>{err.hidden=false;err.textContent=message;};
     if(!date||date>today()){fail('Choose today or a past date.');return;}
-    if(!recipient||!Number.isFinite(sacks)||sacks<=0||Math.abs(sacks*2-Math.round(sacks*2))>0.000001||!Number.isInteger(pieces)||pieces<0){fail('Enter a recipient, valid half-sack increment, and whole-piece total.');return;}
+    if(!recipient||!sourceDate||!Number.isFinite(sacks)||sacks<=0||Math.abs(sacks*2-Math.round(sacks*2))>0.000001||!Number.isInteger(pieces)||pieces<=0){fail('Enter a recipient, source production date, valid half-sack increment and positive whole-piece total.');return;}
+    if(status!=='cancelled'&&status!=='returned'){
+      let availableSacks=Number(capacity?.remaining_sacks||0),availablePieces=Number(capacity?.remaining_pieces||0);
+      if(old&&String(old.source_production_date||old.sourceProductionDate||old.dispatch_date)===sourceDate&&['prepared','dispatched'].includes(old.status)){
+        availableSacks+=Number((old.sack_count??old.sackCount)||0);availablePieces+=Number((old.total_pieces??old.totalPieces)||0);
+      }
+      if(!capacity||sacks>availableSacks||pieces>availablePieces){fail('This dispatch exceeds available production for the selected date.');return;}
+    }
     el('dispatchSave').disabled=true;err.hidden=true;
-    const payload={dispatch_date:date,recipient_name:recipient,sack_count:sacks,total_pieces:pieces,vehicle_registration:el('dispatchVehicle').value.trim()||null,driver_name:el('dispatchDriver').value.trim()||null,status,notes:el('dispatchNotes').value.trim()||null};
+    const payload={dispatch_date:date,source_production_date:sourceDate,recipient_name:recipient,sack_count:sacks,total_pieces:pieces,vehicle_registration:el('dispatchVehicle').value.trim()||null,driver_name:el('dispatchDriver').value.trim()||null,status,notes:el('dispatchNotes').value.trim()||null};
     try{
       if(isDemo){
         db.naanDispatches=db.naanDispatches||[];
@@ -2104,12 +2125,12 @@ async function renderNaan(p){
         const result=editingId?await supabase.from('naan_dispatches').update(payload).eq('id',editingId):await supabase.from('naan_dispatches').insert({...payload,created_by:currentUser.id});
         if(result.error)throw result.error;
       }
-      p.dataset.dispatchMonth=date.slice(0,7);await renderNaan(p);showToast(editingId?'Dispatch updated.':'Dispatch saved.','success');
+      p.dataset.dispatchMonth=date.slice(0,7);p.dataset.dispatchSourceDate=sourceDate;await renderNaan(p);showToast(editingId?'Dispatch updated.':'Dispatch saved.','success');
     }catch(error){fail(friendlyError(error));el('dispatchSave').disabled=false;}
   });
   p.querySelectorAll('[data-dispatch-edit]').forEach(button=>button.addEventListener('click',()=>{
     const row=rows.find(item=>String(item.id)===button.dataset.dispatchEdit);if(!row)return;
-    editingId=String(row.id);el('dispatchDate').value=String(row.dispatch_date||row.dispatchDate).slice(0,10);el('dispatchRecipient').value=row.recipient_name||row.recipientName||'';el('dispatchSacks').value=Number(row.sack_count??row.sackCount)||1;el('dispatchPieces').value=Number(row.total_pieces??row.totalPieces)||0;el('dispatchVehicle').value=row.vehicle_registration||row.vehicleRegistration||'';el('dispatchDriver').value=row.driver_name||row.driverName||'';el('dispatchStatus').value=row.status||'prepared';el('dispatchNotes').value=row.notes||'';el('dispatchFormTitle').textContent='Edit dispatch';el('dispatchSave').textContent='✓ Save changes';el('dispatchCancelEdit').hidden=false;el('dispatchForm').scrollIntoView({behavior:'smooth',block:'start'});
+    editingId=String(row.id);el('dispatchDate').value=String(row.dispatch_date||row.dispatchDate).slice(0,10);el('dispatchSourceDate').value=String(row.source_production_date||row.sourceProductionDate||row.dispatch_date||row.dispatchDate).slice(0,10);el('dispatchRecipient').value=row.recipient_name||row.recipientName||'';el('dispatchSacks').value=Number(row.sack_count??row.sackCount)||1;el('dispatchPieces').value=Number(row.total_pieces??row.totalPieces)||0;el('dispatchVehicle').value=row.vehicle_registration||row.vehicleRegistration||'';el('dispatchDriver').value=row.driver_name||row.driverName||'';el('dispatchStatus').value=row.status||'prepared';el('dispatchNotes').value=row.notes||'';el('dispatchFormTitle').textContent='Edit dispatch';el('dispatchSave').textContent='✓ Save changes';el('dispatchCancelEdit').hidden=false;updateCapacityPreview();el('dispatchForm').scrollIntoView({behavior:'smooth',block:'start'});
   }));
   p.querySelectorAll('[data-dispatch-delete]').forEach(button=>button.addEventListener('click',async()=>{
     const row=rows.find(item=>String(item.id)===button.dataset.dispatchDelete);if(!row)return;
@@ -2119,6 +2140,7 @@ async function renderNaan(p){
     catch(error){showToast(friendlyError(error),'error');button.disabled=false;}
   }));
   el('dispatchRefresh').addEventListener('click',()=>renderNaan(p));
+  updateCapacityPreview();
   el('dispatchExport').addEventListener('click',()=>{
     const columns=['dispatch_date','recipient_name','sack_count','total_pieces','vehicle_registration','driver_name','status','notes'];
     const cell=value=>'"'+String(value??'').replace(/"/g,'""')+'"';
