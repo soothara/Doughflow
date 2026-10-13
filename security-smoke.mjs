@@ -11,6 +11,7 @@ const inventoryEnvironment = read("./db/inventory_environment_2026_10_13.sql");
 const inventoryCorrectionAudit = read("./db/inventory_correction_audit_2026_10_13.sql");
 const inventoryPrivilegeFix = read("./db/revoke_anon_inventory_admin_rpcs_20261013.sql");
 const productionTeamRead = read("./db/share_production_history_with_authenticated_team_2026_10_13.sql");
+const productionSummaryMigration = read("./db/shared_production_summary_2026_10_13.sql");
 const pinOnlyMigration = read("./db/pin_only_login_2026_10_11.sql");
 const schema = read("./db/schema.sql");
 
@@ -271,3 +272,7 @@ assert.ok(productionTeamRead.includes("production_batches_team_read") && product
 assert.ok(productionTeamRead.includes("production_materials_team_read") && productionTeamRead.includes("is_role('hamurchi'::app_role)"), "only Admin and Hamurchi can read ingredient input details");
 assert.ok(app.includes("const todayProduction=productionRows.filter(run=>String(run.production_date)===today())"), "Reports must attach today's saved production automatically");
 assert.ok(app.includes("todayProductionPieces=todayProduction.reduce"), "Reports must calculate today's actual pieces from saved batches");
+
+assert.ok(productionSummaryMigration.includes("auth.uid() IS NOT NULL") && productionSummaryMigration.includes("REVOKE ALL ON FUNCTION public.production_summary(date,date) FROM PUBLIC, anon"), "production summary must require authentication and block anonymous execution");
+assert.ok(productionSummaryMigration.includes("GRANT EXECUTE ON FUNCTION public.production_summary(date,date) TO authenticated, service_role"), "authenticated team members must be able to load aggregate production totals");
+assert.ok(schema.includes("auth.uid() is not null") && schema.includes("from public, anon"), "fresh schema must use the same safe shared production summary");
