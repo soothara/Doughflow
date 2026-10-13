@@ -106,7 +106,7 @@ begin
  if auth.uid() is null or not public.is_admin() then raise exception 'Not authorized'; end if;
  if p_effective_date is null or p_effective_date>(now() at time zone 'Asia/Bishkek')::date then raise exception 'Choose today or a past date'; end if;
  if p_direction not in ('in','out') then raise exception 'Invalid stock direction'; end if;
- if p_movement_type not in ('purchase','customer_return','manual_receipt','manual_issue','waste','supplier_return','adjustment') then raise exception 'Invalid manual inventory movement type'; end if;
+ if p_movement_type not in ('purchase','customer_return','opening_balance','manual_receipt','manual_issue','waste','supplier_return','adjustment') then raise exception 'Invalid manual inventory movement type'; end if;
  if p_movement_type in ('purchase','customer_return','opening_balance','manual_receipt') and p_direction<>'in' then raise exception 'This movement type must add stock'; end if;
  if p_movement_type in ('manual_issue','waste','supplier_return') and p_direction<>'out' then raise exception 'This movement type must remove stock'; end if;
  if p_qty_base is null or p_qty_base<=0 then raise exception 'Quantity must be greater than zero'; end if;
