@@ -507,10 +507,10 @@ begin
 end;
 $$;
 
-revoke all on function public.complete_production(date,numeric,uuid,jsonb,jsonb) from public;
+revoke all on function public.complete_production(date,numeric,uuid,jsonb,jsonb) from public, anon;
 grant execute on function public.complete_production(date,numeric,uuid,jsonb,jsonb) to authenticated;
 
-revoke all on function public.create_recipe_version(jsonb,text) from public;
+revoke all on function public.create_recipe_version(jsonb,text) from public, anon;
 grant execute on function public.create_recipe_version(jsonb,text) to authenticated;
 
 revoke all on public.inventory_balances from anon;
@@ -566,7 +566,7 @@ begin
 end;
 $$;
 
-revoke all on function public.set_preferred_language(text) from public;
+revoke all on function public.set_preferred_language(text) from public, anon;
 grant execute on function public.set_preferred_language(text) to authenticated;
 
 do $$
@@ -626,3 +626,9 @@ DROP POLICY IF EXISTS production_materials_team_read ON public.production_materi
 CREATE POLICY production_materials_team_read
   ON public.production_materials FOR SELECT TO authenticated
   USING (is_admin() OR is_role('hamurchi'::app_role));
+
+-- Explicit function grants for fresh installations (do not rely on project default privileges).
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.is_role(public.app_role) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_role(public.app_role) TO authenticated, service_role;
