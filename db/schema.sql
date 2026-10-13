@@ -625,7 +625,4 @@ CREATE POLICY production_batches_team_read
 DROP POLICY IF EXISTS production_materials_team_read ON public.production_materials;
 CREATE POLICY production_materials_team_read
   ON public.production_materials FOR SELECT TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM public.production_runs r
-    WHERE r.id = production_materials.production_run_id
-  ));
+  USING (is_admin() OR is_role('hamurchi'::app_role));
