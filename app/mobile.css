@@ -561,7 +561,7 @@ body.modal-open #app .layout>.sidebar{display:none!important}
 
 /* Admin settings control center */
 :root{--df-accent:#2477ee}
-body[data-route="settings"] .btn.primary{background:var(--df-accent)!important;border-color:var(--df-accent)!important}
+body .btn.primary{background:var(--df-accent)!important;border-color:var(--df-accent)!important}body .layout>.sidebar .nav button.active{color:var(--df-accent)!important}body .layout>.sidebar .nav button.active{background:color-mix(in srgb,var(--df-accent) 12%,white)!important}
 .settings-admin-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #dce7f8;border-radius:999px;background:#eef5ff;color:#285d9d;font-size:11px;font-weight:850}
 .settings-hero{display:flex;align-items:center;gap:13px;margin:12px 0 17px;padding:16px;border:1px solid #dce8fa;border-radius:20px;background:linear-gradient(120deg,#edf5ff,#fff 78%)}
 .settings-hero-icon{display:grid;place-items:center;width:46px;height:46px;flex:none;border-radius:15px;background:#dceaff;color:#2369c7;font-size:24px}
