@@ -506,3 +506,54 @@ body.modal-open #app .layout>.sidebar{display:none!important}
  .stock-shortcut>i{font-size:10px}
  .stock-help-chip{padding:10px 11px}
 }
+
+
+/* Inventory dashboard redesign: compact ingredient tiles and fast, obvious actions. */
+.stock-material-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:0 0 16px}
+.stock-section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:18px 0 12px}
+.stock-section-heading h2{margin:3px 0 4px;font-size:21px;letter-spacing:-.55px;color:#18263d}
+.stock-section-heading p{margin:0;font-size:12px;color:#77849a;line-height:1.45}
+.stock-count-pill{flex:none;padding:7px 10px;border-radius:999px;background:#eaf2ff;color:#245da8;font-size:11px;font-weight:850}
+.stock-card-premium{padding:16px!important;border-radius:20px!important;box-shadow:0 7px 20px rgba(28,49,83,.055)!important}
+.stock-material-head{display:flex;align-items:center;gap:8px;margin-bottom:13px;min-width:0}
+.stock-material-icon{display:grid;place-items:center;width:39px;height:39px;flex:none;border-radius:13px;background:linear-gradient(145deg,#e8f1ff,#f2f6ff);font-size:21px}
+.stock-material-name{min-width:0;flex:1;font-size:13px;font-weight:850;color:#596a82;overflow-wrap:anywhere}
+.stock-material-dot{width:8px;height:8px;flex:none;border-radius:50%;background:#aab5c5}
+.stock-card-premium .stock-primary{font-size:clamp(21px,2.1vw,29px)!important;line-height:1.12!important;letter-spacing:-.7px;margin-bottom:4px}
+.stock-card-premium .stock-secondary{font-size:12px;line-height:1.35;color:#8290a3}
+.stock-card-premium .stock-alert-line{margin:13px 0 10px;min-height:20px}
+.stock-card-premium .stock-reorder-button{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:39px;padding:8px 10px;border:1px solid #e0e8f3;border-radius:12px;background:#f7f9fd;color:#35577e;font-size:11px;font-weight:800;cursor:pointer}
+.stock-card-premium .stock-reorder-button:active{transform:scale(.985)}
+.stock-card-premium:has(.stock-alert-line.low) .stock-material-dot{background:#dc5656;box-shadow:0 0 0 4px #fff0f0}
+.stock-card-premium:has(.stock-alert-line.ok) .stock-material-dot{background:#24a06a;box-shadow:0 0 0 4px #e9f9f0}
+.stock-quick-actions{margin:14px 0 18px}
+.stock-shortcut{position:relative;min-height:138px;justify-content:flex-start;padding:15px;border-radius:19px;background:linear-gradient(145deg,#fff 0%,#f4f8ff 100%)}
+.stock-shortcut>span{width:40px;height:40px;border-radius:14px}
+.stock-shortcut>b{font-size:13px}
+.stock-shortcut>small{font-size:11px}
+.stock-shortcut>i{margin-top:auto;padding-top:4px}
+.inventory-workflow-banner{border-radius:17px}
+@media(max-width:900px){
+ .stock-material-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .stock-card-premium{padding:13px!important;border-radius:18px!important}
+ .stock-material-head{gap:7px;margin-bottom:11px}
+ .stock-material-icon{width:35px;height:35px;font-size:19px;border-radius:11px}
+ .stock-material-name{font-size:12px}
+ .stock-card-premium .stock-primary{font-size:clamp(20px,5.1vw,26px)!important;overflow-wrap:anywhere}
+ .stock-card-premium .stock-secondary{font-size:11px}
+ .stock-card-premium .stock-alert-line{align-items:flex-start;min-height:32px;margin:11px 0 8px}
+ .stock-card-premium .stock-alert-status{font-size:10px;line-height:1.35}
+ .stock-card-premium .stock-reorder-button{font-size:10px;padding:8px 5px}
+ .stock-section-heading h2{font-size:19px}
+ .stock-section-heading p{font-size:11px}
+ .stock-count-pill{font-size:10px}
+ .stock-shortcut{min-height:132px;padding:12px}
+}
+@media(max-width:360px){
+ .stock-material-grid{gap:8px}
+ .stock-card-premium{padding:11px!important}
+ .stock-material-icon{width:31px;height:31px;font-size:17px}
+ .stock-material-name{font-size:11px}
+ .stock-card-premium .stock-primary{font-size:20px!important}
+ .stock-card-premium .stock-reorder-button{font-size:9px}
+}
