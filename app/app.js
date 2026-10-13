@@ -1660,8 +1660,12 @@ async function renderReports(p){
     byDate.get(key).push({sack:Number(row.sack_no),pieces:Number(row.pieces_in_sack)});
   }
   const sackCount=sackRows.length;
-  const averagePieces=sackCount?sackRows.reduce((sum,row)=>sum+Number(row.pieces_in_sack),0)/sackCount:0;
+  const totalNotebookPieces=sackRows.reduce((sum,row)=>sum+Number(row.pieces_in_sack),0);
+  const averagePieces=sackCount?totalNotebookPieces/sackCount:0;
   const dates=[...byDate.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
+  const reportSacks=isDemo?total:sackCount;
+  const reportPieces=isDemo?pieces:totalNotebookPieces;
+  const reportAverage=reportSacks?reportPieces/reportSacks:0;
   const dailyCards=sackError
     ? "<div class='notice'>Unable to load notebook sack records: "+esc(sackError)+"</div>"
     : dates.length
@@ -1669,20 +1673,21 @@ async function renderReports(p){
           const vals=items.map(x=>x.pieces);
           const mean=vals.reduce((sum,n)=>sum+n,0)/vals.length;
           const low=Math.min(...vals),high=Math.max(...vals);
-          const detail=items.map(x=>"<span class='piece-weight-chip'><small>Sack "+String(x.sack).padStart(2,'0')+"</small><b>"+fmt(x.pieces)+" pieces</b></span>").join("");
+          const dailyTotal=vals.reduce((sum,n)=>sum+n,0);
+          const detail=items.map(x=>"<span class='piece-weight-chip'><small>Sack "+String(x.sack).padStart(2,'0')+"</small><b>"+fmt(x.pieces)+"</b></span>").join("");
           const displayDate=new Date(date+"T12:00:00").toLocaleDateString(lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-GB',{day:'numeric',month:'short',year:'numeric'});
-          return "<article class='piece-weight-day'><div class='piece-weight-day-head'><div><span class='piece-weight-date'>"+esc(displayDate)+"</span><span class='piece-weight-day-sub'>Notebook sack count</span></div><span class='piece-weight-sack-count'><b>"+items.length+"</b> sacks</span></div><div class='piece-weight-chips'>"+detail+"</div><div class='piece-weight-stats'><span><small>Avg. pieces / sack</small><b>"+fmt(mean)+" pieces</b></span><span><small>Fewest pieces</small><b>"+fmt(low)+"</b></span><span><small>Most pieces</small><b>"+fmt(high)+"</b></span></div></article>";
+          return "<article class='piece-weight-day'><div class='piece-weight-day-head'><div><span class='piece-weight-date'>"+esc(displayDate)+"</span><span class='piece-weight-day-sub'>Notebook sack count</span></div><span class='piece-weight-sack-count'><b>"+items.length+"</b> sacks</span></div><div class='piece-weight-daily-total'><span>Total pieces in these sacks</span><strong>"+fmt(dailyTotal)+"</strong></div><div class='piece-weight-chips'>"+detail+"</div><div class='piece-weight-stats'><span><small>Avg. pieces / sack</small><b>"+fmt(mean)+"</b></span><span><small>Fewest in a sack</small><b>"+fmt(low)+"</b></span><span><small>Most in a sack</small><b>"+fmt(high)+"</b></span></div></article>";
         }).join("")+"</div>"
       : "<div class='empty'>No notebook sack counts found for 26 Sep–12 Oct 2026.</div>";
-  p.innerHTML=`<div class="page-head report-page-head"><div><div class="eyebrow">Production insights</div><h1>Reports</h1><p>Production totals and notebook sack counts.</p></div></div>
+  p.innerHTML=`<div class="page-head report-page-head"><div><div class="eyebrow">Production insights</div><h1>Reports</h1><p>Totals calculated directly from your dated sack records.</p></div></div>
     <section class="report-production-summary">
-      <article class="report-stat-card"><span class="report-stat-icon">▤</span><small>All-time sacks produced</small><strong>${fmt(total)}</strong></article>
-      <article class="report-stat-card"><span class="report-stat-icon">◉</span><small>All-time pieces produced</small><strong>${fmt(pieces)}</strong></article>
-      <article class="report-stat-card"><span class="report-stat-icon">↗</span><small>Pieces per produced sack</small><strong>${fmt(avg)}</strong></article>
+      <article class="report-stat-card"><span class="report-stat-icon">▤</span><small>Notebook sacks recorded</small><strong>${fmt(reportSacks)}</strong></article>
+      <article class="report-stat-card"><span class="report-stat-icon">◉</span><small>Total pieces counted</small><strong>${fmt(reportPieces)}</strong></article>
+      <article class="report-stat-card"><span class="report-stat-icon">↗</span><small>Average pieces per sack</small><strong>${fmt(reportAverage)}</strong></article>
     </section>
     <section class="piece-weight-report card">
       <div class="piece-weight-report-title"><div><div class="eyebrow">Notebook records</div><h2>Sacks &amp; piece counts</h2><p>Each numbered entry is a <b>sack</b>. The number beside it is how many <b>bread pieces were in that sack</b> — these are counts, not gram weights.</p></div><span class="piece-weight-period">26 Sep – 12 Oct</span></div>
-      <div class="piece-weight-overview"><div><small>Sacks recorded</small><strong>${fmt(sackCount)}</strong></div><div><small>Average pieces per sack</small><strong>${fmt(averagePieces)}</strong></div><div><small>Days recorded</small><strong>${fmt(dates.length)}</strong></div></div>
+      <div class="piece-weight-overview"><div><small>Sacks recorded</small><strong>${fmt(sackCount)}</strong></div><div><small>Total pieces counted</small><strong>${fmt(totalNotebookPieces)}</strong></div><div><small>Days recorded</small><strong>${fmt(dates.length)}</strong></div></div>
       <div class="piece-weight-note"><span>ⓘ</span><p>The notebook counts <b>127 pieces</b> (27 Sep) and <b>184 pieces</b> (6 Oct) are preserved exactly as written.</p></div>
       <div class="piece-weight-day-list">${dailyCards}</div>
     </section>
