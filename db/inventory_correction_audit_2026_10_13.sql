@@ -71,5 +71,5 @@ begin
 end;
 $$;
 
-revoke all on function public.admin_set_stock_as_of_date(text,date,numeric,text) from public;
+revoke all on function public.admin_set_stock_as_of_date(text,date,numeric,text) from anon, public;
 grant execute on function public.admin_set_stock_as_of_date(text,date,numeric,text) to authenticated;
