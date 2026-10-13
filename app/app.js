@@ -1028,7 +1028,7 @@ function renderDashboard(p){
   const shiftActive=shiftStartNum===shiftEndNum?true:(shiftStartNum<shiftEndNum?shiftNow>=shiftStartNum&&shiftNow<shiftEndNum:shiftNow>=shiftStartNum||shiftNow<shiftEndNum);
   const shiftStatus=shiftActive?'Shift active':'Outside shift hours';
   const adminNotes=currentUser.role==='admin'?String(appSettings.adminNotes||'').trim():'';
-  const adminNotesHtml=adminNotes?"<div class='dashboard-admin-notes'><span aria-hidden='true'>▤</span><div><b>Admin notes</b><p>"+esc(adminNotes).replace(/\\r?\\n/g,'<br>')+"</p></div></div>":'';
+  const adminNotesHtml=adminNotes?"<div class='dashboard-admin-notes'><span aria-hidden='true'>▤</span><div><b>Admin notes</b><p>"+esc(adminNotes).replaceAll(String.fromCharCode(13),'').split(String.fromCharCode(10)).join('<br>')+"</p></div></div>":'';
   const syncBanner=!isDemo&&liveState.syncError?"<div class='sync-banner' role='alert'>⚠️ <div><b>"+t('Data sync issue',lang)+"</b><small>"+t('Some data may be temporarily out of date.',lang)+"</small></div></div>":"";
   const recipeCards=(recipe?.items||[]).map(it=>"<div class='recipe-photo-card' data-tilt tabindex='0'><div class='recipe-visual "+esc(it.code)+"'><span>"+materialIcon(it.code)+"</span></div><b>"+esc(t(it.name,lang))+"</b><strong>"+fmt(it.qty)+" "+esc(it.unit)+"</strong></div>").join('');
   const stockCards=stockRows.map(m=>{
