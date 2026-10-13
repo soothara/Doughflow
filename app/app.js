@@ -1391,8 +1391,8 @@ async function renderInventory(p){
       if(/^[=+@\\-]/.test(text))text="'"+text;
       return '"'+text.replace(/"/g,'""')+'"';
     };
-    const csv=[columns.join(','),...currentActivityRows.map(row=>columns.map(key=>cell(row[key])).join(','))].join('\\r\\n');
-    const url=URL.createObjectURL(new Blob(['\\ufeff',csv],{type:'text/csv;charset=utf-8;'}));
+    const csv=[columns.join(','),...currentActivityRows.map(row=>columns.map(key=>cell(row[key])).join(','))].join('\r\n');
+    const url=URL.createObjectURL(new Blob(['\ufeff',csv],{type:'text/csv;charset=utf-8;'}));
     const link=document.createElement('a');link.href=url;link.download=(currentActivityKind==='audit'?'doughflow-inventory-audit':'doughflow-inventory-ledger')+'-'+$('historyFrom').value+'-'+$('historyTo').value+'.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
   });
   $('saveStockByDate').addEventListener('click',async()=>{
