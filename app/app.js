@@ -958,9 +958,9 @@ async function renderSettings(p){
       };
       let payload;
       if(isDemo){
-        payload={format:'DoughFlow complete operational backup',version:3,exportedAt:new Date().toISOString(),business:appSettings,production:db.productions||[],inventory:db.inventory||{},recipe:db.recipe||{},notebookSacks:[],sales:db.salesRecords||[],dispatches:db.naanDispatches||[],materials:STOCK_MATERIALS.map(m=>({code:m.code,name:m.name,packages:m.packages})),businessAudit:[],inventoryAudit:[],notice:'Demo backup; no credentials, PINs, hashes, or authentication tokens included.'};
+        payload={format:'DoughFlow complete operational backup',version:4,exportedAt:new Date().toISOString(),business:appSettings,teamProfiles:(db.users||[]).map(u=>({id:u.id,full_name:u.name,role:u.role,preferred_language:u.lang||null})),production:db.productions||[],inventory:db.inventory||{},recipe:db.recipe||{},notebookSacks:[],sales:db.salesRecords||[],dispatches:db.naanDispatches||[],materials:STOCK_MATERIALS.map(m=>({code:m.code,name:m.name,packages:m.packages})),businessAudit:[],inventoryAudit:[],notice:'Demo backup; no credentials, PINs, hashes, or authentication tokens included.'};
       }else{
-        const [production,inventoryTransactions,inventoryBalances,recipeVersions,notebookSacks,sales,dispatches,materials,settings,audit]=await Promise.all([
+        const [production,inventoryTransactions,inventoryBalances,recipeVersions,notebookSacks,sales,dispatches,materials,settings,audit,teamProfiles]=await Promise.all([
           fetchAll(()=>supabase.from('production_runs').select('id,production_date,created_by,mishok_count,recipe_version_id,status,created_at,production_batches(batch_no,mishok_fraction,pieces),production_materials(material_code,expected_qty,actual_qty,unit)').order('production_date',{ascending:false})),
           fetchAll(()=>supabase.from('inventory_transactions').select('*').order('effective_date',{ascending:false}).order('created_at',{ascending:false})),
           fetchAll(()=>supabase.from('inventory_balances').select('*')),
@@ -970,11 +970,12 @@ async function renderSettings(p){
           fetchAll(()=>supabase.from('naan_dispatches').select('*').order('dispatch_date',{ascending:false})),
           fetchAll(()=>supabase.from('materials').select('*').order('code')),
           fetchAll(()=>supabase.from('app_settings').select('setting_key,setting_value,updated_at,updated_by')),
-          fetchAll(()=>supabase.from('business_activity_audit').select('*').order('occurred_at',{ascending:false}))
+          fetchAll(()=>supabase.from('business_activity_audit').select('*').order('occurred_at',{ascending:false})),
+          fetchAll(()=>supabase.from('profiles').select('id,full_name,role,preferred_language,created_at,updated_at').order('full_name'))
         ]);
         const inventoryAuditResult=await supabase.rpc('admin_inventory_audit',{p_from:'2000-01-01',p_to:today()});
         if(inventoryAuditResult.error)throw inventoryAuditResult.error;
-        payload={format:'DoughFlow complete operational backup',version:3,exportedAt:new Date().toISOString(),business:settings,activeWorkspaceSettings:appSettings,production,inventory:{balances:inventoryBalances,transactions:inventoryTransactions},recipeVersions,notebookSacks,sales,dispatches,materials,businessAudit:audit,inventoryAudit:inventoryAuditResult.data||[],notice:'Complete operational backup. Authentication credentials, PINs, PIN hashes and auth tokens are intentionally excluded. Includes business and inventory audit history.'};
+        payload={format:'DoughFlow complete operational backup',version:4,exportedAt:new Date().toISOString(),business:settings,activeWorkspaceSettings:appSettings,teamProfiles,production,inventory:{balances:inventoryBalances,transactions:inventoryTransactions},recipeVersions,notebookSacks,sales,dispatches,materials,businessAudit:audit,inventoryAudit:inventoryAuditResult.data||[],notice:'Complete operational backup. Includes staff names, roles and language preferences, but excludes credentials, PINs, PIN hashes and auth tokens.'};
       }
       const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
       link.href=url;link.download='doughflow-complete-backup-'+today()+'.json';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
@@ -1009,10 +1010,11 @@ function renderMore(p){
 function renderDashboard(p){
   const prod=isDemo?db.productions:liveState.productions;
   const todayRuns=prod.filter(x=>(isDemo?x.date:x.production_date)===today());
-  // Today's headline metrics come directly from persisted production records.
-  const totalSacks=todayRuns.reduce((sum,run)=>sum+Number(isDemo?run.mishokCount:run.mishok_count||0),0);
-  const totalPieces=todayRuns.reduce((sum,run)=>sum+(isDemo?run.batches:(run.production_batches||[])).reduce((s,b)=>s+Number(b.pieces||0),0),0);
-  const totalRuns=todayRuns.length;
+  // Prefer the server-side all-user aggregate so today's KPI never depends on the 200-row dashboard cache.
+  const todaySummary=!isDemo?liveState.summaryToday:null;
+  const totalSacks=todaySummary?Number(todaySummary.total_sacks):todayRuns.reduce((sum,run)=>sum+Number(isDemo?run.mishokCount:run.mishok_count||0),0);
+  const totalPieces=todaySummary?Number(todaySummary.total_pieces):todayRuns.reduce((sum,run)=>sum+(isDemo?run.batches:(run.production_batches||[])).reduce((s,b)=>s+Number(b.pieces||0),0),0);
+  const totalRuns=todaySummary?Number(todaySummary.run_count):todayRuns.length;
   const stockRows=MATERIALS.map(m=>({...m,stock:m.inventoryTracked===false?null:getStock(m.code)}));
   const recipe=isDemo?db.recipe:liveState.recipe;
   const recipeVersion=isDemo?db?.recipe?.version:liveState.recipe?.version;
