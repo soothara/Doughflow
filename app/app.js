@@ -42,7 +42,29 @@ const DEFAULT_RECIPE = [
   {code:'sugar', name:'Sugar', qty:.5, unit:'kg', note:''}
 ];
 
-const KEY='doughflow_demo_v1';
+const DEFAULT_APP_SETTINGS={businessName:'DoughFlow',tagline:'Bakery control',accentColor:'#2477ee',defaultLanguage:'en',timezone:'Asia/Bishkek',currency:'KGS',weightUnit:'kg',pieceUnit:'pieces',sackLabel:'sacks',confirmDestructiveActions:true,lowStockAlerts:true,compactStockCards:true,shiftStart:'21:00',shiftEnd:'12:00',adminNotes:''};
+let appSettings={...DEFAULT_APP_SETTINGS};
+const APP_SETTINGS_DEMO_KEY='doughflow_settings_demo_v1';
+function applyAppSettings(){
+  try{document.documentElement.style.setProperty('--df-accent',/^#[0-9a-fA-F]{6}$/.test(appSettings.accentColor||'')?appSettings.accentColor:DEFAULT_APP_SETTINGS.accentColor);}catch{}
+  const name=String(appSettings.businessName||'DoughFlow').trim()||'DoughFlow';
+  document.querySelectorAll('.hero-brand b,.login-brand-row strong,[data-app-business-name]').forEach(el=>{el.textContent=name;});
+  const tagline=String(appSettings.tagline||'Bakery control').trim();
+  document.querySelectorAll('.hero-brand small,.login-brand-row small,[data-app-tagline]').forEach(el=>{el.textContent=tagline;});
+  document.title=name+' · '+tagline;
+}
+async function loadAppSettings(){
+  if(isDemo){
+    try{const saved=JSON.parse(localStorage.getItem(APP_SETTINGS_DEMO_KEY)||'{}');appSettings={...DEFAULT_APP_SETTINGS,...saved};}catch{appSettings={...DEFAULT_APP_SETTINGS};}
+  }else{
+    try{
+      const {data,error}=await supabase.from('app_settings').select('setting_value').eq('setting_key','global').maybeSingle();
+      if(!error&&data?.setting_value&&typeof data.setting_value==='object')appSettings={...DEFAULT_APP_SETTINGS,...data.setting_value};
+    }catch{}
+  }
+  applyAppSettings();
+}
+
 const uid=()=>crypto.randomUUID();
 const today=()=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bishkek',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return `${p.year}-${p.month}-${p.day}`;}; const dateLocale=()=>lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-US'; const formatToday=()=>new Intl.DateTimeFormat(dateLocale(),{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'Asia/Bishkek'}).format(new Date());
 const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:3});
@@ -446,7 +468,7 @@ async function setLanguage(next){
 function languageFlag(){ return lang==='ru'?'🇷🇺':lang==='ky'?'🇰🇬':'🇬🇧'; }
 function languageName(){ return LANGUAGES[lang]||'English'; }
 function languageSwitcher(){ return `<select id="languageSelect" class="language-select" aria-label="${t('Language',lang)}">${languageOptions(lang)}</select>`; }
-function applyCurrentLanguage(){ applyTranslations(document,lang); const sel=document.getElementById('languageSelect'); if(sel) sel.value=lang; document.documentElement.lang = lang==='ru'?'ru':lang==='ky'?'ky':'en'; }
+function applyCurrentLanguage(){ applyTranslations(document,lang); const sel=document.getElementById('languageSelect'); if(sel) sel.value=lang; document.documentElement.lang = lang==='ru'?'ru':lang==='ky'?'ky':'en'; } applyAppSettings();
 function can(role, section){
   if(section==='more') return true;
   if(role==='admin') return true;
@@ -487,6 +509,7 @@ async function init(){
     currentUser=db.session.user ? {...db.session.user,role:db.session.role,lang:db.session.lang||getSavedLang(db.session.user.id)} : null;
     lang=currentUser?.lang||lang;
   }
+  if(currentUser) await loadAppSettings();
   render();
   if(!isDemo && currentUser) void refreshLiveState().then(()=>refreshVisiblePageData());
   if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
@@ -779,6 +802,7 @@ async function renderPage(){
     inventory:renderInventory,
     reports:renderReports,
     users:renderUsers,
+    settings:renderSettings,
     naan:()=>placeholderPanel('Naan / Leposhka Maker','This panel is reserved for the exact workflow you will provide next.'),
     sales:()=>placeholderPanel('Salesman','This panel is reserved for the exact sales workflow you will provide next.'),
     more:renderMore
@@ -786,6 +810,64 @@ async function renderPage(){
   await (pages[route]||renderDashboard)(p);
 }
 
+async function renderSettings(p){
+  if(currentUser.role!=='admin'){p.innerHTML="<div class='card'><h2>Settings</h2><div class='alert error'>Admin access only.</div></div>";return;}
+  await loadAppSettings();
+  const s=appSettings;
+  const modules=[
+    ['users','users','People & permissions','Staff accounts, roles and PIN resets'],
+    ['inventory','package','Stock & inventory','Materials, balances, receipts and corrections'],
+    ['recipe','book-open','Recipe & production standards','Ingredient quantities and version history'],
+    ['reports','chart','Reports & notebook','Monthly reports, sack counts and production history'],
+    ['production','clipboard','Production workflow','Daily production entries'],
+    ['sales','trending-up','Sales workspace','Sales tools and related workflows'],
+    ['naan','bread','Naan / Leposhka workflow','Bread count and dispatch workflow']
+  ];
+  const moduleIcons={users:'users',inventory:'package',recipe:'book-open',reports:'chart',production:'clipboard',sales:'trending-up',naan:'bread'};
+  p.innerHTML=`<div class="page-head settings-page-head"><div><div class="eyebrow">ADMIN CONTROL CENTER</div><h1>⚙️ Settings</h1><p>Manage the business identity, workspace preferences, data safety and every operational module from one place.</p></div><span class="settings-admin-pill">🔐 Admin only</span></div>
+  <div class="settings-hero"><div class="settings-hero-icon">⚙</div><div><b>System control center</b><p>Changes are saved to the shared workspace. Operational data is managed in its own module, with permissions and history.</p></div><span class="settings-live-dot">● Shared</span></div>
+  <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🏢</span><div><h2>Business identity</h2><p>Update the name and tagline shown across the app.</p></div></div>
+    <div class="settings-form-grid"><div class="field"><label for="settingBusinessName">Business / workspace name</label><input id="settingBusinessName" maxlength="70" value="${esc(s.businessName)}" required></div><div class="field"><label for="settingTagline">Tagline</label><input id="settingTagline" maxlength="100" value="${esc(s.tagline)}"></div></div>
+  </section>
+  <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🎨</span><div><h2>Appearance & language</h2><p>Set the workspace accent and default language.</p></div></div>
+    <div class="settings-form-grid"><div class="field"><label for="settingAccent">Accent color</label><div class="settings-color-row"><input id="settingAccent" type="color" value="${/^#[0-9a-fA-F]{6}$/.test(s.accentColor||'')?s.accentColor:'#2477ee'}"><span id="settingAccentValue">${esc(s.accentColor)}</span></div></div><div class="field"><label for="settingLanguage">Default language for new sessions</label><select id="settingLanguage"><option value="en" ${s.defaultLanguage==='en'?'selected':''}>English</option><option value="ru" ${s.defaultLanguage==='ru'?'selected':''}>Русский — Russian</option><option value="ky" ${s.defaultLanguage==='ky'?'selected':''}>Кыргызча — Kyrgyz</option></select></div><div class="field"><label for="settingTimezone">Business time zone</label><select id="settingTimezone">${[['Asia/Bishkek','Bishkek (UTC+6)'],['Europe/Helsinki','Helsinki'],['Asia/Karachi','Pakistan'],['UTC','UTC']].map(([v,l])=>'<option value="'+v+'" '+(s.timezone===v?'selected':'')+'>'+l+'</option>').join('')}</select></div><div class="field"><label for="settingCurrency">Currency code</label><select id="settingCurrency">${[['KGS','KGS — Kyrgyz som'],['PKR','PKR — Pakistani rupee'],['EUR','EUR — Euro'],['USD','USD — US dollar']].map(([v,l])=>'<option value="'+v+'" '+(s.currency===v?'selected':'')+'>'+l+'</option>').join('')}</select></div></div>
+  </section>
+  <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🧰</span><div><h2>Operations preferences</h2><p>Set your working terminology and default shift times. Recipe quantities and stock package sizes remain controlled in their dedicated modules.</p></div></div>
+    <div class="settings-form-grid"><div class="field"><label for="settingWeightUnit">Inventory base unit</label><select id="settingWeightUnit"><option value="kg" ${s.weightUnit==='kg'?'selected':''}>Kilograms (kg)</option><option value="g" ${s.weightUnit==='g'?'selected':''}>Grams (g)</option></select></div><div class="field"><label for="settingPieceUnit">Count unit</label><select id="settingPieceUnit"><option value="pieces" ${s.pieceUnit==='pieces'?'selected':''}>Pieces</option><option value="units" ${s.pieceUnit==='units'?'selected':''}>Units</option></select></div><div class="field"><label for="settingSackLabel">Sack terminology</label><input id="settingSackLabel" maxlength="24" value="${esc(s.sackLabel)}"></div><div class="field"><label for="settingShiftStart">Shift start</label><input id="settingShiftStart" type="time" value="${esc(s.shiftStart)}"></div><div class="field"><label for="settingShiftEnd">Shift end</label><input id="settingShiftEnd" type="time" value="${esc(s.shiftEnd)}"></div></div>
+    <div class="settings-toggle-list"><label class="settings-toggle"><span><b>Low-stock alert indicators</b><small>Show inventory reorder status and alerts.</small></span><input id="settingLowStock" type="checkbox" ${s.lowStockAlerts?'checked':''}></label><label class="settings-toggle"><span><b>Confirm destructive actions</b><small>Keep confirmation steps for deleting or replacing records.</small></span><input id="settingConfirm" type="checkbox" ${s.confirmDestructiveActions?'checked':''}></label><label class="settings-toggle"><span><b>Compact inventory cards</b><small>Use a space-saving stock overview on mobile.</small></span><input id="settingCompact" type="checkbox" ${s.compactStockCards?'checked':''}></label></div>
+    <div class="field"><label for="settingAdminNotes">Admin operating notes</label><textarea id="settingAdminNotes" rows="3" maxlength="1500" placeholder="Add internal notes for administrators">${esc(s.adminNotes)}</textarea></div>
+  </section>
+  <div class="settings-savebar"><span id="settingsSaveStatus">Changes are not saved until you press Save.</span><button type="button" class="btn secondary" id="settingsReset">Reset form</button><button type="button" class="btn primary" id="settingsSave">✓ Save workspace settings</button></div>
+  <section class="settings-section settings-modules"><div class="settings-section-heading"><span class="settings-section-icon">🧩</span><div><h2>Manage every module</h2><p>Open the correct module to edit its actual records, rather than changing a display-only copy.</p></div></div><div class="settings-module-grid">${modules.map(([r,icon,title,desc])=>'<button type="button" class="settings-module-card" data-settings-route="'+r+'"><span class="settings-module-icon">'+uiIcon(icon,22)+'</span><span><b>'+esc(title)+'</b><small>'+esc(desc)+'</small></span><span class="chevron">›</span></button>').join('')}</div></section>
+  <section class="settings-section settings-backup"><div class="settings-section-heading"><span class="settings-section-icon">🛡️</span><div><h2>Data safety & backup</h2><p>Download a snapshot of available application data before making major changes. This export does not contain passwords or PINs.</p></div></div><div class="settings-backup-actions"><button type="button" class="btn secondary" id="settingsRefresh">↻ Refresh live data</button><button type="button" class="btn primary" id="settingsExport">↓ Export data backup (.json)</button></div><small class="settings-footnote">Backup export is read-only. Restoring a backup is not enabled here to prevent accidental overwrites of production or inventory history.</small></section>`;
+  const original=()=>({...appSettings});
+  p.querySelector('#settingAccent')?.addEventListener('input',e=>{p.querySelector('#settingAccentValue').textContent=e.target.value;document.documentElement.style.setProperty('--df-accent',e.target.value);});
+  p.querySelectorAll('[data-settings-route]').forEach(b=>b.addEventListener('click',()=>navigateTo(b.dataset.settingsRoute)));
+  p.querySelector('#settingsReset')?.addEventListener('click',()=>renderSettings(p));
+  p.querySelector('#settingsSave')?.addEventListener('click',async()=>{
+    const button=p.querySelector('#settingsSave'),status=p.querySelector('#settingsSaveStatus');
+    const businessName=p.querySelector('#settingBusinessName').value.trim();
+    if(!businessName){status.textContent='Business name is required.';p.querySelector('#settingBusinessName').focus();return;}
+    const next={businessName,tagline:p.querySelector('#settingTagline').value.trim(),accentColor:p.querySelector('#settingAccent').value,defaultLanguage:p.querySelector('#settingLanguage').value,timezone:p.querySelector('#settingTimezone').value,currency:p.querySelector('#settingCurrency').value,weightUnit:p.querySelector('#settingWeightUnit').value,pieceUnit:p.querySelector('#settingPieceUnit').value,sackLabel:p.querySelector('#settingSackLabel').value.trim()||'sacks',shiftStart:p.querySelector('#settingShiftStart').value,shiftEnd:p.querySelector('#settingShiftEnd').value,lowStockAlerts:p.querySelector('#settingLowStock').checked,confirmDestructiveActions:p.querySelector('#settingConfirm').checked,compactStockCards:p.querySelector('#settingCompact').checked,adminNotes:p.querySelector('#settingAdminNotes').value.trim()};
+    button.disabled=true;status.textContent='Saving shared settings…';
+    try{
+      if(isDemo){appSettings=next;localStorage.setItem(APP_SETTINGS_DEMO_KEY,JSON.stringify(next));}
+      else{const {error}=await supabase.from('app_settings').upsert({setting_key:'global',setting_value:next,updated_by:currentUser.id},{onConflict:'setting_key'});if(error)throw error;appSettings=next;}
+      applyAppSettings();status.textContent='✓ Saved successfully to '+(isDemo?'this demo device':'the shared workspace')+'.';showToast('Workspace settings saved.','success');
+    }catch(error){status.textContent='Could not save: '+friendlyError(error);}
+    finally{button.disabled=false;}
+  });
+  p.querySelector('#settingsExport')?.addEventListener('click',async()=>{
+    const button=p.querySelector('#settingsExport');button.disabled=true;
+    try{
+      if(!isDemo)await refreshLiveState();
+      const payload={format:'DoughFlow backup',version:1,exportedAt:new Date().toISOString(),business:appSettings,production:isDemo?db.productions:liveState.productions,inventory:isDemo?db.inventory:liveState.inventory,recipe:isDemo?db.recipe:liveState.recipe,notebookSacks:isDemo?[]:(await supabase.from('notebook_sack_entries').select('record_date,sack_no,pieces_in_sack').order('record_date').order('sack_no')).data||[],materials:isDemo?STOCK_MATERIALS:liveState.materials,notice:'Export contains operational data only. It excludes credentials, PIN hashes, and authentication tokens.'};
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='doughflow-backup-'+today()+'.json';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);showToast('Backup downloaded.','success');
+    }catch(error){showToast('Backup failed: '+friendlyError(error),'error');}
+    finally{button.disabled=false;}
+  });
+  p.querySelector('#settingsRefresh')?.addEventListener('click',async()=>{const b=p.querySelector('#settingsRefresh');b.disabled=true;try{if(!isDemo)await refreshLiveState();showToast('Live data refreshed.','success');}catch(error){showToast(friendlyError(error),'error');}finally{b.disabled=false;}});
+}
 function renderMore(p){
   const extra=[];
   if(currentUser.role==='admin') extra.push(
@@ -793,7 +875,8 @@ function renderMore(p){
     ['users',uiIcon('users',24),'People','Manage staff and roles'],
     ['naan',NAV_ICONS.naan,'Naan / Leposhka','Open the naan workflow'],
     ['sales',NAV_ICONS.sales,'Sales','Open the sales workspace'],
-    ['recipe',NAV_ICONS.recipe,'Recipe','Edit the working recipe']
+    ['recipe',NAV_ICONS.recipe,'Recipe','Edit the working recipe'],
+    ['settings',uiIcon('settings',24),'Settings','Business profile, appearance and system controls']
   );
   else if(currentUser.role==='hamurchi') extra.push(['recipe',NAV_ICONS.recipe,'Recipe','Edit the working recipe']);
   else if(currentUser.role==='naan') extra.push(['naan',NAV_ICONS.naan,'Naan / Leposhka','Open the naan workflow']);
