@@ -818,8 +818,8 @@ async function renderPage(){
     reports:renderReports,
     users:renderUsers,
     settings:renderSettings,
-    naan:()=>placeholderPanel('Naan / Leposhka Maker','This panel is reserved for the exact workflow you will provide next.'),
-    sales:()=>placeholderPanel('Salesman','This panel is reserved for the exact sales workflow you will provide next.'),
+    naan:renderNaan,
+    sales:renderSales,
     more:renderMore
   };
   await (pages[route]||renderDashboard)(p);
@@ -1909,6 +1909,192 @@ async function renderReports(p){
     renderReports(p);
   });
 }
+async function renderSales(p){
+  if(!currentUser||!['admin','sales'].includes(currentUser.role)){p.innerHTML="<div class='card'><h2>Sales</h2><div class='alert error'>Sales access only.</div></div>";return;}
+  const month=p.dataset.salesMonth||today().slice(0,7);
+  const parts=month.split('-').map(Number),year=parts[0],monthNo=parts[1];
+  const from=month+'-01',to=monthNo===12?String(year+1)+'-01-01':String(year)+'-'+String(monthNo+1).padStart(2,'0')+'-01';
+  const defaultDate=month===today().slice(0,7)?today():from;
+  let rows=[],dispatches=[],dataError='';
+  if(isDemo){
+    db.salesRecords=db.salesRecords||[];db.naanDispatches=db.naanDispatches||[];
+    rows=db.salesRecords.filter(x=>String(x.sale_date||x.saleDate).startsWith(month)).sort((x,y)=>String(y.sale_date||y.saleDate).localeCompare(String(x.sale_date||x.saleDate)));
+    dispatches=db.naanDispatches.filter(x=>x.status==='dispatched');
+  }else{
+    const [salesResult,dispatchResult]=await Promise.all([
+      supabase.from('sales_records').select('id,sale_date,customer_name,product_name,quantity_pieces,unit_price,total_amount,paid_amount,payment_method,dispatch_id,notes,created_by,created_at').gte('sale_date',from).lt('sale_date',to).order('sale_date',{ascending:false}).order('created_at',{ascending:false}).limit(1000),
+      supabase.from('naan_dispatches').select('id,dispatch_date,recipient_name,sack_count,total_pieces,status').eq('status','dispatched').order('dispatch_date',{ascending:false}).limit(300)
+    ]);
+    if(salesResult.error)dataError=friendlyError(salesResult.error);else rows=salesResult.data||[];
+    if(!dispatchResult.error)dispatches=dispatchResult.data||[];
+  }
+  const curr=String(appSettings.currency||'KGS');
+  const currencyFmt=value=>{try{return new Intl.NumberFormat(dateLocale(),{style:'currency',currency:curr,maximumFractionDigits:2}).format(Number(value||0));}catch{return curr+' '+money(value);}};
+  const amount=row=>Number(row.total_amount??(Number(row.quantity_pieces||row.quantityPieces||0)*Number(row.unit_price||row.unitPrice||0)))||0;
+  const paid=row=>Number(row.paid_amount??row.paidAmount)||0;
+  const pieces=row=>Number(row.quantity_pieces??row.quantityPieces)||0;
+  const totalSales=rows.reduce((sum,row)=>sum+amount(row),0);
+  const totalPaid=rows.reduce((sum,row)=>sum+paid(row),0);
+  const totalDue=Math.max(0,totalSales-totalPaid);
+  const totalPieces=rows.reduce((sum,row)=>sum+pieces(row),0);
+  const statusOf=row=>paid(row)>=amount(row)-0.005?'Paid':paid(row)>0?'Part paid':'Unpaid';
+  const dispatchOptions=dispatches.map(row=>'<option value="'+esc(row.id)+'">'+esc(String(row.dispatch_date||'').slice(0,10))+' · '+esc(row.recipient_name||'Recipient')+' · '+fmt(row.sack_count)+' sacks</option>').join('');
+  const history=rows.map(row=>{
+    const id=String(row.id||'');
+    const saleDate=String(row.sale_date||row.saleDate||'').slice(0,10);
+    const customer=row.customer_name||row.customerName||'Walk-in';
+    const product=row.product_name||row.productName||'Leposhka';
+    const qty=pieces(row),unitPrice=Number(row.unit_price??row.unitPrice)||0,amountValue=amount(row),paidValue=paid(row);
+    return '<tr><td>'+esc(saleDate)+'</td><td><b>'+esc(customer)+'</b><small class="table-secondary">'+esc(product)+'</small></td><td>'+fmt(qty)+'</td><td>'+currencyFmt(unitPrice)+'</td><td><b>'+currencyFmt(amountValue)+'</b></td><td>'+currencyFmt(paidValue)+'<small class="table-secondary">Due '+currencyFmt(Math.max(0,amountValue-paidValue))+'</small></td><td><span class="workflow-status-pill '+statusOf(row).toLowerCase().replace(/ /g,'-')+'">'+statusOf(row)+'</span></td><td><div class="workflow-row-actions"><button type="button" class="btn secondary" data-sale-edit="'+esc(id)+'">Edit</button><button type="button" class="btn danger" data-sale-delete="'+esc(id)+'">Delete</button></div></td></tr>';
+  }).join('');
+  p.innerHTML='<div class="page-head workflow-page-head"><div><div class="eyebrow">DAILY CASHFLOW</div><h1>Sales</h1><p>Record Leposhka sales, money collected and unpaid balances. Totals update from saved sales.</p></div><span class="settings-admin-pill">'+(currentUser.role==='admin'?'Admin workspace':'Sales workspace')+'</span></div>'+
+    '<section class="report-month-toolbar card"><div><span class="report-month-icon">↗</span><div><b>Sales report</b><small>Monthly totals from saved sales entries</small></div></div><label for="salesMonth">Report month<input id="salesMonth" type="month" value="'+esc(month)+'"></label></section>'+
+    '<section class="report-production-summary workflow-kpi-grid"><article class="report-stat-card"><span class="report-stat-icon">₸</span><small>Sales total</small><strong>'+currencyFmt(totalSales)+'</strong></article><article class="report-stat-card"><span class="report-stat-icon">✓</span><small>Collected</small><strong>'+currencyFmt(totalPaid)+'</strong></article><article class="report-stat-card"><span class="report-stat-icon">!</span><small>Outstanding</small><strong>'+currencyFmt(totalDue)+'</strong></article></section>'+
+    '<section class="workflow-summary-strip"><span>'+fmt(rows.length)+' sales entries</span><b>'+fmt(totalPieces)+' pieces sold</b></section>'+
+    (dataError?'<div class="notice warn" role="alert">Could not load sales: '+esc(dataError)+'</div>':'')+
+    '<section class="card workflow-editor-card"><div class="report-section-heading"><div><div class="eyebrow">ENTRY FORM</div><h2 id="saleFormTitle">Record a sale</h2><p>Amount is calculated automatically from pieces × unit price.</p></div></div><div id="salesFormError" class="alert error" hidden></div><div class="workflow-form-grid" id="salesForm">'+
+      '<div class="field"><label for="saleDate">Sale date *</label><input id="saleDate" type="date" max="'+today()+'" value="'+defaultDate+'"></div>'+
+      '<div class="field"><label for="saleCustomer">Customer / buyer *</label><input id="saleCustomer" maxlength="120" placeholder="Walk-in customer or name" value="Walk-in"></div>'+
+      '<div class="field"><label for="saleProduct">Product *</label><input id="saleProduct" maxlength="80" value="Leposhka"></div>'+
+      '<div class="field"><label for="salePieces">Pieces sold *</label><input id="salePieces" type="number" min="1" step="1" value="1"></div>'+
+      '<div class="field"><label for="salePrice">Price per piece ('+esc(curr)+') *</label><input id="salePrice" type="number" min="0" step="0.01" value="0"></div>'+
+      '<div class="field"><label for="salePaid">Amount collected ('+esc(curr)+')</label><input id="salePaid" type="number" min="0" step="0.01" value="0"></div>'+
+      '<div class="field"><label for="salePaymentMethod">Payment method</label><select id="salePaymentMethod"><option value="cash">Cash</option><option value="transfer">Bank transfer</option><option value="credit">Credit / pay later</option><option value="other">Other</option></select></div>'+
+      '<div class="field"><label for="saleDispatch">Link dispatched order (optional)</label><select id="saleDispatch"><option value="">No dispatch linked</option>'+dispatchOptions+'</select></div>'+
+      '<div class="field workflow-form-span"><label for="saleNotes">Notes / receipt reference</label><input id="saleNotes" maxlength="500" placeholder="Optional note"></div>'+
+    '</div><div class="workflow-calculation"><span>Calculated sale total</span><strong id="saleTotalPreview">'+currencyFmt(0)+'</strong><small id="saleDuePreview">Outstanding: '+currencyFmt(0)+'</small></div><div class="workflow-form-actions"><button type="button" class="btn secondary" id="saleCancelEdit" hidden>Cancel edit</button><button type="button" class="btn primary" id="saleSave">＋ Save sale</button></div></section>'+
+    '<section class="card workflow-history-card"><div class="report-section-heading"><div><div class="eyebrow">SAVED RECORDS</div><h2>'+esc(monthLabelForWorkflow(month))+' sales</h2></div><div class="workflow-row-actions"><button type="button" class="btn secondary" id="saleExport">Export CSV</button><button type="button" class="btn secondary" id="saleRefresh">↻ Refresh</button></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Customer / product</th><th>Pieces</th><th>Unit price</th><th>Total</th><th>Paid / due</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+ (history||'<tr><td colspan="8" class="empty">No sales saved for this month yet.</td></tr>')+'</tbody></table></div></section>';
+  let editingId='';
+  const el=id=>p.querySelector('#'+id);
+  const calculate=()=>{const qty=Number(el('salePieces').value||0),price=Number(el('salePrice').value||0),collected=Number(el('salePaid').value||0),saleTotal=qty*price;el('saleTotalPreview').textContent=currencyFmt(saleTotal);el('saleDuePreview').textContent='Outstanding: '+currencyFmt(Math.max(0,saleTotal-collected));};
+  ['salePieces','salePrice','salePaid'].forEach(id=>el(id).addEventListener('input',calculate));
+  el('salesMonth').addEventListener('change',()=>{p.dataset.salesMonth=el('salesMonth').value||today().slice(0,7);renderSales(p);});
+  const resetForm=()=>{editingId='';el('saleDate').value=defaultDate;el('saleCustomer').value='Walk-in';el('saleProduct').value='Leposhka';el('salePieces').value='1';el('salePrice').value='0';el('salePaid').value='0';el('salePaymentMethod').value='cash';el('saleDispatch').value='';el('saleNotes').value='';el('saleFormTitle').textContent='Record a sale';el('saleSave').textContent='＋ Save sale';el('saleCancelEdit').hidden=true;el('salesFormError').hidden=true;calculate();};
+  el('saleCancelEdit').addEventListener('click',resetForm);
+  el('saleSave').addEventListener('click',async()=>{
+    const date=el('saleDate').value,customer=el('saleCustomer').value.trim(),product=el('saleProduct').value.trim(),qty=Number(el('salePieces').value),price=Number(el('salePrice').value),collected=Number(el('salePaid').value),total=qty*price;
+    const note=el('saleNotes').value.trim(),method=el('salePaymentMethod').value,dispatchId=el('saleDispatch').value||null;
+    const err=el('salesFormError');
+    const fail=msg=>{err.hidden=false;err.textContent=msg;};
+    if(!date||date>today()){fail('Choose today or a past sale date.');return;}
+    if(!customer||!product||!Number.isInteger(qty)||qty<1){fail('Enter a customer, product and whole-piece quantity greater than zero.');return;}
+    if(!Number.isFinite(price)||price<0||!Number.isFinite(collected)||collected<0||collected>total+0.005){fail('Price and collected amount must be valid; collected cannot exceed the calculated total.');return;}
+    el('saleSave').disabled=true;err.hidden=true;
+    const payload={sale_date:date,customer_name:customer,product_name:product,quantity_pieces:qty,unit_price:Number(price.toFixed(2)),paid_amount:Number(collected.toFixed(2)),payment_method:method,dispatch_id:dispatchId,notes:note||null};
+    try{
+      if(isDemo){
+        db.salesRecords=db.salesRecords||[];
+        if(editingId){const index=db.salesRecords.findIndex(row=>String(row.id)===editingId);if(index<0)throw new Error('Sale not found');db.salesRecords[index]={...db.salesRecords[index],...payload};}
+        else db.salesRecords.push({id:uid(),...payload,total_amount:total,created_by:currentUser.id,created_at:new Date().toISOString()});
+        saveDemo();
+      }else{
+        let result;
+        if(editingId)result=await supabase.from('sales_records').update(payload).eq('id',editingId);
+        else result=await supabase.from('sales_records').insert({...payload,created_by:currentUser.id});
+        if(result.error)throw result.error;
+      }
+      p.dataset.salesMonth=date.slice(0,7);await renderSales(p);showToast(editingId?'Sale updated.':'Sale saved.','success');
+    }catch(error){fail(friendlyError(error));el('saleSave').disabled=false;}
+  });
+  p.querySelectorAll('[data-sale-edit]').forEach(button=>button.addEventListener('click',()=>{
+    const row=rows.find(item=>String(item.id)===button.dataset.saleEdit);if(!row)return;
+    editingId=String(row.id);el('saleDate').value=String(row.sale_date||row.saleDate).slice(0,10);el('saleCustomer').value=row.customer_name||row.customerName||'';el('saleProduct').value=row.product_name||row.productName||'Leposhka';el('salePieces').value=pieces(row);el('salePrice').value=Number(row.unit_price??row.unitPrice)||0;el('salePaid').value=paid(row);el('salePaymentMethod').value=row.payment_method||row.paymentMethod||'cash';el('saleDispatch').value=row.dispatch_id||'';el('saleNotes').value=row.notes||'';el('saleFormTitle').textContent='Edit sale entry';el('saleSave').textContent='✓ Save changes';el('saleCancelEdit').hidden=false;calculate();el('salesForm').scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+  p.querySelectorAll('[data-sale-delete]').forEach(button=>button.addEventListener('click',async()=>{
+    const row=rows.find(item=>String(item.id)===button.dataset.saleDelete);if(!row)return;
+    if(appSettings.confirmDestructiveActions&& !window.confirm('Delete this sale entry? This cannot be undone.'))return;
+    button.disabled=true;
+    try{if(isDemo){db.salesRecords=(db.salesRecords||[]).filter(item=>String(item.id)!==String(row.id));saveDemo();}else{const {error}=await supabase.from('sales_records').delete().eq('id',row.id);if(error)throw error;}await renderSales(p);showToast('Sale entry deleted.','success');}
+    catch(error){showToast(friendlyError(error),'error');button.disabled=false;}
+  }));
+  el('saleRefresh').addEventListener('click',()=>renderSales(p));
+  el('saleExport').addEventListener('click',()=>{
+    const columns=['sale_date','customer_name','product_name','quantity_pieces','unit_price','total_amount','paid_amount','payment_method','dispatch_id','notes'];
+    const cell=value=>'"'+String(value??'').replace(/"/g,'""')+'"';
+    const csv=[columns.join(','),...rows.map(row=>columns.map(key=>cell(row[key])).join(','))].join('\r\n');
+    const url=URL.createObjectURL(new Blob(['\ufeff',csv],{type:'text/csv;charset=utf-8;'})),link=document.createElement('a');link.href=url;link.download='doughflow-sales-'+month+'.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+  });
+  calculate();
+}
+
+async function renderNaan(p){
+  if(!currentUser||!['admin','naan'].includes(currentUser.role)){p.innerHTML="<div class='card'><h2>Naan / Leposhka</h2><div class='alert error'>Naan workflow access only.</div></div>";return;}
+  const month=p.dataset.dispatchMonth||today().slice(0,7);
+  const part=month.split('-').map(Number),year=part[0],monthNo=part[1],from=month+'-01',to=monthNo===12?String(year+1)+'-01-01':String(year)+'-'+String(monthNo+1).padStart(2,'0')+'-01';
+  const defaultDate=month===today().slice(0,7)?today():from;
+  let rows=[],dataError='';
+  if(isDemo){db.naanDispatches=db.naanDispatches||[];rows=db.naanDispatches.filter(x=>String(x.dispatch_date||x.dispatchDate).startsWith(month)).sort((x,y)=>String(y.dispatch_date||y.dispatchDate).localeCompare(String(x.dispatch_date||x.dispatchDate)));}
+  else{const result=await supabase.from('naan_dispatches').select('id,dispatch_date,recipient_name,sack_count,total_pieces,vehicle_registration,driver_name,status,notes,created_by,created_at,updated_at').gte('dispatch_date',from).lt('dispatch_date',to).order('dispatch_date',{ascending:false}).order('created_at',{ascending:false}).limit(1000);if(result.error)dataError=friendlyError(result.error);else rows=result.data||[];}
+  const sacks=rows.filter(row=>(row.status||'')==='dispatched').reduce((sum,row)=>sum+Number(row.sack_count||0),0);
+  const piecesOut=rows.filter(row=>(row.status||'')==='dispatched').reduce((sum,row)=>sum+Number(row.total_pieces||row.totalPieces||0),0);
+  const pending=rows.filter(row=>(row.status||'prepared')==='prepared').length;
+  const history=rows.map(row=>{
+    const id=String(row.id),date=String(row.dispatch_date||row.dispatchDate||'').slice(0,10),status=row.status||'prepared';
+    const canDelete=currentUser.role==='admin'||(currentUser.role==='naan'&&row.created_by===currentUser.id&&status==='prepared');
+    const canEdit=currentUser.role==='admin'||(currentUser.role==='naan'&&row.created_by===currentUser.id);
+    const statusLabel={prepared:'Prepared',dispatched:'Dispatched',returned:'Returned',cancelled:'Cancelled'}[status]||status;
+    return '<tr><td>'+esc(date)+'</td><td><b>'+esc(row.recipient_name||row.recipientName||'')+'</b><small class="table-secondary">'+esc(row.vehicle_registration||row.vehicleRegistration||'')+(row.driver_name||row.driverName?' · '+esc(row.driver_name||row.driverName):'')+'</small></td><td>'+fmt(row.sack_count||row.sackCount)+'</td><td>'+fmt(row.total_pieces||row.totalPieces)+'</td><td><span class="workflow-status-pill '+status+'">'+statusLabel+'</span></td><td><div class="workflow-row-actions">'+(canEdit?'<button type="button" class="btn secondary" data-dispatch-edit="'+esc(id)+'">Edit</button>':'')+(canDelete?'<button type="button" class="btn danger" data-dispatch-delete="'+esc(id)+'">Delete</button>':'')+'</div></td></tr>';
+  }).join('');
+  p.innerHTML='<div class="page-head workflow-page-head"><div><div class="eyebrow">LEPOSHKA FLOW</div><h1>Naan / Leposhka</h1><p>Prepare and track dispatches by date, recipient, sacks and piece count.</p></div><span class="settings-admin-pill">'+(currentUser.role==='admin'?'Admin workspace':'Dispatch workspace')+'</span></div>'+
+    '<section class="report-month-toolbar card"><div><span class="report-month-icon">◈</span><div><b>Dispatch report</b><small>Track what is prepared, sent and returned</small></div></div><label for="dispatchMonth">Report month<input id="dispatchMonth" type="month" value="'+esc(month)+'"></label></section>'+
+    '<section class="report-production-summary workflow-kpi-grid"><article class="report-stat-card"><span class="report-stat-icon">▤</span><small>Sacks dispatched</small><strong>'+fmt(sacks)+'</strong></article><article class="report-stat-card"><span class="report-stat-icon">◉</span><small>Pieces dispatched</small><strong>'+fmt(piecesOut)+'</strong></article><article class="report-stat-card"><span class="report-stat-icon">…</span><small>Awaiting dispatch</small><strong>'+fmt(pending)+'</strong></article></section>'+
+    (dataError?'<div class="notice warn" role="alert">Could not load dispatches: '+esc(dataError)+'</div>':'')+
+    '<section class="card workflow-editor-card"><div class="report-section-heading"><div><div class="eyebrow">DISPATCH ENTRY</div><h2 id="dispatchFormTitle">Prepare a dispatch</h2><p>Use piece counts, not grams. Mark a dispatch as sent only when it has left the bakery.</p></div></div><div id="dispatchFormError" class="alert error" hidden></div><div class="workflow-form-grid" id="dispatchForm">'+
+      '<div class="field"><label for="dispatchDate">Dispatch date *</label><input id="dispatchDate" type="date" max="'+today()+'" value="'+defaultDate+'"></div>'+
+      '<div class="field"><label for="dispatchRecipient">Recipient / customer *</label><input id="dispatchRecipient" maxlength="120" placeholder="Shop, customer or delivery point"></div>'+
+      '<div class="field"><label for="dispatchSacks">Sacks (may include 0.5) *</label><input id="dispatchSacks" type="number" min="0.5" step="0.5" value="1"></div>'+
+      '<div class="field"><label for="dispatchPieces">Total pieces in dispatch *</label><input id="dispatchPieces" type="number" min="0" step="1" value="0"></div>'+
+      '<div class="field"><label for="dispatchVehicle">Vehicle registration</label><input id="dispatchVehicle" maxlength="30" placeholder="Optional plate / van ID"></div>'+
+      '<div class="field"><label for="dispatchDriver">Driver / responsible person</label><input id="dispatchDriver" maxlength="100" placeholder="Optional name"></div>'+
+      '<div class="field"><label for="dispatchStatus">Status</label><select id="dispatchStatus"><option value="prepared">Prepared</option><option value="dispatched">Dispatched</option><option value="returned">Returned</option><option value="cancelled">Cancelled</option></select></div>'+
+      '<div class="field workflow-form-span"><label for="dispatchNotes">Notes / reference</label><input id="dispatchNotes" maxlength="500" placeholder="Optional delivery note"></div>'+
+    '</div><div class="workflow-form-actions"><button type="button" class="btn secondary" id="dispatchCancelEdit" hidden>Cancel edit</button><button type="button" class="btn primary" id="dispatchSave">＋ Save dispatch</button></div></section>'+
+    '<section class="card workflow-history-card"><div class="report-section-heading"><div><div class="eyebrow">DISPATCH HISTORY</div><h2>'+esc(monthLabelForWorkflow(month))+' dispatches</h2></div><div class="workflow-row-actions"><button type="button" class="btn secondary" id="dispatchExport">Export CSV</button><button type="button" class="btn secondary" id="dispatchRefresh">↻ Refresh</button></div></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Recipient / vehicle</th><th>Sacks</th><th>Pieces</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+(history||'<tr><td colspan="6" class="empty">No dispatches saved for this month.</td></tr>')+'</tbody></table></div></section>';
+  let editingId='';
+  const el=id=>p.querySelector('#'+id),err=el('dispatchFormError');
+  el('dispatchMonth').addEventListener('change',()=>{p.dataset.dispatchMonth=el('dispatchMonth').value||today().slice(0,7);renderNaan(p);});
+  const resetForm=()=>{editingId='';el('dispatchDate').value=defaultDate;el('dispatchRecipient').value='';el('dispatchSacks').value='1';el('dispatchPieces').value='0';el('dispatchVehicle').value='';el('dispatchDriver').value='';el('dispatchStatus').value='prepared';el('dispatchNotes').value='';el('dispatchFormTitle').textContent='Prepare a dispatch';el('dispatchSave').textContent='＋ Save dispatch';el('dispatchCancelEdit').hidden=true;err.hidden=true;};
+  el('dispatchCancelEdit').addEventListener('click',resetForm);
+  el('dispatchSave').addEventListener('click',async()=>{
+    const date=el('dispatchDate').value,recipient=el('dispatchRecipient').value.trim(),sacks=Number(el('dispatchSacks').value),pieces=Number(el('dispatchPieces').value),status=el('dispatchStatus').value;
+    const fail=message=>{err.hidden=false;err.textContent=message;};
+    if(!date||date>today()){fail('Choose today or a past date.');return;}
+    if(!recipient||!Number.isFinite(sacks)||sacks<=0||Math.abs(sacks*2-Math.round(sacks*2))>0.000001||!Number.isInteger(pieces)||pieces<0){fail('Enter a recipient, valid half-sack increment, and whole-piece total.');return;}
+    el('dispatchSave').disabled=true;err.hidden=true;
+    const payload={dispatch_date:date,recipient_name:recipient,sack_count:sacks,total_pieces:pieces,vehicle_registration:el('dispatchVehicle').value.trim()||null,driver_name:el('dispatchDriver').value.trim()||null,status,notes:el('dispatchNotes').value.trim()||null};
+    try{
+      if(isDemo){
+        db.naanDispatches=db.naanDispatches||[];
+        if(editingId){const index=db.naanDispatches.findIndex(row=>String(row.id)===editingId);if(index<0)throw new Error('Dispatch not found');db.naanDispatches[index]={...db.naanDispatches[index],...payload};}
+        else db.naanDispatches.push({id:uid(),...payload,created_by:currentUser.id,created_at:new Date().toISOString()});
+        saveDemo();
+      }else{
+        const result=editingId?await supabase.from('naan_dispatches').update(payload).eq('id',editingId):await supabase.from('naan_dispatches').insert({...payload,created_by:currentUser.id});
+        if(result.error)throw result.error;
+      }
+      p.dataset.dispatchMonth=date.slice(0,7);await renderNaan(p);showToast(editingId?'Dispatch updated.':'Dispatch saved.','success');
+    }catch(error){fail(friendlyError(error));el('dispatchSave').disabled=false;}
+  });
+  p.querySelectorAll('[data-dispatch-edit]').forEach(button=>button.addEventListener('click',()=>{
+    const row=rows.find(item=>String(item.id)===button.dataset.dispatchEdit);if(!row)return;
+    editingId=String(row.id);el('dispatchDate').value=String(row.dispatch_date||row.dispatchDate).slice(0,10);el('dispatchRecipient').value=row.recipient_name||row.recipientName||'';el('dispatchSacks').value=Number(row.sack_count??row.sackCount)||1;el('dispatchPieces').value=Number(row.total_pieces??row.totalPieces)||0;el('dispatchVehicle').value=row.vehicle_registration||row.vehicleRegistration||'';el('dispatchDriver').value=row.driver_name||row.driverName||'';el('dispatchStatus').value=row.status||'prepared';el('dispatchNotes').value=row.notes||'';el('dispatchFormTitle').textContent='Edit dispatch';el('dispatchSave').textContent='✓ Save changes';el('dispatchCancelEdit').hidden=false;el('dispatchForm').scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+  p.querySelectorAll('[data-dispatch-delete]').forEach(button=>button.addEventListener('click',async()=>{
+    const row=rows.find(item=>String(item.id)===button.dataset.dispatchDelete);if(!row)return;
+    if(appSettings.confirmDestructiveActions&&!window.confirm('Delete this dispatch record?'))return;
+    button.disabled=true;
+    try{if(isDemo){db.naanDispatches=(db.naanDispatches||[]).filter(item=>String(item.id)!==String(row.id));saveDemo();}else{const {error}=await supabase.from('naan_dispatches').delete().eq('id',row.id);if(error)throw error;}await renderNaan(p);showToast('Dispatch deleted.','success');}
+    catch(error){showToast(friendlyError(error),'error');button.disabled=false;}
+  }));
+  el('dispatchRefresh').addEventListener('click',()=>renderNaan(p));
+  el('dispatchExport').addEventListener('click',()=>{
+    const columns=['dispatch_date','recipient_name','sack_count','total_pieces','vehicle_registration','driver_name','status','notes'];
+    const cell=value=>'"'+String(value??'').replace(/"/g,'""')+'"';
+    const csv=[columns.join(','),...rows.map(row=>columns.map(key=>cell(row[key])).join(','))].join('\r\n');
+    const url=URL.createObjectURL(new Blob(['\ufeff',csv],{type:'text/csv;charset=utf-8;'})),link=document.createElement('a');link.href=url;link.download='doughflow-dispatch-'+month+'.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+  });
+}
+
 async function renderUsers(p){
   if(currentUser.role!=='admin'){
     p.innerHTML="<div class='card'><h2>"+t('Users',lang)+"</h2><div class='alert error'>"+t('Admin access only.',lang)+"</div></div>";
