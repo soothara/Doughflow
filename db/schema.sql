@@ -540,14 +540,14 @@ as $$
     where pb.production_run_id=r.id
   ) b on true
   where
-    (public.is_admin() or r.created_by=auth.uid())
+    auth.uid() is not null
     and (p_from is null or r.production_date>=p_from)
     and (p_to is null or r.production_date<=p_to)
     and r.status='completed';
-$$;
+$;
 
-revoke all on function public.production_summary(date,date) from public;
-grant execute on function public.production_summary(date,date) to authenticated;
+revoke all on function public.production_summary(date,date) from public, anon;
+grant execute on function public.production_summary(date,date) to authenticated, service_role;
 
 
 create or replace function public.set_preferred_language(p_language text)
