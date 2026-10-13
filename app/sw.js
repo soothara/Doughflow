@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v53-20261013-admin-settings-controls';
+const CACHE = 'doughflow-v54-20261013-slideshow-manager';
 
 const CORE_ASSETS = [
   './',
