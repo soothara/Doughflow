@@ -342,3 +342,16 @@ body.modal-open #app .layout>.sidebar{display:none!important}
 .modal-backdrop.show>.modal .modal-footer{position:sticky;bottom:0}
 .inventory-row-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:120px}
 .inventory-row-actions .btn{white-space:nowrap}
+
+
+/* Fix the clipped dark snackbar on narrow mobile screens. */
+@media(max-width:640px){
+  #toastRoot{
+    left:12px!important;right:12px!important;width:auto!important;max-width:520px!important;
+    bottom:calc(112px + env(safe-area-inset-bottom))!important;
+    transform:none!important;margin-inline:auto!important;z-index:2147483500!important;
+  }
+  #toastRoot .toast{box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;max-height:22vh!important;overflow-wrap:anywhere!important;word-break:normal!important;white-space:normal!important}
+  #toastRoot .toast-text{min-width:0!important;flex:1 1 auto!important}
+  #toastRoot .toast-close{flex:0 0 30px!important}
+}
