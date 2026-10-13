@@ -660,6 +660,8 @@ async function render(){
   document.getElementById('heroLanguageSelect')?.addEventListener('change',e=>setLanguage(e.target.value));
 }
 let routeRenderId=0;
+// Keep the Home sack selector independent of the dashboard DOM, which can be rebuilt after async data refreshes.
+let dashboardSackSelection=0;
 function scrollAppToTop(){
   try{window.scrollTo({top:0,left:0,behavior:'auto'});}catch{}
   document.documentElement.scrollTop=0;document.body.scrollTop=0;
@@ -1069,6 +1071,7 @@ function renderMore(p){
   p.querySelector('#moreLogout')?.addEventListener('click',logout);
 }
 function renderDashboard(p){
+  const dashboardScrollY=Math.max(window.scrollY||0,document.documentElement.scrollTop||0,document.body.scrollTop||0);
   const prod=isDemo?db.productions:liveState.productions;
   const todayRuns=prod.filter(x=>(isDemo?x.date:x.production_date)===today());
   // Prefer the server-side all-user aggregate so today's KPI never depends on the 200-row dashboard cache.
@@ -1143,8 +1146,9 @@ function renderDashboard(p){
       "<div class='photo-attribution'><a href='https://commons.wikimedia.org/wiki/File:Landscape_view,_Ala_Archa_National_Park,_Chuy_region,_Kyrgyzstan_01.jpg' target='_blank' rel='noopener'>Photo gallery · 10 bakery scenes · changes every 3 seconds</div>"+
     "</div>";
 
-  let selected=0;
+  let selected=dashboardSackSelection;
   const sync=()=>{
+    dashboardSackSelection=selected;
     const totalEl=document.getElementById('dashboardTotal');
     totalEl.textContent=selected;
     document.querySelectorAll('[data-dashboard-sack]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.dashboardSack)===Math.floor(selected)));
@@ -1154,6 +1158,8 @@ function renderDashboard(p){
   document.querySelectorAll('[data-dashboard-sack]').forEach(b=>b.addEventListener('click',()=>{selected=Number(b.dataset.dashboardSack);sync();}));
   document.getElementById('dashboardHalf')?.addEventListener('click',()=>{selected=Math.min(9.5,Math.round((selected+0.5)*2)/2);sync();});
   document.getElementById('dashboardReset')?.addEventListener('click',()=>{selected=0;sync();});
+  // Render from the preserved value on every mount; do not show a temporary zero after refresh.
+  sync();
   const openProduction=()=>{
     const initialCount=selected||1;
     route='production';render();
@@ -1197,6 +1203,13 @@ function renderDashboard(p){
   heroDots.forEach((dot,index)=>dot.addEventListener('click',()=>{showHeroPhoto(index);startHeroRotation();}));
   startHeroRotation();
   wireInteractiveCards();
+  // Rebuilding Home can clamp a mobile browser's scroll to the top. Restore it after layout settles.
+  if(dashboardScrollY>0)requestAnimationFrame(()=>{
+    if(route!=='dashboard')return;
+    window.scrollTo({top:dashboardScrollY,left:0,behavior:'auto'});
+    document.documentElement.scrollTop=dashboardScrollY;
+    document.body.scrollTop=dashboardScrollY;
+  });
 }
 function roleDashboard(p){
   if(currentUser.role==='hamurchi') p.innerHTML=`<div class="grid grid-2"><div class="card"><h2>Today</h2><div class="kpi">${isDemo?fmt(db.productions.filter(x=>x.date===today()&&x.createdBy===currentUser.name).reduce((a,b)=>a+b.mishokCount,0)):'—'} sack</div><div class="small">Enter your sacks and actual pieces from the Production panel.</div></div><div class="card"><h2>Recipe</h2><div class="kpi">v${db?.recipe?.version||1}</div><div class="small">You may update the working recipe. Future production uses the new version.</div></div></div>`;
