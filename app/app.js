@@ -22,7 +22,7 @@ const DEFAULT_RECIPE = [
   {code:'flour', name:'Flour', qty:50, unit:'kg', note:'1 operational sack; actual batch can be 48–52 kg and is still counted as 1 sack'},
   {code:'water', name:'Water', qty:31.2, unit:'kg', note:'Combined water; no hot/cold split'},
   {code:'oil', name:'Oil', qty:1, unit:'kg', note:'Standard 20 kg carton packaging'},
-  {code:'yeast', name:'Yeast', qty:.045, unit:'kg', note:'Default 45 g; operational range 35–55 g'},
+  {code:'yeast', name:'Yeast', qty:.055, unit:'kg', note:'Default 55 g; operational range 35–55 g'},
   {code:'salt', name:'Salt', qty:1.2, unit:'kg', note:'1 kg or 750 g packets'},
   {code:'sugar', name:'Sugar', qty:.5, unit:'kg', note:''}
 ];
