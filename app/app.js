@@ -1146,25 +1146,36 @@ async function renderInventory(p){
     $('stockEditRemainderUnit').dataset.unit=$('stockEditRemainderUnit').value;
     updatePreview();
   };
-  const drawHistory=(rows,date)=>{
-    $('historyDateCaption').textContent=t('Transactions for selected date',lang)+' · '+date;
-    $('inventoryHistorySummary').innerHTML='<div><small>'+t('Transactions',lang)+'</small><b>'+rows.length+'</b></div><div><small>'+t('Correction date',lang)+'</small><b>'+esc(date)+'</b></div><div><small>'+t('Tracked materials',lang)+'</small><b>'+STOCK_MATERIALS.length+'</b></div>';
-    if(!rows.length){$('inventoryHistoryRows').innerHTML='<div class="empty">'+t('No inventory transactions on this date.',lang)+'</div>';return;}
-    const body=rows.map(row=>{
-      const m=STOCK_MATERIALS.find(x=>x.code===row.material_code)||STOCK_MATERIALS[0],v=stockBreakdown(m,Number(row.qty_base)||0,lang),inc=row.direction==='in';
+  let currentActivityRows=[];
+  let currentActivityKind='movements';
+  const drawHistory=(rows,rangeLabel)=>{
+    currentActivityRows=rows||[];
+    currentActivityKind='movements';
+    $('historyDateCaption').textContent='Inventory movements · '+rangeLabel;
+    $('inventoryHistorySummary').innerHTML='<div><small>Records</small><b>'+currentActivityRows.length+'</b></div><div><small>Period</small><b>'+esc(rangeLabel)+'</b></div><div><small>Materials</small><b>'+STOCK_MATERIALS.length+'</b></div>';
+    if(!currentActivityRows.length){$('inventoryHistoryRows').innerHTML='<div class="empty">No inventory movements match these filters.</div>';return;}
+    const body=currentActivityRows.map(row=>{
+      const m=STOCK_MATERIALS.find(x=>x.code===row.material_code)||STOCK_MATERIALS[0];
+      const value=stockBreakdown(m,Number(row.qty_base)||0,lang);
+      const inc=row.direction==='in';
       const id=String(row.transaction_id||row.id||'');
-      const actions=row.production_run_id?'<span class="small">Production-linked</span>':'<div class="inventory-row-actions"><button type="button" class="btn secondary" data-inventory-edit="'+esc(id)+'">Edit</button><button type="button" class="btn danger" data-inventory-delete="'+esc(id)+'">Remove</button></div>';
-      return '<tr><td><b>'+esc(t(row.material_name||m.name,lang))+'</b><small class="table-secondary">'+esc(row.package_label||'')+'</small></td><td><span class="movement-pill '+(inc?'in':'out')+'">'+(inc?'＋ '+t('Stock in',lang):'− '+t('Stock out',lang))+'</span></td><td><b>'+esc(v.primary)+'</b><small class="table-secondary">'+esc(v.secondary)+'</small></td><td><span class="history-reason">'+esc(row.reason||'')+'</span></td><td>'+esc(row.created_by_name||'')+'</td><td>'+actions+'</td></tr>';
+      const type=row.movement_type||((row.reason||'').toLowerCase().includes('historical stock correction')?'adjustment':inc?'manual_receipt':'manual_issue');
+      const actions=(row.production_run_id||type==='production')
+        ? '<span class="small">Linked to production</span>'
+        : '<div class="inventory-row-actions"><button type="button" class="btn secondary" data-inventory-edit="'+esc(id)+'">Edit</button><button type="button" class="btn danger" data-inventory-delete="'+esc(id)+'">Remove</button></div>';
+      const source=[row.supplier_name,row.reference_code?'Ref: '+row.reference_code:''].filter(Boolean).join(' · ');
+      return '<tr><td>'+esc(String(row.effective_date||'').slice(0,10))+'</td><td><b>'+esc(t(row.material_name||m.name,lang))+'</b><small class="table-secondary">'+esc(row.package_label||'')+'</small></td><td><span class="movement-pill '+(inc?'in':'out')+'">'+(inc?'＋ '+t('Stock in',lang):'− '+t('Stock out',lang))+'</span><small class="table-secondary">'+esc(movementTypeLabel(type))+'</small></td><td><b>'+esc(value.primary)+'</b><small class="table-secondary">'+esc(value.secondary)+'</small></td><td><span class="history-reason">'+esc(row.reason||'')+'</span><small class="table-secondary">'+esc(source)+'</small></td><td>'+esc(row.created_by_name||'')+'</td><td>'+actions+'</td></tr>';
     }).join('');
-    $('inventoryHistoryRows').innerHTML='<table><thead><tr><th>'+t('Material',lang)+'</th><th>'+t('Movement',lang)+'</th><th>'+t('Quantity',lang)+'</th><th>'+t('Reason / audit note',lang)+'</th><th>'+t('Entered by',lang)+'</th><th>Admin actions</th></tr></thead><tbody>'+body+'</tbody></table>';
+    $('inventoryHistoryRows').innerHTML='<div class="table-wrap"><table><thead><tr><th>Date</th><th>Material</th><th>Movement</th><th>Quantity</th><th>Reason / source / ref</th><th>Entered by</th><th>Admin actions</th></tr></thead><tbody>'+body+'</tbody></table></div>';
     $('inventoryHistoryRows').querySelectorAll('[data-inventory-edit]').forEach(button=>button.addEventListener('click',()=>{
-      const row=rows.find(x=>String(x.transaction_id||x.id||'')===button.dataset.inventoryEdit);
-      if(row)openInventoryTransactionModal(row,async()=>{await refreshLiveState();await loadDate(date);});
+      const row=currentActivityRows.find(x=>String(x.transaction_id||x.id||'')===button.dataset.inventoryEdit);
+      if(row)openInventoryTransactionModal(row,async()=>{await refreshLiveState();await loadDate($('stockHistoryDate').value);await loadActivity();});
     }));
     $('inventoryHistoryRows').querySelectorAll('[data-inventory-delete]').forEach(button=>button.addEventListener('click',async()=>{
-      const row=rows.find(x=>String(x.transaction_id||x.id||'')===button.dataset.inventoryDelete);
+      const row=currentActivityRows.find(x=>String(x.transaction_id||x.id||'')===button.dataset.inventoryDelete);
       if(!row)return;
-      const label=(row.material_name||row.material_code)+' · '+row.direction+' · '+formatInventoryNumber(row.qty_base,lang)+' kg · '+date;
+      const date=String(row.effective_date||'').slice(0,10);
+      const label=(row.material_name||row.material_code)+' · '+movementTypeLabel(row.movement_type||'manual_receipt')+' · '+formatInventoryNumber(row.qty_base,lang)+' kg · '+date;
       if(!window.confirm('Remove this historical stock entry?\n'+label+'\nThe action will be recorded in the admin audit log.'))return;
       const reason=window.prompt('Why are you removing this entry?');
       if(reason===null)return;
@@ -1178,9 +1189,54 @@ async function renderInventory(p){
           const {error}=await supabase.rpc('admin_delete_inventory_transaction',{p_transaction_id:row.transaction_id||row.id,p_reason:reason.trim()});
           if(error)throw error;
         }
-        await refreshLiveState();await loadDate(date);showToast('Historical stock entry removed. Audit record retained.','success');render();
+        await refreshLiveState();await loadDate($('stockHistoryDate').value);await loadActivity();
+        showToast('Historical stock entry removed. Audit record retained.','success');render();
       }catch(error){showToast(friendlyError(error),'error');button.disabled=false;}
     }));
+  };
+  const drawAudit=(rows,rangeLabel)=>{
+    currentActivityRows=rows||[];
+    currentActivityKind='audit';
+    $('historyDateCaption').textContent='Admin audit log · '+rangeLabel;
+    $('inventoryHistorySummary').innerHTML='<div><small>Audit records</small><b>'+currentActivityRows.length+'</b></div><div><small>Period</small><b>'+esc(rangeLabel)+'</b></div><div><small>Scope</small><b>Admin edits / removals</b></div>';
+    if(!currentActivityRows.length){$('inventoryHistoryRows').innerHTML='<div class="empty">No admin edits or removals in this period.</div>';return;}
+    const body=currentActivityRows.map(row=>{
+      const before=JSON.stringify(row.before_record||{},null,2);
+      const after=JSON.stringify(row.after_record||{},null,2);
+      return '<tr><td>'+esc(String(row.occurred_at||'').replace('T',' ').slice(0,19))+'</td><td><b>'+esc(row.action||'')+'</b></td><td>'+esc(String(row.transaction_id||''))+'</td><td>'+esc(row.note||'')+'</td><td><details><summary>Before</summary><pre>'+esc(before)+'</pre></details></td><td><details><summary>After</summary><pre>'+esc(after||'—')+'</pre></details></td></tr>';
+    }).join('');
+    $('inventoryHistoryRows').innerHTML='<div class="table-wrap"><table><thead><tr><th>Changed at</th><th>Action</th><th>Entry ID</th><th>Audit note</th><th>Original values</th><th>New values</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+  };
+  const loadActivity=async()=>{
+    const from=$('historyFrom').value,to=$('historyTo').value;
+    if(!from||!to||from>to||to>today()){showInventoryNotice('Choose a valid activity date range ending today or earlier.','error');return;}
+    const rangeLabel=from===to?from:from+' – '+to;
+    showInventoryNotice('');
+    if(isDemo){
+      const query=$('historySearch').value.trim().toLowerCase();
+      const material=$('historyMaterialFilter').value,type=$('historyTypeFilter').value;
+      const rows=STOCK_MATERIALS.flatMap(m=>(db.inventory?.[m.code]?.tx||[]).map(x=>{
+        const movement=x.movementType||((x.reason||'').toLowerCase().includes('historical stock correction')?'adjustment':x.dir==='out'?'manual_issue':'manual_receipt');
+        return {id:x.id,transaction_id:x.id,production_run_id:x.productionRunId||null,effective_date:x.effectiveDate||String(x.at||'').slice(0,10),material_code:m.code,material_name:m.name,direction:x.dir==='out'?'out':'in',movement_type:movement,qty_base:x.qty,reason:x.reason,package_count:x.packages,package_label:x.packageLabel,supplier_name:x.supplierName,reference_code:x.referenceCode,created_by_name:x.by,created_at:x.at};
+      })).filter(row=>row.effective_date>=from&&row.effective_date<=to&&(!material||row.material_code===material)&&(!type||row.movement_type===type)&&(!query||[row.reason,row.supplier_name,row.reference_code,row.material_name].join(' ').toLowerCase().includes(query))).sort((x,y)=>String(y.effective_date).localeCompare(String(x.effective_date))||String(y.created_at).localeCompare(String(x.created_at)));
+      drawHistory(rows,rangeLabel);
+    }else{
+      const {data,error}=await supabase.rpc('admin_inventory_activity',{
+        p_from:from,p_to:to,p_material_code:$('historyMaterialFilter').value||null,
+        p_movement_type:$('historyTypeFilter').value||null,p_search:$('historySearch').value.trim()||null
+      });
+      if(error){showInventoryNotice(friendlyError(error),'error');$('inventoryHistoryRows').innerHTML='<div class="empty">Unable to load inventory activity. Check the database inventory migration and try again.</div>';return;}
+      drawHistory(data||[],rangeLabel);
+    }
+  };
+  const loadAuditLog=async()=>{
+    const from=$('historyFrom').value,to=$('historyTo').value;
+    if(!from||!to||from>to||to>today()){showInventoryNotice('Choose a valid audit date range ending today or earlier.','error');return;}
+    const rangeLabel=from===to?from:from+' – '+to;
+    if(isDemo){drawAudit([],rangeLabel);return;}
+    const {data,error}=await supabase.rpc('admin_inventory_audit',{p_from:from,p_to:to});
+    if(error){showInventoryNotice(friendlyError(error),'error');return;}
+    drawAudit(data||[],rangeLabel);
   };
   const loadDate=async date=>{
     if(!date)return false;
@@ -1190,7 +1246,7 @@ async function renderInventory(p){
     if(isDemo){
       snapshotMap=Object.fromEntries(STOCK_MATERIALS.map(m=>[m.code,stockAtDemo(m.code,date)]));
       const rows=STOCK_MATERIALS.flatMap(m=>(db.inventory?.[m.code]?.tx||[]).filter(x=>(x.effectiveDate||String(x.at||'').slice(0,10))===date).map(x=>({transaction_id:x.id,id:x.id,production_run_id:null,effective_date:date,material_code:m.code,material_name:m.name,direction:x.dir,qty_base:x.qty,package_count:x.packages??null,package_label:x.packageLabel||'',reason:x.reason||'Inventory movement',created_by_name:x.by||'Admin',created_at:x.at}))).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
-      drawHistory(rows,date);
+      // Date-wise correction snapshot loads independently of activity filters.
       snapshotLoaded=true;
       showInventoryNotice('');
       updateCorrectionButton();
@@ -1202,7 +1258,7 @@ async function renderInventory(p){
       if(document.body.dataset.route!=='inventory')return false;
       if(!snap.error&&!hist.error){
         snapshotMap=Object.fromEntries((snap.data||[]).map(x=>[x.material_code,Number(x.stock||0)]));
-        drawHistory(hist.data||[],date);
+        // Activity rows are loaded by the filter panel, independently of the correction date.
         snapshotLoaded=true;
         historicalCorrectionRpcReady=true;
         showInventoryNotice('');
@@ -1238,11 +1294,12 @@ async function renderInventory(p){
           }
           snapshotMap=Object.fromEntries(STOCK_MATERIALS.map(m=>[m.code,(current.get(m.code)||0)-(laterDelta.get(m.code)||0)]));
           const userName=new Map((liveState.users||[]).map(u=>[u.id,u.full_name||u.name||'Admin']));
-          drawHistory(datedRows.map(row=>({
+          /* snapshot recovery uses the ledger; the separate activity query owns history rendering. */
+          const recoveredHistoryRows=datedRows.map(row=>({
             ...row,
             material_name:STOCK_MATERIALS.find(m=>m.code===row.material_code)?.name||row.material_code,
             created_by_name:userName.get(row.created_by)||'Admin'
-          })),date);
+          }));
           snapshotLoaded=true;
           historicalCorrectionRpcReady=false;
           showInventoryNotice('Read-only recovery is active: balances and activity were reconstructed from the inventory ledger. To enable safe date corrections, run db/fix_admin_inventory_snapshot_2026_10_11.sql in Supabase SQL Editor, then refresh. No stock was changed.','warning');
