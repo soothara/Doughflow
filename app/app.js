@@ -20,6 +20,7 @@ const STOCK_MATERIALS=MATERIALS.filter(m=>m.inventoryTracked!==false);
 const INVENTORY_MOVEMENT_TYPES=[
   {value:'purchase',label:'Supplier delivery / purchase',direction:'in'},
   {value:'customer_return',label:'Return from customer',direction:'in'},
+  {value:'opening_balance',label:'Opening balance',direction:'in'},
   {value:'manual_receipt',label:'Other stock received',direction:'in'},
   {value:'manual_issue',label:'Internal use / stock issued',direction:'out'},
   {value:'waste',label:'Waste / damaged / expired',direction:'out'},
