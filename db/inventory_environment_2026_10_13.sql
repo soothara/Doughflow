@@ -220,13 +220,13 @@ begin
  from public.inventory_transaction_audit a where (a.occurred_at at time zone 'Asia/Bishkek')::date between p_from and p_to order by a.occurred_at desc;
 end $$;
 
-revoke all on function public.admin_inventory_history(date) from public;
-revoke all on function public.admin_record_inventory_movement(text,text,text,numeric,date,text,numeric,text,text,text) from public;
-revoke all on function public.admin_update_inventory_transaction(uuid,text,text,numeric,date,text,numeric,text,text,text,text) from public;
-revoke all on function public.admin_delete_inventory_transaction(uuid,text) from public;
-revoke all on function public.admin_set_reorder_level(text,numeric) from public;
-revoke all on function public.admin_inventory_activity(date,date,text,text,text) from public;
-revoke all on function public.admin_inventory_audit(date,date) from public;
+revoke all on function public.admin_inventory_history(date) from anon, public;
+revoke all on function public.admin_record_inventory_movement(text,text,text,numeric,date,text,numeric,text,text,text) from anon, public;
+revoke all on function public.admin_update_inventory_transaction(uuid,text,text,numeric,date,text,numeric,text,text,text,text) from anon, public;
+revoke all on function public.admin_delete_inventory_transaction(uuid,text) from anon, public;
+revoke all on function public.admin_set_reorder_level(text,numeric) from anon, public;
+revoke all on function public.admin_inventory_activity(date,date,text,text,text) from anon, public;
+revoke all on function public.admin_inventory_audit(date,date) from anon, public;
 grant execute on function public.admin_inventory_history(date) to authenticated;
 grant execute on function public.admin_record_inventory_movement(text,text,text,numeric,date,text,numeric,text,text,text) to authenticated;
 grant execute on function public.admin_update_inventory_transaction(uuid,text,text,numeric,date,text,numeric,text,text,text,text) to authenticated;
