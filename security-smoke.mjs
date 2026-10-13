@@ -268,6 +268,6 @@ assert.match(mobileCss, /report-reconcile-note/, "source mismatches must be visi
 // Shared production records must feed every authenticated team report, without granting write access.
 assert.ok(productionTeamRead.includes("production_runs_team_read") && productionTeamRead.includes("TO authenticated") && productionTeamRead.includes("USING (true)"), "authenticated team can read shared production runs");
 assert.ok(productionTeamRead.includes("production_batches_team_read") && productionTeamRead.includes("FOR SELECT"), "team can read batch output for reports");
-assert.ok(productionTeamRead.includes("production_materials_team_read") && productionTeamRead.includes("FOR SELECT"), "team can read actual ingredient input for reports");
+assert.ok(productionTeamRead.includes("production_materials_team_read") && productionTeamRead.includes("is_role('hamurchi'::app_role)"), "only Admin and Hamurchi can read ingredient input details");
 assert.ok(app.includes("const todayProduction=productionRows.filter(run=>String(run.production_date)===today())"), "Reports must attach today's saved production automatically");
 assert.ok(app.includes("todayProductionPieces=todayProduction.reduce"), "Reports must calculate today's actual pieces from saved batches");
