@@ -652,7 +652,19 @@ function scrollAppToTop(){
   const page=document.getElementById('page');if(page)page.scrollTop=0;
 }
 async function navigateTo(nextRoute){
-  if(!currentUser||!can(currentUser.role,nextRoute)||nextRoute===route)return;
+  if(!currentUser||!can(currentUser.role,nextRoute))return;
+  if(nextRoute===route){
+    scrollAppToTop();
+    const renderId=++routeRenderId;
+    if(route==='dashboard'||route==='production'){
+      void refreshLiveState().then(()=>{
+        if(renderId===routeRenderId&&currentUser&&route===nextRoute)void renderPage();
+      });
+    }else{
+      void renderPage();
+    }
+    return;
+  }
   route=nextRoute;
   const renderId=++routeRenderId;
   document.body.classList.toggle('dashboard-mode',route==='dashboard');
