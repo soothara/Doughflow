@@ -726,6 +726,53 @@ Object.assign(DICT.ky, {
   'Outstanding:':'Калган төлөм:'
 });
 
+// Complete the most-used operational labels that are generated dynamically by the app.
+Object.assign(DICT.ru, {
+  'Home':'Главная','Daily workflow':'Ежедневный процесс','Choose your batch':'Выберите партию',
+  'Select total sacks to begin. Half-sacks are supported.':'Выберите количество мешков. Половина мешка также доступна.',
+  '1 · Sacks':'1 · Мешки','2 · Pieces':'2 · Штуки','3 · Review':'3 · Проверка',
+  'Batch size and actual output':'Размер партии и фактический выход','Sack count':'Количество мешков',
+  'Total sacks':'Всего мешков','Reset':'Сбросить','Material consumption':'Расход материалов',
+  'A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.':'Полный мешок = 1,0. Кнопка +0,5 добавляет половину мешка: 6 + 0,5 = 6,5. Максимум — 9,5 мешка.',
+  'Complete production':'Завершить производство','Clear':'Очистить','Today’s production':'Производство сегодня',
+  'Choose your batch':'Выберите партию','Select total sacks to begin. Half-sacks are supported.':'Выберите количество мешков. Половина мешка также доступна.',
+  'Save':'Сохранить','Loading…':'Загрузка…','Pieces / sack':'Штук на мешок','Actual pieces':'Фактическое количество штук',
+  'Actual':'Фактически','Expected':'Ожидается','Expected consumption':'Ожидаемый расход',
+  'Flour':'Мука','Water':'Вода','Oil':'Масло','Salt':'Соль','Sugar':'Сахар','Yeast':'Дрожжи',
+  'Time':'Время','Sacks':'Мешки','Pieces':'Штуки','Recipe':'Рецепт','No production saved today.':'Сегодня производство ещё не сохранено.',
+  'Production saved.':'Производство сохранено.','Enter a valid sack count.':'Введите корректное количество мешков.',
+  'Sack count must be between 0.5 and 9.5.':'Количество мешков должно быть от 0,5 до 9,5.',
+  'Batch size and actual output':'Размер партии и фактический выход','Choose a batch, record actual pieces, and finish with confidence.':'Выберите партию, укажите фактическое количество штук и завершите запись.',
+  'Search':'Поиск','Date':'Дата','Material':'Материал','Quantity':'Количество','Status':'Статус',
+  'Edit':'Изменить','Delete':'Удалить','Close':'Закрыть','Cancel':'Отмена','Confirm':'Подтвердить',
+  'Settings':'Настройки','Language':'Язык','English':'Английский','Russian':'Русский','Kyrgyz':'Кыргызский',
+  'Inventory':'Склад','Reports':'Отчёты','Users':'Пользователи','Dashboard':'Панель управления',
+  'Stock':'Остаток','Stock in':'Приход','Stock out':'Расход','No production yet.':'Производственных записей пока нет.',
+  'PIN is incorrect':'Неверный PIN-код','Something went wrong':'Что-то пошло не так'
+});
+Object.assign(DICT.ky, {
+  'Home':'Башкы бет','Daily workflow':'Күндөлүк иш процесси','Choose your batch':'Партияны тандаңыз',
+  'Select total sacks to begin. Half-sacks are supported.':'Баштоо үчүн каптардын санын тандаңыз. Жарым кап да мүмкүн.',
+  '1 · Sacks':'1 · Каптар','2 · Pieces':'2 · Дааналар','3 · Review':'3 · Текшерүү',
+  'Batch size and actual output':'Партиянын көлөмү жана чыныгы натыйжа','Sack count':'Каптын саны',
+  'Total sacks':'Жалпы кап','Reset':'Калыбына келтирүү','Material consumption':'Материалдардын сарпталышы',
+  'A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.':'Толук кап = 1,0. +0,5 баскычы жарым кап кошот: 6 + 0,5 = 6,5. Эң көбү — 9,5 кап.',
+  'Complete production':'Өндүрүштү бүтүрүү','Clear':'Тазалоо','Today’s production':'Бүгүнкү өндүрүш',
+  'Save':'Сактоо','Loading…':'Жүктөлүүдө…','Pieces / sack':'Бир каптагы даана','Actual pieces':'Чыныгы даана',
+  'Actual':'Чыныгы','Expected':'Күтүлгөн','Expected consumption':'Күтүлгөн сарптоо',
+  'Flour':'Ун','Water':'Суу','Oil':'Май','Salt':'Туз','Sugar':'Кант','Yeast':'Ачыткы',
+  'Time':'Убакыт','Sacks':'Каптар','Pieces':'Даана','Recipe':'Рецепт','No production saved today.':'Бүгүн өндүрүш сакталган жок.',
+  'Production saved.':'Өндүрүш сакталды.','Enter a valid sack count.':'Каптын санын туура киргизиңиз.',
+  'Sack count must be between 0.5 and 9.5.':'Каптын саны 0,5тен 9,5ке чейин болушу керек.',
+  'Batch size and actual output':'Партиянын көлөмү жана чыныгы натыйжа','Choose a batch, record actual pieces, and finish with confidence.':'Партияны тандап, чыныгы дааналарды киргизип, бүтүрүңүз.',
+  'Search':'Издөө','Date':'Күнү','Material':'Материал','Quantity':'Саны','Status':'Абалы',
+  'Edit':'Өзгөртүү','Delete':'Өчүрүү','Close':'Жабуу','Cancel':'Жокко чыгаруу','Confirm':'Ырастоо',
+  'Settings':'Жөндөөлөр','Language':'Тил','English':'Англисче','Russian':'Орусча','Kyrgyz':'Кыргызча',
+  'Inventory':'Кампа','Reports':'Отчёттор','Users':'Колдонуучулар','Dashboard':'Башкаруу панели',
+  'Stock':'Калдык','Stock in':'Кампага кириш','Stock out':'Кампадан чыгыш','No production yet.':'Азырынча өндүрүш жазуулары жок.',
+  'PIN is incorrect':'PIN-код туура эмес','Something went wrong':'Ката кетти'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
