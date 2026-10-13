@@ -279,7 +279,7 @@ assert.ok(productionSummaryMigration.includes("GRANT EXECUTE ON FUNCTION public.
 assert.ok(schema.includes("auth.uid() is not null") && schema.includes("from public, anon"), "fresh schema must use the same safe shared production summary");
 
 assert.match(app, /function scrollAppToTop\(\)/, "page navigation must reset scroll position");
-assert.match(app, /if\(route==='reports'\)\{const page=document\.getElementById\('page'\);if\(page\)renderReports\(page\);\}/, "tapping the Reports tab again must refresh today's live data");
+assert.match(app, /if\(nextRoute===route\)\{[\s\S]{0,350}void renderPage\(\);[\s\S]{0,100}return;/, "tapping the active route must refresh its connected live data");
 assert.match(app, /id="refreshReports"/, "Reports must provide a manual refresh action");
 assert.match(app, /inventoryAuditResult=await supabase\.rpc\('admin_inventory_audit'/, "complete backup must include inventory audit history");
 assert.match(app, /inventoryAudit:inventoryAuditResult\.data\|\|\[\]/, "backup must serialize inventory audit history");
