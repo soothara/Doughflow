@@ -10,6 +10,7 @@ const inventoryFix = read("./db/fix_admin_inventory_snapshot_2026_10_11.sql");
 const inventoryEnvironment = read("./db/inventory_environment_2026_10_13.sql");
 const inventoryCorrectionAudit = read("./db/inventory_correction_audit_2026_10_13.sql");
 const inventoryPrivilegeFix = read("./db/revoke_anon_inventory_admin_rpcs_20261013.sql");
+const productionTeamRead = read("./db/share_production_history_with_authenticated_team_2026_10_13.sql");
 const pinOnlyMigration = read("./db/pin_only_login_2026_10_11.sql");
 const schema = read("./db/schema.sql");
 
@@ -60,7 +61,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v55-20261013-live-production-report-link/);
+assert.match(worker, /doughflow-v56-20261013-shared-production/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -74,7 +75,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:\(appSettings\?\.timezone\|\|'Asia\/Bishkek'\)/, "business time zone must come from saved settings with a safe default");
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v55-20261013-live-production-report-link/);
+assert.match(worker, /doughflow-v56-20261013-shared-production/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -146,7 +147,7 @@ assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should 
 const heroImageSection = app.slice(app.indexOf("const DEFAULT_SLIDESHOW ="), app.indexOf("const defaultSlideUrl="));
 assert.equal((heroImageSection.match(/\{file:/g) || []).length, 10, "hero carousel should define ten default photo slides");
 assert.ok(heroImageSection.includes("01-baker-tandoor-hd-20261012.webp") && heroImageSection.includes("02-leposhka-closeup-hd-20261012.avif"), "HD hero gallery should use the available high-resolution images");
-assert.match(worker, /doughflow-v55-20261013-live-production-report-link/, "service worker cache version must change when the gallery changes");
+assert.match(worker, /doughflow-v56-20261013-shared-production/, "service worker cache version must change when the gallery changes");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache gallery image "+image);
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected HD gallery image "+image);
 
@@ -155,7 +156,7 @@ assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should 
 assert.ok(app.includes("const heroImages=DEFAULT_SLIDESHOW.map"), "hero must render its selected photo gallery from saved settings");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(app.includes(image), "selected hero gallery must include "+image);
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected authentic gallery image "+image);
-assert.match(worker, /doughflow-v55-20261013-live-production-report-link/, "service worker cache version must change when gallery assets are replaced");
+assert.match(worker, /doughflow-v56-20261013-shared-production/, "service worker cache version must change when gallery assets are replaced");
 assert.ok(app.includes("heroPhotoMarkup") && app.includes("heroDotsMarkup"), "hero slides and navigation dots should be generated from one gallery");
 assert.ok(dashboardCss.includes("High-visibility mobile hero") && dashboardCss.includes("rgba(6,18,29,.78)"), "hero photo and text should remain clearly visible");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero-photo.hero-slide.is-active{display:block}"), "only the active hero photo should be visible; do not blend photos");
@@ -262,3 +263,11 @@ assert.match(app, /supabase\.from\('production_runs'\)[\s\S]{0,350}\.range\(offs
 assert.match(app, /p\.dataset\.reportMonth=event\.target\.value/, "month selection must update the displayed report");
 assert.match(app, /today\(\)\.slice\(0,7\)/, "current month must be available automatically");
 assert.match(mobileCss, /report-reconcile-note/, "source mismatches must be visible rather than silently double-counted");
+
+ 
+// Shared production records must feed every authenticated team report, without granting write access.
+assert.ok(productionTeamRead.includes("production_runs_team_read") && productionTeamRead.includes("TO authenticated") && productionTeamRead.includes("USING (true)"), "authenticated team can read shared production runs");
+assert.ok(productionTeamRead.includes("production_batches_team_read") && productionTeamRead.includes("FOR SELECT"), "team can read batch output for reports");
+assert.ok(productionTeamRead.includes("production_materials_team_read") && productionTeamRead.includes("FOR SELECT"), "team can read actual ingredient input for reports");
+assert.ok(app.includes("const todayProduction=productionRows.filter(run=>String(run.production_date)===today())"), "Reports must attach today's saved production automatically");
+assert.ok(app.includes("todayProductionPieces=todayProduction.reduce"), "Reports must calculate today's actual pieces from saved batches");
