@@ -524,7 +524,7 @@ async function refreshLiveState(){
     liveState.syncError=friendlyError(error);
   }
 }
-async async function render(){
+async function render(){
   document.body.classList.toggle('dashboard-mode', !!currentUser && route==='dashboard');
   document.body.dataset.route=currentUser?route:'login';
   if(!currentUser){
