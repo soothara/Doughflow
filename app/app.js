@@ -1097,7 +1097,8 @@ async function renderInventory(p){
   p.innerHTML=
     '<div class="page-head"><div><div class="eyebrow">'+t('Admin tools',lang)+'</div><h1>'+t('Inventory',lang)+'</h1><p>'+t('Receive, issue, correct and audit every ingredient movement.',lang)+'</p></div><div class="inventory-page-actions"><button class="btn primary" id="stockIn">＋ Receive stock</button><button class="btn secondary" id="stockOut">− Issue / waste</button></div></div>'+
     '<div class="grid grid-3">'+cards+'</div>'+
-    '<section class="inventory-workflow-banner"><div class="inventory-workflow-icon">◈</div><div><b>'+t('Inventory control center',lang)+'</b><small>'+t('Choose a date, set the correct physical quantity, and preserve an audit trail.',lang)+'</small></div><span class="inventory-live-pill">'+t('Admin',lang)+' • 🔐</span></section>'+
+    '<section class="inventory-workflow-banner"><div class="inventory-workflow-icon">◈</div><div><b>'+t('Inventory control center',lang)+'</b><small>Current balances, quick stock actions and a complete dated audit trail.</small></div><span class="inventory-live-pill">'+t('Admin',lang)+' • 🔐</span></section>'+
+    '<section class="stock-quick-actions" aria-label="Inventory shortcuts"><button type="button" class="stock-shortcut" id="jumpStockCorrection"><span>⚖</span><b>Correct past stock</b><small>Fix a wrong balance by date</small><i>Open editor →</i></button><button type="button" class="stock-shortcut" id="jumpStockLedger"><span>▤</span><b>Movement history</b><small>Search, edit or remove entries</small><i>Open ledger →</i></button><div class="stock-help-chip"><span>✓</span><div><b>Every change is tracked</b><small>Receipts, issues and corrections keep their dates and audit history.</small></div></div></section>'+
     '<section class="card historical-editor-card"><div class="history-card-heading"><div><div class="eyebrow">'+t('Audit-safe correction',lang)+'</div><h2>🗓️ '+t('Date-wise inventory editor',lang)+'</h2><p>'+t('Set the correct stock balance as of a past date. The system records a correction instead of deleting history.',lang)+'</p></div></div>'+
     '<div class="history-filter-row"><div class="field"><label for="stockHistoryDate">'+t('Inventory date',lang)+'</label><input id="stockHistoryDate" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="stockEditMaterial">'+t('Material',lang)+'</label><select id="stockEditMaterial">'+options+'</select></div></div>'+
     '<div class="history-target-grid"><div class="field"><label for="stockEditPackage">'+t('Package / container',lang)+'</label><select id="stockEditPackage"></select></div><div class="field"><label for="stockEditPackages">'+t('Full packages',lang)+'</label><input id="stockEditPackages" type="number" min="0" step="1" value="0"></div><div class="field"><label for="stockEditRemainder">'+t('Open remainder',lang)+'</label><div class="unit-input-pair"><input id="stockEditRemainder" type="number" min="0" step="0.001" value="0"><select id="stockEditRemainderUnit" aria-label="'+t('Remainder unit',lang)+'"><option value="kg">kg</option><option value="g">g</option></select></div></div></div>'+
@@ -1106,6 +1107,8 @@ async function renderInventory(p){
     '<div class="history-form-footer"><small>🔒 '+t('Admin-only action. Every correction is dated and auditable.',lang)+'</small><button class="btn primary" id="saveStockByDate">✓ '+t('Save dated correction',lang)+'</button></div></section>'+
     '<section class="card inventory-history-card"><div class="history-card-heading"><div><h2>🧾 Inventory movement ledger</h2><p id="historyDateCaption"></p></div><div class="inventory-page-actions"><button type="button" class="btn secondary" id="exportHistoryCsv">Export CSV</button><button type="button" class="btn secondary" id="viewAuditLog">Audit log</button><button type="button" class="btn secondary" id="refreshHistory">↻ Refresh</button></div></div><div class="history-filters"><div class="field"><label for="historyFrom">From</label><input id="historyFrom" type="date" max="'+today()+'" value="'+daysAgoDate(6)+'"></div><div class="field"><label for="historyTo">To</label><input id="historyTo" type="date" max="'+today()+'" value="'+today()+'"></div><div class="field"><label for="historyMaterialFilter">Material</label><select id="historyMaterialFilter"><option value="">All materials</option>'+options+'</select></div><div class="field"><label for="historyTypeFilter">Movement type</label><select id="historyTypeFilter"><option value="">All movements</option>'+INVENTORY_MOVEMENT_TYPES.map(x=>'<option value="'+x.value+'">'+esc(x.label)+'</option>').join('')+'</select></div><div class="field"><label for="historySearch">Search note / supplier / ref</label><input id="historySearch" type="search" placeholder="Search inventory history"></div><button type="button" class="btn primary" id="applyHistoryFilters">Apply filters</button></div><div id="inventoryDatabaseNotice" class="inventory-database-notice" role="status" hidden></div><div id="inventoryHistorySummary" class="history-summary-strip"></div><div id="inventoryHistoryRows" class="table-wrap"><div class="empty">Loading inventory activity…</div></div></section>';
 
+  p.querySelector('#jumpStockCorrection')?.addEventListener('click',()=>p.querySelector('.historical-editor-card')?.scrollIntoView({behavior:'smooth',block:'start'}));
+  p.querySelector('#jumpStockLedger')?.addEventListener('click',()=>p.querySelector('.inventory-history-card')?.scrollIntoView({behavior:'smooth',block:'start'}));
   let reorderLevels={};
   const paintReorderLevel=code=>{
     const material=STOCK_MATERIALS.find(m=>m.code===code);
@@ -1648,24 +1651,32 @@ async function renderReports(p){
   if(!isDemo){
     const {data,error}=await supabase.from('notebook_sack_entries')
       .select('record_date,sack_no,pieces_in_sack')
-      .gte('record_date','2026-09-26').lte('record_date','2026-10-12')
       .order('record_date',{ascending:false}).order('sack_no',{ascending:true});
     if(error) sackError=friendlyError(error);
     else sackRows=data||[];
   }
-  const byDate=new Map();
+  const allByDate=new Map();
   for(const row of sackRows){
     const key=String(row.record_date);
-    if(!byDate.has(key))byDate.set(key,[]);
-    byDate.get(key).push({sack:Number(row.sack_no),pieces:Number(row.pieces_in_sack)});
+    if(!allByDate.has(key))allByDate.set(key,[]);
+    allByDate.get(key).push({sack:Number(row.sack_no),pieces:Number(row.pieces_in_sack)});
   }
-  const sackCount=sackRows.length;
-  const totalNotebookPieces=sackRows.reduce((sum,row)=>sum+Number(row.pieces_in_sack),0);
+  const allMonths=[...new Set(sackRows.map(row=>String(row.record_date).slice(0,7)))].sort().reverse();
+  const preferredMonth=p.dataset.reportMonth||'';
+  const selectedMonth=allMonths.includes(preferredMonth)?preferredMonth:(allMonths.includes(today().slice(0,7))?today().slice(0,7):(allMonths[0]||today().slice(0,7)));
+  const monthRows=sackRows.filter(row=>String(row.record_date).startsWith(selectedMonth));
+  const byDate=new Map([...allByDate.entries()].filter(([date])=>date.startsWith(selectedMonth)));
+  const sackCount=monthRows.length;
+  const totalNotebookPieces=monthRows.reduce((sum,row)=>sum+Number(row.pieces_in_sack),0);
+  const allTimeSacks=sackRows.length;
+  const allTimePieces=sackRows.reduce((sum,row)=>sum+Number(row.pieces_in_sack),0);
   const averagePieces=sackCount?totalNotebookPieces/sackCount:0;
   const dates=[...byDate.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
   const reportSacks=isDemo?total:sackCount;
   const reportPieces=isDemo?pieces:totalNotebookPieces;
   const reportAverage=reportSacks?reportPieces/reportSacks:0;
+  const monthLabel=month=>new Date(month+'-01T12:00:00').toLocaleDateString(lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-GB',{month:'long',year:'numeric'});
+  const monthOptions=[...new Set([...allMonths,selectedMonth])].sort().reverse().map(month=>'<option value="'+esc(month)+'"'+(month===selectedMonth?' selected':'')+'>'+esc(monthLabel(month))+'</option>').join('');
   const dailyCards=sackError
     ? "<div class='notice'>Unable to load notebook sack records: "+esc(sackError)+"</div>"
     : dates.length
@@ -1678,20 +1689,26 @@ async function renderReports(p){
           const displayDate=new Date(date+"T12:00:00").toLocaleDateString(lang==='ru'?'ru-RU':lang==='ky'?'ky-KG':'en-GB',{day:'numeric',month:'short',year:'numeric'});
           return "<article class='piece-weight-day'><div class='piece-weight-day-head'><div><span class='piece-weight-date'>"+esc(displayDate)+"</span><span class='piece-weight-day-sub'>Notebook sack count</span></div><span class='piece-weight-sack-count'><b>"+items.length+"</b> sacks</span></div><div class='piece-weight-daily-total'><span>Total pieces in these sacks</span><strong>"+fmt(dailyTotal)+"</strong></div><div class='piece-weight-chips'>"+detail+"</div><div class='piece-weight-stats'><span><small>Avg. pieces / sack</small><b>"+fmt(mean)+"</b></span><span><small>Fewest in a sack</small><b>"+fmt(low)+"</b></span><span><small>Most in a sack</small><b>"+fmt(high)+"</b></span></div></article>";
         }).join("")+"</div>"
-      : "<div class='empty'>No notebook sack counts found for 26 Sep–12 Oct 2026.</div>";
-  p.innerHTML=`<div class="page-head report-page-head"><div><div class="eyebrow">Production insights</div><h1>Reports</h1><p>Totals calculated directly from your dated sack records.</p></div></div>
+      : "<div class='empty'>No notebook sack counts found for "+esc(monthLabel(selectedMonth))+". Choose another month above.</div>";
+  p.innerHTML=`<div class="page-head report-page-head"><div><div class="eyebrow">Production insights</div><h1>Reports</h1><p>Choose a month to review daily sack counts and total bread pieces.</p></div></div>
+    <section class="report-month-toolbar card"><div><span class="report-month-icon">▦</span><div><b>Monthly report</b><small>Filter daily sack counts and piece totals by month</small></div></div><label for="reportMonthSelect">Report month<select id="reportMonthSelect">${monthOptions}</select></label></section>
     <section class="report-production-summary">
       <article class="report-stat-card"><span class="report-stat-icon">▤</span><small>Notebook sacks recorded</small><strong>${fmt(reportSacks)}</strong></article>
       <article class="report-stat-card"><span class="report-stat-icon">◉</span><small>Total pieces counted</small><strong>${fmt(reportPieces)}</strong></article>
       <article class="report-stat-card"><span class="report-stat-icon">↗</span><small>Average pieces per sack</small><strong>${fmt(reportAverage)}</strong></article>
     </section>
+    <section class="report-alltime-strip"><span>All-time notebook totals</span><b>${fmt(allTimeSacks)} sacks</b><b>${fmt(allTimePieces)} pieces</b></section>
     <section class="piece-weight-report card">
-      <div class="piece-weight-report-title"><div><div class="eyebrow">Notebook records</div><h2>Sacks &amp; piece counts</h2><p>Each numbered entry is a <b>sack</b>. The number beside it is how many <b>bread pieces were in that sack</b> — these are counts, not gram weights.</p></div><span class="piece-weight-period">26 Sep – 12 Oct</span></div>
+      <div class="piece-weight-report-title"><div><div class="eyebrow">Notebook records</div><h2>${esc(monthLabel(selectedMonth))}: sacks &amp; pieces</h2><p>Each numbered entry is a <b>sack</b>. Its number is the count of bread pieces inside that sack — not a gram weight.</p></div><span class="piece-weight-period">${fmt(dates.length)} days</span></div>
       <div class="piece-weight-overview"><div><small>Sacks recorded</small><strong>${fmt(sackCount)}</strong></div><div><small>Total pieces counted</small><strong>${fmt(totalNotebookPieces)}</strong></div><div><small>Days recorded</small><strong>${fmt(dates.length)}</strong></div></div>
-      <div class="piece-weight-note"><span>ⓘ</span><p>The notebook counts <b>127 pieces</b> (27 Sep) and <b>184 pieces</b> (6 Oct) are preserved exactly as written.</p></div>
+      <div class="piece-weight-note"><span>ⓘ</span><p>Original notebook counts are preserved exactly as recorded. Unusually low counts are included in the monthly totals.</p></div>
       <div class="piece-weight-day-list">${dailyCards}</div>
     </section>
     <section class="card report-production-history"><div class="report-section-heading"><div><div class="eyebrow">Operations</div><h2>Production history</h2></div><span class="report-section-count">${runs.length||dates.length} days</span></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Sacks</th><th>Total pieces</th><th>Source</th></tr></thead><tbody>${runs.length?runs.map(r=>`<tr><td>${esc(isDemo?r.date:r.production_date)}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt((isDemo?r.batches:r.production_batches||[]).reduce((a,b)=>a+Number(b.pieces||0),0))}</td><td>${esc(isDemo?r.createdBy:r.created_by===currentUser.id?currentUser.name:'User')}</td></tr>`).join(''):dates.map(([date,items])=>`<tr><td>${esc(date)}</td><td>${fmt(items.length)}</td><td>${fmt(items.reduce((sum,item)=>sum+item.pieces,0))}</td><td>Notebook</td></tr>`).join('')}</tbody></table></div></section>`;
+  p.querySelector('#reportMonthSelect')?.addEventListener('change',event=>{
+    p.dataset.reportMonth=event.target.value;
+    renderReports(p);
+  });
 }
 async function renderUsers(p){
   if(currentUser.role!=='admin'){
