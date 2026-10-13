@@ -615,3 +615,16 @@ body[data-compact-stock-cards="true"][data-route="inventory"] .stock-card-premiu
 .report-page-head>div{min-width:0}
 .report-page-head .btn{flex:none;min-height:42px;white-space:nowrap}
 @media(max-width:640px){.report-page-head{align-items:flex-start;flex-direction:column}.report-page-head .btn{width:100%;min-height:44px}}
+
+
+/* Connect configurable shift hours and admin operating notes to Home. */
+.dashboard-mode .hero-shift-pill{display:inline-flex;align-items:center;gap:9px;width:max-content;max-width:100%;margin-top:11px;padding:8px 12px;border:1px solid rgba(255,255,255,.25);border-radius:13px;background:rgba(8,24,41,.54);color:#fff;box-shadow:0 5px 18px rgba(0,0,0,.13);backdrop-filter:blur(8px)}
+.dashboard-mode .hero-shift-pill>span:first-child{font-size:20px;line-height:1}
+.dashboard-mode .hero-shift-pill>span:last-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dashboard-mode .hero-shift-pill b{font-size:10px;line-height:1.2;letter-spacing:.35px;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.dashboard-mode .hero-shift-pill small{font-size:12px;font-weight:850;line-height:1.25;color:#fff;overflow-wrap:anywhere}
+.dashboard-mode .dashboard-admin-notes{position:relative;z-index:2;display:flex;align-items:flex-start;gap:9px;width:min(100%,650px);max-height:92px;overflow:auto;margin:10px 0 0;padding:10px 12px;border:1px solid rgba(255,255,255,.24);border-radius:13px;background:rgba(7,19,32,.74);color:#fff;box-shadow:0 5px 18px rgba(0,0,0,.12);backdrop-filter:blur(9px)}
+.dashboard-mode .dashboard-admin-notes>span{flex:none;font-size:15px;line-height:1.5}
+.dashboard-mode .dashboard-admin-notes b{display:block;margin-bottom:3px;font-size:10px;letter-spacing:.45px;text-transform:uppercase;color:rgba(255,255,255,.73)}
+.dashboard-mode .dashboard-admin-notes p{margin:0;font-size:11px;line-height:1.45;white-space:normal;overflow-wrap:anywhere;color:#fff}
+@media(max-width:640px){.dashboard-mode .hero-shift-pill{margin-top:9px;padding:7px 10px}.dashboard-mode .dashboard-admin-notes{max-height:76px;margin-top:8px;padding:8px 10px}}
