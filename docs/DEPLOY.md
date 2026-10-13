@@ -61,6 +61,7 @@ After the existing schema and hardening migration, run these files in Supabase S
 6. `db/inventory_environment_2026_10_13.sql` — adds movement categories, supplier/reference metadata, low-stock thresholds, stock-out validation, date-range activity search, CSV export support, and audit-log reads.
 7. `db/inventory_correction_audit_2026_10_13.sql` — records physical stock-count corrections in the same audit log.
 8. `db/revoke_anon_inventory_admin_rpcs_20261013.sql` — removes direct anonymous execute privileges from admin-only inventory functions; signed-in calls remain restricted by each function's Admin-role check.
+9. `db/share_production_history_with_authenticated_team_2026_10_13.sql` — lets authenticated team members read shared production runs, sack batches, and actual ingredient inputs so Reports and cross-role handoffs include production created by another team member.
 
 The inventory environment migration files are additive; apply them to the same Supabase project configured in `app/config.js`. Back up first and do not run schema files against an unrelated project.
 
