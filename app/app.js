@@ -215,6 +215,25 @@ const app=document.getElementById('app');
 const modalRoot=document.getElementById('modalRoot');
 const toastRoot=document.getElementById('toastRoot');
 
+// Keep mobile bottom-sheet dialogs independently scrollable and prevent the page behind them from moving.
+let modalScrollY=0;
+const syncModalScrollLock=()=>{
+  const isOpen=!!modalRoot?.querySelector('.modal-backdrop.show');
+  if(isOpen&&!document.documentElement.classList.contains('modal-open')){
+    modalScrollY=window.scrollY||window.pageYOffset||0;
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+  }else if(!isOpen&&document.documentElement.classList.contains('modal-open')){
+    document.documentElement.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
+    window.scrollTo(0,modalScrollY);
+  }
+};
+if(modalRoot&&typeof MutationObserver!=='undefined'){
+  new MutationObserver(syncModalScrollLock).observe(modalRoot,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+}
+
+
 
 function showToast(message,type='info',duration=2600){
   if(!toastRoot) return;
