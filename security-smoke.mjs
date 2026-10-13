@@ -57,7 +57,7 @@ assert.match(schema, /alter table public\.inventory_transactions enable row leve
 assert.match(schema, /create policy inventory_admin_insert/i);
 
 // Old PWA caches must be retired to pick up the updated login and application code.
-assert.match(worker, /doughflow-v41-20261012-hd-gallery-10-3s/);
+assert.match(worker, /doughflow-v42-20261013-empty-stock-yeast-grams/);
 const interactive = read("./app/interactive.css");
 assert.match(app, /uiIcon\('users',24\)/, "More menu people icon must use the shared SVG icon helper");
 assert.match(app, /Array\.from\(x\)\[0\]/, "Profile initials must handle Unicode names safely");
@@ -71,7 +71,7 @@ assert.match(app, /data-tilt/);
 assert.match(app, /timeZone:'Asia\/Bishkek'/);
 assert.doesNotMatch(interactive, /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles to keep the mobile bundle lean");
 assert.doesNotMatch(read("./app/styles.css"), /\.simulator-[\w-]+|\.sim-[\w-]+|\.quest-[\w-]+/i, "remove unused game styles from base CSS");
-assert.match(worker, /doughflow-v41-20261012-hd-gallery-10-3s/);
+assert.match(worker, /doughflow-v42-20261013-empty-stock-yeast-grams/);
 assert.match(app, /Inventory database update required\. Run db\/fix_admin_inventory_snapshot_2026_10_11\.sql in Supabase SQL Editor, then refresh\./);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_snapshot\(p_effective_date date\)/i);
 assert.match(inventoryFix, /create or replace function public\.admin_inventory_history\(p_effective_date date\)/i);
@@ -143,7 +143,7 @@ assert.match(app, /navigateTo\(b\.dataset\.route\)/, "navigation buttons should 
 const heroImageSection = app.slice(app.indexOf("const heroImages=["), app.indexOf("const heroPhotoMarkup="));
 assert.equal((heroImageSection.match(/\['/g) || []).length, 10, "hero carousel should contain ten photo slides");
 assert.ok(heroImageSection.includes("01-baker-tandoor-hd-20261012.webp") && heroImageSection.includes("02-leposhka-closeup-hd-20261012.avif"), "HD hero gallery should use the available high-resolution images");
-assert.match(worker, /doughflow-v41-20261012-hd-gallery-10-3s/, "service worker cache version must change when the gallery changes");
+assert.match(worker, /doughflow-v42-20261013-empty-stock-yeast-grams/, "service worker cache version must change when the gallery changes");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif","03-bishkek-context.webp","04-bread-delivery-owner.webp","05-bread-delivery-worker.webp","06-van-bread-stock.webp","07-bakery-team.webp","08-bakery-team-selfie.webp","09-team-social.webp","10-oven-production.webp"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache gallery image "+image);
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected HD gallery image "+image);
 
@@ -152,7 +152,7 @@ assert.ok(app.includes("showHeroPhoto(activeHero+1),3000"), "hero photos should 
 assert.ok(app.includes("const heroImages=["), "hero must define its selected photo gallery");
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(app.includes(image), "selected hero gallery must include "+image);
 for (const image of ["01-baker-tandoor-hd-20261012.webp","02-leposhka-closeup-hd-20261012.avif"]) assert.ok(worker.includes("./assets/doughflow-gallery/"+image), "service worker must precache selected authentic gallery image "+image);
-assert.match(worker, /doughflow-v41-20261012-hd-gallery-10-3s/, "service worker cache version must change when gallery assets are replaced");
+assert.match(worker, /doughflow-v42-20261013-empty-stock-yeast-grams/, "service worker cache version must change when gallery assets are replaced");
 assert.ok(app.includes("heroPhotoMarkup") && app.includes("heroDotsMarkup"), "hero slides and navigation dots should be generated from one gallery");
 assert.ok(dashboardCss.includes("High-visibility mobile hero") && dashboardCss.includes("rgba(6,18,29,.78)"), "hero photo and text should remain clearly visible");
 assert.ok(dashboardCss.includes(".dashboard-mode .portal-hero-photo.hero-slide.is-active{display:block}"), "only the active hero photo should be visible; do not blend photos");
@@ -171,3 +171,13 @@ assert.ok(mobileCss.includes("prefers-reduced-motion:reduce"));
 assert.ok(worker.includes("./assets/bakery.webp") && worker.includes("./assets/leposhka-detail.svg") && worker.includes("./assets/leposhka-delivery.svg"), "real bakery photos should be precached for offline startup");
 assert.ok(!dashboardCss.includes("Landscape_view%2C_Ala_Archa_National_Park") && !dashboardCss.includes("images.unsplash.com"), "the dashboard hero must not fall back to a blended mountain/photo background");
 console.log("DoughFlow static security, inventory RPC, mobile UI, and no-simulator checks passed.");
+
+
+// Fresh-start data must remain genuinely empty, with the yeast recipe presented as grams and stored in kg.
+assert.match(app, /__emptyStartV1/);
+assert.match(app, /data\.productions=\[\]/);
+assert.match(app, /a\[m\.code\]=\{stock:0,tx:\[\]\}/);
+assert.doesNotMatch(app, /db\.inventory\.flour\.stock=325|db\.inventory\.oil\.stock=26\.5|reason:'Opening balance'/, "demo startup must not create stock or fake opening ledger entries");
+assert.match(app, /const yeast=it\.code==='yeast';const unit=yeast\?'g':it\.unit;const qty=yeast\?Number\(it\.qty\)\*1000:it\.qty/);
+assert.match(app, /qty:it\.code==='yeast'\?entered\/1000:entered/);
+console.log("DoughFlow fresh-empty inventory and 55 g yeast editor checks passed.");

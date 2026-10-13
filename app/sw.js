@@ -1,4 +1,4 @@
-const CACHE = 'doughflow-v41-20261012-hd-gallery-10-3s';
+const CACHE = 'doughflow-v42-20261013-empty-stock-yeast-grams';
 
 const CORE_ASSETS = [
   './',

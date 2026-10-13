@@ -164,8 +164,22 @@ function seed(){
   const saved=localStorage.getItem(KEY);
   if(saved){
     const data=JSON.parse(saved);
-    // Force one PIN login when upgrading from the old auto-admin demo session.
-    if(!data.__pinLoginV1){
+    // One-time clean start: remove demo production/stock history and preserve the recipe except yeast.
+    if(!data.__emptyStartV1){
+      data.session=null;
+      data.productions=[];
+      data.inventory=MATERIALS.reduce((a,m)=>{a[m.code]={stock:0,tx:[]};return a;},{});
+      if(data.recipe && Array.isArray(data.recipe.items)){
+        data.recipe.items=data.recipe.items.map(it=>it.code==='yeast'
+          ? {...it,qty:.055,unit:'kg',note:'Default 55 g; operational range 35–55 g'}
+          : it);
+      }else{
+        data.recipe={version:1,updatedAt:new Date().toISOString(),updatedBy:'Admin',items:DEFAULT_RECIPE};
+      }
+      data.__emptyStartV1=true;
+      data.__pinLoginV1=true;
+      localStorage.setItem(KEY,JSON.stringify(data));
+    }else if(!data.__pinLoginV1){
       data.session=null;
       data.__pinLoginV1=true;
       localStorage.setItem(KEY,JSON.stringify(data));
@@ -175,6 +189,7 @@ function seed(){
   const data={
     session:null,
     __pinLoginV1:true,
+    __emptyStartV1:true,
     recipe:{version:1,updatedAt:new Date().toISOString(),updatedBy:'Admin',items:DEFAULT_RECIPE},
     productions:[],
     inventory:MATERIALS.reduce((a,m)=>{a[m.code]={stock:0,tx:[]};return a;},{}),
@@ -1012,7 +1027,7 @@ function renderRecipe(p){
   if(!recipe){p.innerHTML='<div class="card"><h2>Recipe</h2><div class="alert warn">No active recipe found. Run the database seed SQL first.</div></div>';return;}
   p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">WORKING STANDARD</div><h1>Recipe</h1><p>Keep each ingredient consistent. Saving creates a new version; previous production stays unchanged.</p></div></div>
     <section class="recipe-guide-strip"><span class="recipe-guide-icon">${uiIcon('recipe',23)}</span><div><strong>Per operational sack</strong><small>Review quantity · check units · save a version</small></div><span class="recipe-version-pill">v${recipe.version}</span></section>
-    <div class="grid grid-2 recipe-layout"><div class="card recipe-editor-card"><div class="workflow-heading"><span class="workflow-step-number">01</span><div><h2>Active recipe</h2><p>Quantities for one sack</p></div><span class="workflow-status" id="recipeStatusPill">Saved</span></div>${recipe.items.map((it)=>`<div class="field-row recipe-item-row" style="align-items:end"><div class="field"><label>${esc(it.name)} (${esc(it.unit)})</label><input class="recipe-qty" data-code="${esc(it.code)}" type="number" step="0.001" value="${it.qty}"><div class="small">${esc(it.note||'')}</div></div><div class="field"><label>Current standard</label><div class="notice recipe-standard-notice">${fmt(it.qty)} ${esc(it.unit)} / sack</div></div></div>`).join('')}<button class="btn primary recipe-save-button" id="saveRecipe">Save as new recipe version</button></div><div class="card recipe-packaging-card"><div class="workflow-heading compact"><span class="workflow-step-number neutral">02</span><div><h2>Packaging rules</h2><p>How stock is counted</p></div></div><div class="table-wrap"><table><thead><tr><th>Material</th><th>Purchase package</th></tr></thead><tbody>${STOCK_MATERIALS.map(m=>`<tr><td>${esc(m.name)}</td><td>${m.packages.map(x=>esc(x.label)).join('<br>')}</td></tr>`).join('')}</tbody></table></div><div class="notice" style="margin-top:14px">Water is a recipe input and is not tracked as stock. Salt supports 1 kg and 750 g packets. Yeast supports 500 g packets and 20-packet boxes. Oil uses 20 kg cartons.</div></div></div>`;
+    <div class="grid grid-2 recipe-layout"><div class="card recipe-editor-card"><div class="workflow-heading"><span class="workflow-step-number">01</span><div><h2>Active recipe</h2><p>Quantities for one sack</p></div><span class="workflow-status" id="recipeStatusPill">Saved</span></div>${recipe.items.map((it)=>{const yeast=it.code==='yeast';const unit=yeast?'g':it.unit;const qty=yeast?Number(it.qty)*1000:it.qty;return `<div class="field-row recipe-item-row" style="align-items:end"><div class="field"><label>${esc(it.name)} (${esc(unit)})</label><input class="recipe-qty" data-code="${esc(it.code)}" type="number" step="${yeast?'1':'0.001'}" value="${qty}"><div class="small">${esc(it.note||'')}</div></div><div class="field"><label>Current standard</label><div class="notice recipe-standard-notice">${fmt(qty)} ${esc(unit)} / sack</div></div></div>`;}).join('')}<button class="btn primary recipe-save-button" id="saveRecipe">Save as new recipe version</button></div><div class="card recipe-packaging-card"><div class="workflow-heading compact"><span class="workflow-step-number neutral">02</span><div><h2>Packaging rules</h2><p>How stock is counted</p></div></div><div class="table-wrap"><table><thead><tr><th>Material</th><th>Purchase package</th></tr></thead><tbody>${STOCK_MATERIALS.map(m=>`<tr><td>${esc(m.name)}</td><td>${m.packages.map(x=>esc(x.label)).join('<br>')}</td></tr>`).join('')}</tbody></table></div><div class="notice" style="margin-top:14px">Water is a recipe input and is not tracked as stock. Salt supports 1 kg and 750 g packets. Yeast supports 500 g packets and 20-packet boxes. Oil uses 20 kg cartons.</div></div></div>`;
   document.querySelectorAll('.recipe-qty').forEach(input=>input.addEventListener('input',()=>{
     const pill=document.getElementById('recipeStatusPill');
     if(pill){pill.textContent='Unsaved changes';pill.classList.add('workflow-status-dirty');}
@@ -1020,7 +1035,7 @@ function renderRecipe(p){
   document.getElementById('saveRecipe').addEventListener('click',async()=>{
     const recipeButton=document.getElementById('saveRecipe');
     recipeButton.disabled=true;recipeButton.textContent='Saving version…';
-    const items=recipe.items.map((it,i)=>({...it,qty:Number(document.querySelector(`.recipe-qty[data-code="${it.code}"]`).value),sort_order:i}));
+    const items=recipe.items.map((it,i)=>{const entered=Number(document.querySelector(`.recipe-qty[data-code="${it.code}"]`).value);return {...it,qty:it.code==='yeast'?entered/1000:entered,sort_order:i};});
     if(items.some(x=>!Number.isFinite(x.qty)||x.qty<0)){recipeButton.disabled=false;recipeButton.textContent='Save as new recipe version';showToast(t('Recipe quantities must be valid non-negative numbers.',lang),'error');return;}
     if(isDemo){db.recipe.version+=1;db.recipe.updatedAt=new Date().toISOString();db.recipe.updatedBy=currentUser.name;db.recipe.items=items;saveDemo();showToast(`${t('Recipe saved as',lang)} v${db.recipe.version}.`,'success');render();}
     else {const {error}=await supabase.rpc('create_recipe_version',{p_items:items.map(x=>({code:x.code,qty:x.qty,unit:x.unit,note:x.note||'',sort_order:x.sort_order})),p_note:`Updated by ${currentUser.name}`});if(error){recipeButton.disabled=false;recipeButton.textContent='Save as new recipe version';showToast(friendlyError(error),'error');return;}await refreshLiveState();showToast(`${t('Recipe saved as',lang)} v${liveState.recipe.version}.`,'success');render();}
@@ -1339,43 +1354,3 @@ async function activeRecipeId(){ const {data}=await supabase.from('recipe_versio
 
 // Optional Supabase status helper: visible on demo build only.
 window.DoughFlow={resetDemo(){localStorage.removeItem(KEY);location.reload();},isDemo};
-
-if(isDemo){
-  // Seed a few realistic stock quantities for an immediately useful preview.
-  if(!db.__seededStock){db.inventory.flour.stock=325;db.inventory.oil.stock=26.5;db.inventory.salt.stock=43;db.inventory.sugar.stock=65;db.inventory.yeast.stock=10.293;db.__seededStock=true;saveDemo();}
-  if(db.__seededHistory){
-    let migrated=false;
-    STOCK_MATERIALS.forEach(m=>{
-      (db.inventory[m.code]?.tx||[]).forEach(tx=>{
-        if(tx.reason==='Opening balance' && tx.effectiveDate!=='2026-01-01'){
-          tx.effectiveDate='2026-01-01';migrated=true;
-        }
-      });
-    });
-    if(migrated) saveDemo();
-  }
-  if(db.__seededHistory){
-    let migrated=false;
-    STOCK_MATERIALS.forEach(m=>{
-      (db.inventory[m.code]?.tx||[]).forEach(tx=>{
-        if(tx.reason==='Opening balance' && tx.effectiveDate!=='2026-01-01'){
-          tx.effectiveDate='2026-01-01';migrated=true;
-        }
-      });
-    });
-    if(migrated) saveDemo();
-  }
-  if(!db.__seededHistory){
-    STOCK_MATERIALS.forEach(m=>{
-      const inv=db.inventory[m.code]||{stock:0,tx:[]};
-      inv.tx=inv.tx||[];
-      const ledger=inv.tx.reduce((sum,x)=>sum+(x.dir==='out'?-Number(x.qty||0):Number(x.qty||0)),0);
-      const missing=Number(inv.stock||0)-ledger;
-      if(Math.abs(missing)>0.00005) inv.tx.push({id:uid(),dir:missing>0?'in':'out',qty:Math.abs(missing),reason:'Opening balance',effectiveDate:'2026-01-01',at:new Date().toISOString(),by:'System',packageLabel:'Opening balance'});
-      db.inventory[m.code]=inv;
-    });
-    db.__seededHistory=true;saveDemo();
-  }
-}
-
-init();
