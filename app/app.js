@@ -42,13 +42,15 @@ const DEFAULT_RECIPE = [
   {code:'sugar', name:'Sugar', qty:.5, unit:'kg', note:''}
 ];
 
-const DEFAULT_APP_SETTINGS={businessName:'DoughFlow',tagline:'Bakery control',accentColor:'#2477ee',defaultLanguage:'en',timezone:'Asia/Bishkek',currency:'KGS',weightUnit:'kg',pieceUnit:'pieces',sackLabel:'sacks',confirmDestructiveActions:true,lowStockAlerts:true,compactStockCards:true,shiftStart:'21:00',shiftEnd:'12:00',adminNotes:''};
+const DEFAULT_APP_SETTINGS={businessName:'DoughFlow',tagline:'Bakery control',accentColor:'#2477ee',defaultLanguage:'en',timezone:'Asia/Bishkek',currency:'KGS',weightUnit:'kg',pieceUnit:'pieces',sackLabel:'sacks',confirmDestructiveActions:true,lowStockAlerts:true,compactStockCards:true,shiftStart:'21:00',shiftEnd:'12:00',adminNotes:'',homeSubtitle:'Let’s make great leposhka today!'};
 let appSettings={...DEFAULT_APP_SETTINGS};
 const APP_SETTINGS_DEMO_KEY='doughflow_settings_demo_v1';
 function applyAppSettings(){
   try{document.documentElement.style.setProperty('--df-accent',/^#[0-9a-fA-F]{6}$/.test(appSettings.accentColor||'')?appSettings.accentColor:DEFAULT_APP_SETTINGS.accentColor);}catch{}
   const name=String(appSettings.businessName||'DoughFlow').trim()||'DoughFlow';
   document.querySelectorAll('.brand-copy strong,.hero-brand b,.login-brand-row strong,[data-app-business-name]').forEach(el=>{el.textContent=name;});
+  document.body.dataset.lowStockAlerts=appSettings.lowStockAlerts?'true':'false';
+  document.body.dataset.compactStockCards=appSettings.compactStockCards?'true':'false';
   const tagline=String(appSettings.tagline||'Bakery control').trim();
   document.querySelectorAll('.brand-copy span,.hero-brand small,.login-brand-row small,[data-app-tagline]').forEach(el=>{el.textContent=tagline;});
   document.title=name+' · '+tagline;
@@ -827,7 +829,7 @@ async function renderSettings(p){
   p.innerHTML=`<div class="page-head settings-page-head"><div><div class="eyebrow">ADMIN CONTROL CENTER</div><h1>⚙️ Settings</h1><p>Manage the business identity, workspace preferences, data safety and every operational module from one place.</p></div><span class="settings-admin-pill">🔐 Admin only</span></div>
   <div class="settings-hero"><div class="settings-hero-icon">⚙</div><div><b>System control center</b><p>Changes are saved to the shared workspace. Operational data is managed in its own module, with permissions and history.</p></div><span class="settings-live-dot">● Shared</span></div>
   <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🏢</span><div><h2>Business identity</h2><p>Update the name and tagline shown across the app.</p></div></div>
-    <div class="settings-form-grid"><div class="field"><label for="settingBusinessName">Business / workspace name</label><input id="settingBusinessName" maxlength="70" value="${esc(s.businessName)}" required></div><div class="field"><label for="settingTagline">Tagline</label><input id="settingTagline" maxlength="100" value="${esc(s.tagline)}"></div></div>
+    <div class="settings-form-grid"><div class="field"><label for="settingBusinessName">Business / workspace name</label><input id="settingBusinessName" maxlength="70" value="${esc(s.businessName)}" required></div><div class="field"><label for="settingTagline">Tagline</label><input id="settingTagline" maxlength="100" value="${esc(s.tagline)}"></div><div class="field"><label for="settingHomeSubtitle">Home screen welcome line</label><input id="settingHomeSubtitle" maxlength="140" value="${esc(s.homeSubtitle||DEFAULT_APP_SETTINGS.homeSubtitle)}"></div></div>
   </section>
   <section class="settings-section"><div class="settings-section-heading"><span class="settings-section-icon">🎨</span><div><h2>Appearance & language</h2><p>Set the workspace accent and default language.</p></div></div>
     <div class="settings-form-grid"><div class="field"><label for="settingAccent">Accent color</label><div class="settings-color-row"><input id="settingAccent" type="color" value="${/^#[0-9a-fA-F]{6}$/.test(s.accentColor||'')?s.accentColor:'#2477ee'}"><span id="settingAccentValue">${esc(s.accentColor)}</span></div></div><div class="field"><label for="settingLanguage">Default language for new sessions</label><select id="settingLanguage"><option value="en" ${s.defaultLanguage==='en'?'selected':''}>English</option><option value="ru" ${s.defaultLanguage==='ru'?'selected':''}>Русский — Russian</option><option value="ky" ${s.defaultLanguage==='ky'?'selected':''}>Кыргызча — Kyrgyz</option></select></div><div class="field"><label for="settingTimezone">Business time zone</label><select id="settingTimezone">${[['Asia/Bishkek','Bishkek (UTC+6)'],['Europe/Helsinki','Helsinki'],['Asia/Karachi','Pakistan'],['UTC','UTC']].map(([v,l])=>'<option value="'+v+'" '+(s.timezone===v?'selected':'')+'>'+l+'</option>').join('')}</select></div><div class="field"><label for="settingCurrency">Currency code</label><select id="settingCurrency">${[['KGS','KGS — Kyrgyz som'],['PKR','PKR — Pakistani rupee'],['EUR','EUR — Euro'],['USD','USD — US dollar']].map(([v,l])=>'<option value="'+v+'" '+(s.currency===v?'selected':'')+'>'+l+'</option>').join('')}</select></div></div>
@@ -848,7 +850,7 @@ async function renderSettings(p){
     const button=p.querySelector('#settingsSave'),status=p.querySelector('#settingsSaveStatus');
     const businessName=p.querySelector('#settingBusinessName').value.trim();
     if(!businessName){status.textContent='Business name is required.';p.querySelector('#settingBusinessName').focus();return;}
-    const next={businessName,tagline:p.querySelector('#settingTagline').value.trim(),accentColor:p.querySelector('#settingAccent').value,defaultLanguage:p.querySelector('#settingLanguage').value,timezone:p.querySelector('#settingTimezone').value,currency:p.querySelector('#settingCurrency').value,weightUnit:p.querySelector('#settingWeightUnit').value,pieceUnit:p.querySelector('#settingPieceUnit').value,sackLabel:p.querySelector('#settingSackLabel').value.trim()||'sacks',shiftStart:p.querySelector('#settingShiftStart').value,shiftEnd:p.querySelector('#settingShiftEnd').value,lowStockAlerts:p.querySelector('#settingLowStock').checked,confirmDestructiveActions:p.querySelector('#settingConfirm').checked,compactStockCards:p.querySelector('#settingCompact').checked,adminNotes:p.querySelector('#settingAdminNotes').value.trim()};
+    const next={businessName,tagline:p.querySelector('#settingTagline').value.trim(),homeSubtitle:p.querySelector('#settingHomeSubtitle').value.trim(),accentColor:p.querySelector('#settingAccent').value,defaultLanguage:p.querySelector('#settingLanguage').value,timezone:p.querySelector('#settingTimezone').value,currency:p.querySelector('#settingCurrency').value,weightUnit:p.querySelector('#settingWeightUnit').value,pieceUnit:p.querySelector('#settingPieceUnit').value,sackLabel:p.querySelector('#settingSackLabel').value.trim()||'sacks',shiftStart:p.querySelector('#settingShiftStart').value,shiftEnd:p.querySelector('#settingShiftEnd').value,lowStockAlerts:p.querySelector('#settingLowStock').checked,confirmDestructiveActions:p.querySelector('#settingConfirm').checked,compactStockCards:p.querySelector('#settingCompact').checked,adminNotes:p.querySelector('#settingAdminNotes').value.trim()};
     button.disabled=true;status.textContent='Saving shared settings…';
     try{
       if(isDemo){appSettings=next;localStorage.setItem(APP_SETTINGS_DEMO_KEY,JSON.stringify(next));}
@@ -935,7 +937,7 @@ function renderDashboard(p){
           "<label class='hero-language'><span>"+languageFlag()+"</span><select id='heroLanguageSelect' aria-label=\""+t('Language',lang)+"\">"+languageOptions(lang)+"</select><b>⌄</b></label>"+
           "<div class='hero-user'><span class='hero-avatar'>"+esc(Array.from(String(currentUser.name||'A').trim())[0]?.toUpperCase()||'A')+"</span><span><b class='no-translate'>"+esc(currentUser.name)+"</b><small>"+roleName(currentUser.role)+"</small></span></div>"+
         "</div>"+
-        "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+t('Let’s make great leposhka today!',lang)+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div></div>"+
+        "<div class='hero-copy'><h1>"+t('Good day',lang)+", "+firstName+" <span>👋</span></h1><p>"+esc(appSettings.homeSubtitle||'Let’s make great leposhka today!')+"</p><div class='hero-date'>"+uiIcon('calendar',17)+" "+formatToday()+"</div></div>"+
       "</div>"+
       "<div class='hero-slide-controls' aria-label='Photo carousel controls'>"+
         "<button type='button' class='hero-slide-arrow' data-hero-prev aria-label='Previous photo'>‹</button>"+
