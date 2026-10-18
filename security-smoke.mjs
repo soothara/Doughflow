@@ -25,6 +25,7 @@ const stylesCss = read("./app/styles.css");
 const dashboardCss = read("./app/dashboard.css");
 const interactiveCss = read("./app/interactive.css");
 const mobileCss = read("./app/mobile.css");
+const i18n = read("./app/i18n.js");
 
 // Production must not silently degrade to a local app with hard-coded PINs.
 assert.match(app, /const isDemo = CFG\.demoMode === true;/);
@@ -325,3 +326,13 @@ assert.ok(app.includes("'leposhkaEmblem','Production Leposhka emblem'"), "Settin
 
 assert.ok(app.includes("defaultPageMediaUrl(key)"), "restoring a page photo must return its preview to the original image");
 assert.ok(app.includes("const defaultPageMediaUrl=key=>"), "each editable page background must have a defined default");
+
+
+// Automatic mishok timetable: one anchor-time input drives the entire schedule.
+assert.ok(app.includes('id="openAutoTimetable"'), "Production must provide a separate automatic timetable action without cluttering Home");
+assert.ok(app.includes('id="timetableSecondTime"'), "Timetable must use one time input for the second mishok");
+assert.ok(app.includes("index===0?anchorMinutes-120:anchorMinutes+(index-1)*90"), "First mishok must be two hours before the second; later mishoks must be spaced 90 minutes apart");
+assert.ok(app.includes("localStorage.setItem('doughflow_auto_mishok_timetable_v1'"), "The chosen anchor time must be remembered automatically on the device");
+assert.ok(app.includes('id="timetableMinuteHand"') && app.includes('id="timetableHourHand"'), "The timetable must include a live analog clock preview");
+assert.ok(mobileCss.includes(".auto-timetable-overlay[hidden]") && mobileCss.includes("@media(max-width:640px)"), "The timetable must have hidden-state and mobile-responsive styling");
+assert.ok(i18n.includes("'Automatic mishok timetable'") && i18n.includes("'Auto timetable'"), "The new timetable interface must include Russian and Kyrgyz translations");
