@@ -835,6 +835,18 @@ Object.assign(DICT.ky, {
   'Could not copy timetable on this device.':'Бул түзмөктө жадыбалды көчүрүү мүмкүн болгон жок.'
 });
 
+
+Object.assign(DICT.ru, {
+  'MISHOK TIMER':'ТАЙМЕР МИШОКА',
+  'ANCHOR':'ОПОРА',
+  'MIN':'МИН'
+});
+Object.assign(DICT.ky, {
+  'MISHOK TIMER':'МИШОКТУН ТАЙМЕРИ',
+  'ANCHOR':'ТИРЕК',
+  'MIN':'МҮН'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
