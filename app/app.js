@@ -1282,7 +1282,7 @@ function renderProduction(p){
             <circle cx="110" cy="110" r="105" class="auto-watch-halo"/><circle cx="110" cy="110" r="100" fill="url(#autoWatchFace)" class="auto-watch-face"/><circle cx="110" cy="110" r="85" fill="url(#autoWatchGlow)"/>
             <circle cx="110" cy="110" r="99" class="auto-watch-rim"/>${timetableClockTicks}
             <text x="110" y="52" text-anchor="middle" class="auto-watch-brand">DOUGHFLOW</text>
-            <text x="110" y="177" text-anchor="middle" class="auto-watch-caption">MISHOK TIMER</text>
+            <text x="110" y="177" text-anchor="middle" class="auto-watch-caption">${esc(t('MISHOK TIMER',lang))}</text>
             <line id="timetableHourHand" class="auto-watch-hour-hand" x1="110" y1="110" x2="110" y2="67" transform="rotate(240 110 110)"/>
             <line id="timetableMinuteHand" class="auto-watch-minute-hand" x1="110" y1="110" x2="110" y2="39" transform="rotate(0 110 110)"/>
             <circle cx="110" cy="110" r="6.5" class="auto-watch-pin"/><circle cx="110" cy="110" r="2.5" class="auto-watch-pin-core"/>
@@ -1328,7 +1328,7 @@ function renderProduction(p){
       const time=`${hh}:${mm}`;
       const dayLabel=dayOffset<0?t('Previous day',lang):dayOffset>0?t('Next day',lang):t('Same day',lang);
       const description=index===0?t('2 hours before the 2nd mishok',lang):index===1?t('Your input time',lang):t('90 minutes after the previous mishok',lang);
-      const offset=index===0?'−120 MIN':index===1?'ANCHOR':'+90 MIN';
+      const offset=index===0?'−120 '+t('MIN',lang):index===1?t('ANCHOR',lang):'+90 '+t('MIN',lang);
       return {number:index+1,time,dayLabel,description,offset,anchor:index===1};
     });
     const list=document.getElementById('ttSchedule');
