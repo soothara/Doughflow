@@ -1358,7 +1358,7 @@ function renderProduction(p){
     const countLabel=document.getElementById('ttSlotCount');if(countLabel)countLabel.textContent=t('9 scheduled slots',lang);
     const savedLabel=document.getElementById('ttSavedState');if(savedLabel)savedLabel.textContent=t('Auto-saved on this device',lang);
     const lineBreak=String.fromCharCode(10);
-    timetableCopyText=[t('Automatic mishok timetable',lang),t('2nd mishok start time',lang)+': '+raw,...slots.map(slot=>t('Mishok',lang)+' '+slot.number+': '+slot.time+' ('+slot.dayLabel+')'),t('Estimated end time',lang)+': '+endTime+' ('+t('After mishok {number} starts',lang).replace('{number}',String(endSlotNumber))+')].join(lineBreak);
+    timetableCopyText=[t('Automatic mishok timetable',lang),t('2nd mishok start time',lang)+': '+raw,...slots.map(slot=>t('Mishok',lang)+' '+slot.number+': '+slot.time+' ('+slot.dayLabel+')'),t('Estimated end time',lang)+': '+endTime+' (mishok '+endSlotNumber+')'].join(lineBreak);
   };
   const closeAutoTimetable=()=>{
     if(!timetableModal)return;
