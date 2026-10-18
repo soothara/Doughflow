@@ -1274,6 +1274,17 @@ function renderProduction(p){
       <div class="auto-timetable-input-copy"><label for="timetableSecondTime">${esc(t('2nd mishok start time',lang))}</label><small>${esc(t('Only one input. All other times are calculated for you.',lang))}</small></div>
       <input id="timetableSecondTime" type="time" step="60" value="${esc(savedTimetableTime)}" aria-label="${esc(t('2nd mishok start time',lang))}">
     </div>
+    <div class="auto-end-time-card">
+      <div class="auto-end-time-copy">
+        <span class="auto-end-time-kicker">${esc(t('SHIFT FINISH ESTIMATE',lang))}</span>
+        <label for="timetableMishokCount">${esc(t('How many mishoks will you make today?',lang))}</label>
+        <small>${esc(t('Your estimated finish time is 3 hours after your last mishok starts.',lang))}</small>
+      </div>
+      <div class="auto-end-time-controls">
+        <div class="auto-end-count-wrap"><input id="timetableMishokCount" type="number" min="1" max="9" step="1" value="5" inputmode="numeric" aria-label="${esc(t('Mishok count for today',lang))}"><span>${esc(t('mishoks',lang))}</span></div>
+        <div class="auto-end-result" aria-live="polite"><span>${esc(t('ESTIMATED END TIME',lang))}</span><strong id="ttEndTime">14:00</strong><small id="ttEndDetail">${esc(t('After mishok {number} starts',lang).replace('{number}','7'))}</small></div>
+      </div>
+    </div>
     <div class="auto-timetable-main">
       <div class="auto-timetable-watch-panel">
         <div class="auto-watch-wrap">
@@ -1319,6 +1330,17 @@ function renderProduction(p){
     document.getElementById('timetableMinuteHand')?.setAttribute('transform',`rotate(${minuteAngle} 110 110)`);
     document.getElementById('timetableHourHand')?.setAttribute('transform',`rotate(${hourAngle} 110 110)`);
     const digital=document.getElementById('ttDigitalTime');if(digital)digital.textContent=raw;
+    const countInput=document.getElementById('timetableMishokCount');
+    const mishokCount=Math.max(1,Math.min(9,Math.trunc(Number(countInput?.value)||1)));
+    if(countInput && String(mishokCount)!==countInput.value) countInput.value=String(mishokCount);
+    const endMinutes=anchorMinutes+(mishokCount+1)*90;
+    const endDayOffset=Math.floor(endMinutes/1440);
+    const normalizedEnd=((endMinutes%1440)+1440)%1440;
+    const endTime=String(Math.floor(normalizedEnd/60)).padStart(2,'0')+':'+String(normalizedEnd%60).padStart(2,'0');
+    const endDayLabel=endDayOffset<0?t('Previous day',lang):endDayOffset>0?t('Next day',lang):t('Same day',lang);
+    const endSlotNumber=mishokCount+2;
+    const endTimeNode=document.getElementById('ttEndTime');if(endTimeNode)endTimeNode.textContent=endTime;
+    const endDetailNode=document.getElementById('ttEndDetail');if(endDetailNode)endDetailNode.textContent=t('After mishok {number} starts',lang).replace('{number}',String(endSlotNumber))+' · '+endDayLabel;
     const slots=Array.from({length:9},(_,index)=>{
       const totalMinutes=index===0?anchorMinutes-120:anchorMinutes+(index-1)*90;
       const dayOffset=Math.floor(totalMinutes/1440);
@@ -1332,11 +1354,11 @@ function renderProduction(p){
       return {number:index+1,time,dayLabel,description,offset,anchor:index===1};
     });
     const list=document.getElementById('ttSchedule');
-    if(list)list.innerHTML=slots.map(slot=>`<article class="auto-timetable-row${slot.anchor?' is-anchor':''}" data-mishok-slot="${slot.number}" ${slot.anchor?'aria-current="time"':''}><span class="auto-slot-index">${String(slot.number).padStart(2,'0')}</span><div class="auto-slot-copy"><b>${esc(t('Mishok',lang))} ${slot.number}</b><small>${esc(slot.description)}</small></div><div class="auto-slot-time"><strong>${slot.time}</strong><small>${esc(slot.dayLabel)}</small></div><span class="auto-slot-offset">${slot.offset}</span></article>`).join('');
+    if(list)list.innerHTML=slots.map(slot=>`<article class="auto-timetable-row${slot.anchor?' is-anchor':''}${slot.number===endSlotNumber?' is-end-time':''}" data-mishok-slot="${slot.number}" ${slot.anchor?'aria-current="time"':''}><span class="auto-slot-index">${String(slot.number).padStart(2,'0')}</span><div class="auto-slot-copy"><b>${esc(t('Mishok',lang))} ${slot.number}</b><small>${esc(slot.description)}</small></div><div class="auto-slot-time"><strong>${slot.time}</strong><small>${esc(slot.dayLabel)}</small></div><span class="auto-slot-offset">${slot.offset}</span></article>`).join('');
     const countLabel=document.getElementById('ttSlotCount');if(countLabel)countLabel.textContent=t('9 scheduled slots',lang);
     const savedLabel=document.getElementById('ttSavedState');if(savedLabel)savedLabel.textContent=t('Auto-saved on this device',lang);
     const lineBreak=String.fromCharCode(10);
-    timetableCopyText=[t('Automatic mishok timetable',lang),t('2nd mishok start time',lang)+': '+raw,...slots.map(slot=>t('Mishok',lang)+' '+slot.number+': '+slot.time+' ('+slot.dayLabel+')')].join(lineBreak);
+    timetableCopyText=[t('Automatic mishok timetable',lang),t('2nd mishok start time',lang)+': '+raw,...slots.map(slot=>t('Mishok',lang)+' '+slot.number+': '+slot.time+' ('+slot.dayLabel+')'),t('Estimated end time',lang)+': '+endTime+' (mishok '+endSlotNumber+')'].join(lineBreak);
   };
   const closeAutoTimetable=()=>{
     if(!timetableModal)return;
@@ -1353,6 +1375,7 @@ function renderProduction(p){
   timetableModal?.querySelectorAll('[data-timetable-close]').forEach(button=>button.addEventListener('click',closeAutoTimetable));
   timetableModal?.addEventListener('click',event=>{if(event.target.matches('[data-timetable-backdrop]'))closeAutoTimetable();});
   timetableModal?.addEventListener('keydown',event=>{if(event.key==='Escape')closeAutoTimetable();});
+  document.getElementById('timetableMishokCount')?.addEventListener('input',renderAutoTimetable);
   timetableInput?.addEventListener('input',()=>{
     try{localStorage.setItem('doughflow_auto_mishok_timetable_v1',timetableInput.value);}catch{}
     renderAutoTimetable();
