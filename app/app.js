@@ -1250,9 +1250,124 @@ function renderProduction(p){
   }catch{}
   const existing=isDemo?db.productions.filter(x=>x.date===today()):liveState.productions.filter(x=>x.production_date===today());
   const recipe=isDemo?db.recipe:liveState.recipe;
-  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">DAILY WORKFLOW</div><h1>${esc(siteText('productionTitle','Production'))}</h1><p>${esc(siteText('productionSubtitle','Choose a batch, record actual pieces, and finish with confidence.'))}</p></div></div><section class="workflow-progress-card" aria-live="polite"><div class="workflow-progress-top"><span class="workflow-step-icon">01</span><div class="workflow-progress-copy"><strong id="productionJourneyTitle">Choose your batch</strong><small id="productionJourneyText">Select total sacks to begin. Half-sacks are supported.</small></div><span class="workflow-step-count" id="productionJourneyCount">0 / 3</span></div><div class="workflow-progress-track"><span id="productionJourneyFill" style="width:0%"></span></div><div class="workflow-phase-list"><span>1 · Sacks</span><span>2 · Pieces</span><span>3 · Review</span></div></section><div class="grid grid-2"><div class="card production-work-card"><div class="workflow-heading"><span class="workflow-step-number">01</span><div><h2>New production</h2><p>Batch size and actual output</p></div></div><div class="field"><label>Sack count</label><div class="sack-picker"><button type="button" class="sack-choice" data-sack="1">1</button><button type="button" class="sack-choice " data-sack="2">2</button><button type="button" class="sack-choice " data-sack="3">3</button><button type="button" class="sack-choice " data-sack="4">4</button><button type="button" class="sack-choice " data-sack="5">5</button><button type="button" class="sack-choice " data-sack="6">6</button><button type="button" class="sack-choice " data-sack="7">7</button><button type="button" class="sack-choice " data-sack="8">8</button><button type="button" class="sack-choice " data-sack="9">9</button><button type="button" class="sack-choice half-choice" data-half="0.5">＋ 0.5</button></div><div class="sack-total"><span>Total sacks</span><strong id="sackTotal">0</strong><button type="button" class="reset-sack" id="resetSack">Reset</button></div><input id="sackCount" class="sr-only" type="number" min="0" max="9.5" step="0.5" value="0"></div><div id="batchEditor"></div><div style="height:10px"></div><h3>Material consumption</h3><div id="consumptionEditor"></div><div class="notice" style="margin:12px 0">A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveProduction">Complete production</button><button class="btn secondary" id="clearProduction">Clear</button></div></div><div class="card"><h2>Today’s production</h2>${existing.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Sacks</th><th>Pieces</th><th>Recipe</th></tr></thead><tbody>${existing.map(r=>{const bs=isDemo?r.batches:r.production_batches||[]; return `<tr><td>${esc(isDemo?r.timeLabel:new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt(bs.reduce((s,z)=>s+Number(z.pieces||0),0))}</td><td>v${isDemo?r.recipeVersion:(liveState.recipe?.version||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No production saved today.</div>'}</div></div>`;
+
+  let savedTimetableTime = '08:00';
+  try {
+    const storedTimetableTime = localStorage.getItem('doughflow_auto_mishok_timetable_v1');
+    if (typeof storedTimetableTime === 'string' && /^[0-9]{2}:[0-9]{2}$/.test(storedTimetableTime)) savedTimetableTime = storedTimetableTime;
+  } catch {}
+  const timetableClockTicks = Array.from({ length: 60 }, (_, index) => {
+    const inner = index % 5 === 0 ? 29 : 24;
+    return `<line class="auto-watch-tick${index % 5 === 0 ? ' major' : ''}" x1="110" y1="14" x2="110" y2="${inner}" transform="rotate(${index * 6} 110 110)" />`;
+  }).join('');
+  p.innerHTML=`<div class="page-head compact-head"><div><div class="eyebrow">DAILY WORKFLOW</div><h1>${esc(siteText('productionTitle','Production'))}</h1><p>${esc(siteText('productionSubtitle','Choose a batch, record actual pieces, and finish with confidence.'))}</p></div><button type="button" class="auto-timetable-launch" id="openAutoTimetable" aria-haspopup="dialog" aria-controls="autoTimetableModal"><span class="auto-timetable-launch-icon" aria-hidden="true">⏱</span><span class="auto-timetable-launch-copy"><strong>${esc(t('Auto timetable',lang))}</strong><small>${esc(t('Plan every mishok automatically',lang))}</small></span><span class="auto-timetable-launch-arrow" aria-hidden="true">↗</span></button></div><div class="auto-timetable-overlay" id="autoTimetableModal" hidden>
+  <div class="auto-timetable-backdrop" data-timetable-backdrop aria-hidden="true"></div>
+  <section class="auto-timetable-panel" role="dialog" aria-modal="true" aria-labelledby="autoTimetableTitle" aria-describedby="autoTimetableHelp">
+    <header class="auto-timetable-header">
+      <div class="auto-timetable-heading">
+        <span class="auto-timetable-heading-icon" aria-hidden="true">⏱</span>
+        <div><div class="auto-timetable-eyebrow">${esc(t('SMART PRODUCTION PLANNER',lang))}</div><h2 id="autoTimetableTitle">${esc(t('Automatic mishok timetable',lang))}</h2><p id="autoTimetableHelp">${esc(t('Enter the 2nd mishok start time. The full timetable adjusts automatically.',lang))}</p></div>
+      </div>
+      <button type="button" class="auto-timetable-close" id="closeAutoTimetable" data-timetable-close aria-label="${esc(t('Close timetable',lang))}">×</button>
+    </header>
+    <div class="auto-timetable-anchor">
+      <div class="auto-timetable-input-copy"><label for="timetableSecondTime">${esc(t('2nd mishok start time',lang))}</label><small>${esc(t('Only one input. All other times are calculated for you.',lang))}</small></div>
+      <input id="timetableSecondTime" type="time" step="60" value="${esc(savedTimetableTime)}" aria-label="${esc(t('2nd mishok start time',lang))}">
+    </div>
+    <div class="auto-timetable-main">
+      <div class="auto-timetable-watch-panel">
+        <div class="auto-watch-wrap">
+          <svg class="auto-watch-clock" viewBox="0 0 220 220" role="img" aria-label="${esc(t('Analog clock preview',lang))}">
+            <defs><linearGradient id="autoWatchFace" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#142742"/><stop offset="100%" stop-color="#071426"/></linearGradient><radialGradient id="autoWatchGlow"><stop offset="0%" stop-color="#45c5cf" stop-opacity=".20"/><stop offset="100%" stop-color="#45c5cf" stop-opacity="0"/></radialGradient></defs>
+            <circle cx="110" cy="110" r="105" class="auto-watch-halo"/><circle cx="110" cy="110" r="100" fill="url(#autoWatchFace)" class="auto-watch-face"/><circle cx="110" cy="110" r="85" fill="url(#autoWatchGlow)"/>
+            <circle cx="110" cy="110" r="99" class="auto-watch-rim"/>${timetableClockTicks}
+            <text x="110" y="52" text-anchor="middle" class="auto-watch-brand">DOUGHFLOW</text>
+            <text x="110" y="177" text-anchor="middle" class="auto-watch-caption">MISHOK TIMER</text>
+            <line id="timetableHourHand" class="auto-watch-hour-hand" x1="110" y1="110" x2="110" y2="67" transform="rotate(240 110 110)"/>
+            <line id="timetableMinuteHand" class="auto-watch-minute-hand" x1="110" y1="110" x2="110" y2="39" transform="rotate(0 110 110)"/>
+            <circle cx="110" cy="110" r="6.5" class="auto-watch-pin"/><circle cx="110" cy="110" r="2.5" class="auto-watch-pin-core"/>
+          </svg>
+          <div class="auto-watch-center"><span>${esc(t('SECOND MISHOK',lang))}</span><strong id="ttDigitalTime">${esc(savedTimetableTime)}</strong><small>${esc(t('Anchor time',lang))}</small></div>
+        </div>
+        <div class="auto-watch-meta"><span class="auto-watch-meta-icon" aria-hidden="true">✦</span><span><b>${esc(t('Precision timing',lang))}</b><small>${esc(t('24-hour local time · changes are saved on this device automatically',lang))}</small></span></div>
+      </div>
+      <div class="auto-timetable-list-section">
+        <div class="auto-timetable-list-heading"><div><h3>${esc(t('Production timeline',lang))}</h3><p>${esc(t('Change one time — everything recalculates instantly.',lang))}</p></div><span id="ttSlotCount">${esc(t('9 scheduled slots',lang))}</span></div>
+        <div class="auto-timetable-list" id="ttSchedule" aria-live="polite"></div>
+      </div>
+    </div>
+    <footer class="auto-timetable-footer">
+      <div class="auto-timetable-saved"><span class="auto-saved-dot" aria-hidden="true"></span><span id="ttSavedState">${esc(t('Auto-saved on this device',lang))}</span></div>
+      <div class="auto-timetable-actions"><button type="button" class="auto-timetable-copy" id="copyAutoTimetable">⎘ <span>${esc(t('Copy timetable',lang))}</span></button><button type="button" class="auto-timetable-done" data-timetable-close>${esc(t('Done',lang))} <span aria-hidden="true">✓</span></button></div>
+    </footer>
+  </section>
+</div><section class="workflow-progress-card" aria-live="polite"><div class="workflow-progress-top"><span class="workflow-step-icon">01</span><div class="workflow-progress-copy"><strong id="productionJourneyTitle">Choose your batch</strong><small id="productionJourneyText">Select total sacks to begin. Half-sacks are supported.</small></div><span class="workflow-step-count" id="productionJourneyCount">0 / 3</span></div><div class="workflow-progress-track"><span id="productionJourneyFill" style="width:0%"></span></div><div class="workflow-phase-list"><span>1 · Sacks</span><span>2 · Pieces</span><span>3 · Review</span></div></section><div class="grid grid-2"><div class="card production-work-card"><div class="workflow-heading"><span class="workflow-step-number">01</span><div><h2>New production</h2><p>Batch size and actual output</p></div></div><div class="field"><label>Sack count</label><div class="sack-picker"><button type="button" class="sack-choice" data-sack="1">1</button><button type="button" class="sack-choice " data-sack="2">2</button><button type="button" class="sack-choice " data-sack="3">3</button><button type="button" class="sack-choice " data-sack="4">4</button><button type="button" class="sack-choice " data-sack="5">5</button><button type="button" class="sack-choice " data-sack="6">6</button><button type="button" class="sack-choice " data-sack="7">7</button><button type="button" class="sack-choice " data-sack="8">8</button><button type="button" class="sack-choice " data-sack="9">9</button><button type="button" class="sack-choice half-choice" data-half="0.5">＋ 0.5</button></div><div class="sack-total"><span>Total sacks</span><strong id="sackTotal">0</strong><button type="button" class="reset-sack" id="resetSack">Reset</button></div><input id="sackCount" class="sr-only" type="number" min="0" max="9.5" step="0.5" value="0"></div><div id="batchEditor"></div><div style="height:10px"></div><h3>Material consumption</h3><div id="consumptionEditor"></div><div class="notice" style="margin:12px 0">A full sack = 1.0. The +0.5 button adds a half-sack, so 6 + 0.5 = 6.5. Maximum is 9.5 sacks.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveProduction">Complete production</button><button class="btn secondary" id="clearProduction">Clear</button></div></div><div class="card"><h2>Today’s production</h2>${existing.length?`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Sacks</th><th>Pieces</th><th>Recipe</th></tr></thead><tbody>${existing.map(r=>{const bs=isDemo?r.batches:r.production_batches||[]; return `<tr><td>${esc(isDemo?r.timeLabel:new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</td><td>${fmt(isDemo?r.mishokCount:r.mishok_count)}</td><td>${fmt(bs.reduce((s,z)=>s+Number(z.pieces||0),0))}</td><td>v${isDemo?r.recipeVersion:(liveState.recipe?.version||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">No production saved today.</div>'}</div></div>`;
   const editor=document.getElementById('batchEditor');
   const consumption=document.getElementById('consumptionEditor');
+
+  const timetableModal=document.getElementById('autoTimetableModal');
+  const timetableInput=document.getElementById('timetableSecondTime');
+  let timetableCopyText='';
+  const renderAutoTimetable=()=>{
+    if(!timetableInput||!timetableModal)return;
+    const raw=timetableInput.value||'08:00';
+    const parts=raw.split(':').map(Number);
+    const valid=parts.length===2&&parts.every(Number.isFinite)&&parts[0]>=0&&parts[0]<=23&&parts[1]>=0&&parts[1]<=59;
+    const anchorMinutes=valid?parts[0]*60+parts[1]:8*60;
+    const minuteAngle=(anchorMinutes%60)/60*360;
+    const hourAngle=((Math.floor(anchorMinutes/60)%12)+(anchorMinutes%60)/60)/12*360;
+    document.getElementById('timetableMinuteHand')?.setAttribute('transform',`rotate(${minuteAngle} 110 110)`);
+    document.getElementById('timetableHourHand')?.setAttribute('transform',`rotate(${hourAngle} 110 110)`);
+    const digital=document.getElementById('ttDigitalTime');if(digital)digital.textContent=raw;
+    const slots=Array.from({length:9},(_,index)=>{
+      const totalMinutes=index===0?anchorMinutes-120:anchorMinutes+(index-1)*90;
+      const dayOffset=Math.floor(totalMinutes/1440);
+      const normalized=((totalMinutes%1440)+1440)%1440;
+      const hh=String(Math.floor(normalized/60)).padStart(2,'0');
+      const mm=String(normalized%60).padStart(2,'0');
+      const time=`${hh}:${mm}`;
+      const dayLabel=dayOffset<0?t('Previous day',lang):dayOffset>0?t('Next day',lang):t('Same day',lang);
+      const description=index===0?t('2 hours before the 2nd mishok',lang):index===1?t('Your input time',lang):t('90 minutes after the previous mishok',lang);
+      const offset=index===0?'−120 MIN':index===1?'ANCHOR':'+90 MIN';
+      return {number:index+1,time,dayLabel,description,offset,anchor:index===1};
+    });
+    const list=document.getElementById('ttSchedule');
+    if(list)list.innerHTML=slots.map(slot=>`<article class="auto-timetable-row${slot.anchor?' is-anchor':''}" data-mishok-slot="${slot.number}" ${slot.anchor?'aria-current="time"':''}><span class="auto-slot-index">${String(slot.number).padStart(2,'0')}</span><div class="auto-slot-copy"><b>${esc(t('Mishok',lang))} ${slot.number}</b><small>${esc(slot.description)}</small></div><div class="auto-slot-time"><strong>${slot.time}</strong><small>${esc(slot.dayLabel)}</small></div><span class="auto-slot-offset">${slot.offset}</span></article>`).join('');
+    const countLabel=document.getElementById('ttSlotCount');if(countLabel)countLabel.textContent=t('9 scheduled slots',lang);
+    const savedLabel=document.getElementById('ttSavedState');if(savedLabel)savedLabel.textContent=t('Auto-saved on this device',lang);
+    const lineBreak=String.fromCharCode(10);
+    timetableCopyText=[t('Automatic mishok timetable',lang),t('2nd mishok start time',lang)+': '+raw,...slots.map(slot=>t('Mishok',lang)+' '+slot.number+': '+slot.time+' ('+slot.dayLabel+')')].join(lineBreak);
+  };
+  const closeAutoTimetable=()=>{
+    if(!timetableModal)return;
+    timetableModal.hidden=true;
+    document.body.classList.remove('auto-timetable-open');
+    document.getElementById('openAutoTimetable')?.focus({preventScroll:true});
+  };
+  document.getElementById('openAutoTimetable')?.addEventListener('click',()=>{
+    timetableModal.hidden=false;
+    document.body.classList.add('auto-timetable-open');
+    renderAutoTimetable();
+    document.getElementById('closeAutoTimetable')?.focus({preventScroll:true});
+  });
+  timetableModal?.querySelectorAll('[data-timetable-close]').forEach(button=>button.addEventListener('click',closeAutoTimetable));
+  timetableModal?.addEventListener('click',event=>{if(event.target.matches('[data-timetable-backdrop]'))closeAutoTimetable();});
+  timetableModal?.addEventListener('keydown',event=>{if(event.key==='Escape')closeAutoTimetable();});
+  timetableInput?.addEventListener('input',()=>{
+    try{localStorage.setItem('doughflow_auto_mishok_timetable_v1',timetableInput.value);}catch{}
+    renderAutoTimetable();
+  });
+  document.getElementById('copyAutoTimetable')?.addEventListener('click',async()=>{
+    try{
+      if(navigator.clipboard?.writeText) await navigator.clipboard.writeText(timetableCopyText);
+      else{
+        const field=document.createElement('textarea');field.value=timetableCopyText;field.setAttribute('readonly','');field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();
+        const copied=document.execCommand('copy');field.remove();if(!copied)throw new Error('copy_failed');
+      }
+      showToast(t('Timetable copied.',lang),'success');
+    }catch{showToast(t('Could not copy timetable on this device.',lang),'error');}
+  });
+  renderAutoTimetable();
   const updateJourney=()=>{
     const count=normalizeSackCount(document.getElementById('sackCount').value);
     const countReady=count>=0.5&&count<=9.5;
