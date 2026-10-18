@@ -342,7 +342,7 @@ assert.ok(i18n.includes("'Automatic mishok timetable'") && i18n.includes("'Auto 
 assert.ok(app.includes('id="timetableMishokCount"'), "The automatic timetable must ask for today's mishok count");
 assert.ok(app.includes("anchorMinutes+(mishokCount+1)*90"), "Estimated end time must be three hours after the counted mishok start");
 assert.ok(app.includes("const endSlotNumber=mishokCount+2"), "End-time detail must identify the equivalent later mishok slot");
-assert.ok(app.includes("id="+"\\"+"ttEndTime"+"\\"), "The automatic end time must be visibly rendered");
+assert.ok(app.includes('id="ttEndTime"'), "The automatic end time must be visibly rendered");
 assert.ok(app.includes("addEventListener('input',renderAutoTimetable)"), "Changing the mishok count must instantly recalculate the end time");
 assert.ok(mobileCss.includes(".auto-end-time-card") && mobileCss.includes(".auto-end-result"), "The end-time estimator must be professionally styled for mobile");
 assert.ok(i18n.includes("'How many mishoks will you make today?'") && i18n.includes("'Бүгүн канча мишок жасайсыз?'"), "The end-time estimator must include English, Russian, and Kyrgyz UI text");
