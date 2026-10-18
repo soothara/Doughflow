@@ -346,3 +346,4 @@ assert.ok(app.includes('id="ttEndTime"'), "The automatic end time must be visibl
 assert.ok(app.includes("addEventListener('input',renderAutoTimetable)"), "Changing the mishok count must instantly recalculate the end time");
 assert.ok(mobileCss.includes(".auto-end-time-card") && mobileCss.includes(".auto-end-result"), "The end-time estimator must be professionally styled for mobile");
 assert.ok(i18n.includes("'How many mishoks will you make today?'") && i18n.includes("'Бүгүн канча мишок жасайсыз?'"), "The end-time estimator must include English, Russian, and Kyrgyz UI text");
+
