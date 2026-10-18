@@ -847,6 +847,28 @@ Object.assign(DICT.ky, {
   'MIN':'МҮН'
 });
 
+
+Object.assign(DICT.ru, {
+  'SHIFT FINISH ESTIMATE':'РАСЧЁТ ОКОНЧАНИЯ СМЕНЫ',
+  'How many mishoks will you make today?':'Сколько мишоков вы сделаете сегодня?',
+  'Your estimated finish time is 3 hours after your last mishok starts.':'Расчётное окончание работы — через 3 часа после начала последнего мишока.',
+  'Mishok count for today':'Количество мишоков на сегодня',
+  'mishoks':'мишоков',
+  'ESTIMATED END TIME':'РАСЧЁТНОЕ ОКОНЧАНИЕ',
+  'After mishok {number} starts':'Через 3 часа после начала мишока №{number}',
+  'Estimated end time':'Расчётное окончание работы'
+});
+Object.assign(DICT.ky, {
+  'SHIFT FINISH ESTIMATE':'ИШТИН БҮТҮҮ УБАКТЫСЫН ЭСЕПТӨӨ',
+  'How many mishoks will you make today?':'Бүгүн канча мишок жасайсыз?',
+  'Your estimated finish time is 3 hours after your last mishok starts.':'Иштин болжолдуу бүтүү убактысы акыркы мишок башталгандан 3 саат кийин.',
+  'Mishok count for today':'Бүгүнкү мишок саны',
+  'mishoks':'мишок',
+  'ESTIMATED END TIME':'БҮТҮҮ УБАКТЫСЫ',
+  'After mishok {number} starts':'{number}-мишок башталгандан 3 саат кийин',
+  'Estimated end time':'Иштин болжолдуу бүтүү убактысы'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
