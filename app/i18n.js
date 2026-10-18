@@ -773,6 +773,68 @@ Object.assign(DICT.ky, {
   'PIN is incorrect':'PIN-код туура эмес','Something went wrong':'Ката кетти'
 });
 
+
+Object.assign(DICT.ru, {
+  'Auto timetable':'Авто-расписание',
+  'Plan every mishok automatically':'Автоматически рассчитать время для каждого мишока',
+  'SMART PRODUCTION PLANNER':'УМНЫЙ ПЛАНИРОВЩИК ПРОИЗВОДСТВА',
+  'Automatic mishok timetable':'Автоматическое расписание мишоков',
+  'Enter the 2nd mishok start time. The full timetable adjusts automatically.':'Введите время начала 2-го мишока. Всё расписание пересчитается автоматически.',
+  '2nd mishok start time':'Время начала 2-го мишока',
+  'Only one input. All other times are calculated for you.':'Только одно поле. Все остальные времена рассчитываются автоматически.',
+  'Analog clock preview':'Предпросмотр времени на аналоговых часах',
+  'SECOND MISHOK':'ВТОРОЙ МИШОК',
+  'Anchor time':'Опорное время',
+  'Precision timing':'Точное расписание',
+  '24-hour local time · changes are saved on this device automatically':'Местное время в формате 24 часа · изменения автоматически сохраняются на этом устройстве',
+  'Production timeline':'График производства',
+  '9 scheduled slots':'9 запланированных мишоков',
+  'Mishok':'Мишок',
+  '2 hours before the 2nd mishok':'За 2 часа до второго мишока',
+  'Your input time':'Время, которое вы указали',
+  '90 minutes after the previous mishok':'Через 90 минут после предыдущего мишока',
+  'Previous day':'Предыдущий день',
+  'Same day':'В тот же день',
+  'Next day':'Следующий день',
+  'Change one time — everything recalculates instantly.':'Измените одно время — всё пересчитается мгновенно.',
+  'Auto-saved on this device':'Автоматически сохранено на этом устройстве',
+  'Copy timetable':'Копировать расписание',
+  'Done':'Готово',
+  'Close timetable':'Закрыть расписание',
+  'Timetable copied.':'Расписание скопировано.',
+  'Could not copy timetable on this device.':'Не удалось скопировать расписание на этом устройстве.'
+});
+Object.assign(DICT.ky, {
+  'Auto timetable':'Авто-жадыбал',
+  'Plan every mishok automatically':'Ар бир мишоктун убактысын автоматтык эсептөө',
+  'SMART PRODUCTION PLANNER':'ӨНДҮРҮШТҮН АКЫЛДУУ ПЛАНДООЧУСУ',
+  'Automatic mishok timetable':'Мишоктордун автоматтык жадыбалы',
+  'Enter the 2nd mishok start time. The full timetable adjusts automatically.':'2-мишоктун башталуу убактысын киргизиңиз. Калган жадыбал автоматтык өзгөрөт.',
+  '2nd mishok start time':'2-мишоктун башталуу убактысы',
+  'Only one input. All other times are calculated for you.':'Бир гана убакытты киргизиңиз. Калган убакыттар автоматтык эсептелет.',
+  'Analog clock preview':'Аналог сааттын көрүнүшү',
+  'SECOND MISHOK':'ЭКИНЧИ МИШОК',
+  'Anchor time':'Негизги убакыт',
+  'Precision timing':'Так убакыт эсептөө',
+  '24-hour local time · changes are saved on this device automatically':'24 сааттык жергиликтүү убакыт · өзгөрүүлөр бул түзмөккө автоматтык сакталат',
+  'Production timeline':'Өндүрүш графиги',
+  '9 scheduled slots':'9 мишоктун убактысы',
+  'Mishok':'Мишок',
+  '2 hours before the 2nd mishok':'2-мишоктон 2 саат мурда',
+  'Your input time':'Сиз киргизген убакыт',
+  '90 minutes after the previous mishok':'Мурунку мишоктон 90 мүнөт кийин',
+  'Previous day':'Мурунку күн',
+  'Same day':'Ошол эле күн',
+  'Next day':'Эртеси күн',
+  'Change one time — everything recalculates instantly.':'Бир убакытты өзгөртүңүз — калгандары дароо кайра эсептелет.',
+  'Auto-saved on this device':'Бул түзмөккө автоматтык сакталат',
+  'Copy timetable':'Жадыбалды көчүрүү',
+  'Done':'Даяр',
+  'Close timetable':'Жадыбалды жабуу',
+  'Timetable copied.':'Жадыбал көчүрүлдү.',
+  'Could not copy timetable on this device.':'Бул түзмөктө жадыбалды көчүрүү мүмкүн болгон жок.'
+});
+
 export function normalizeLang(value){ return value && DICT[value] ? value : 'en'; }
 export function getSavedLang(userId='guest'){ return normalizeLang(localStorage.getItem(`${LANG_KEY}_${userId}`) || localStorage.getItem(LANG_KEY) || 'en'); }
 export function saveLang(userId, lang){ lang=normalizeLang(lang); localStorage.setItem(`${LANG_KEY}_${userId||'guest'}`,lang); localStorage.setItem(LANG_KEY,lang); return lang; }
